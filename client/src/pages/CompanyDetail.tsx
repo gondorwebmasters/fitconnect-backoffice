@@ -1,0 +1,193 @@
+import { useEffect, useState } from 'react';
+import { useParams, useLocation } from 'wouter';
+import { apolloClient } from '@/graphql/apollo-client';
+import { GET_COMPANIES, UPDATE_COMPANY, UPDATE_COMPANY_LOGO, GET_PRESIGNED_URL } from '@/graphql/operations';
+import type { Company, CompanyResponse, PresignedUrlResponse } from '@/graphql/types';
+import { PageHeader } from '@/components/common/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ArrowLeft, Building2, Loader2, Save, Upload } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function CompanyDetailPage() {
+  const params = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [company, setCompany] = useState<Company | null>(null);
+
+  const [form, setForm] = useState({
+    name: '', email: '', phoneNumber: '', address: '',
+    pollsEnabled: false, productsEnabled: false, chatEnabled: false, trainingEnabled: false,
+    maxActiveReservations: 3, maxAdvanceBookingDays: 7, sameDayBookingAllowed: true,
+    fullOpenHours: 24, bookingCutoffMinutes: 30, minBookingsRequired: 1,
+  });
+
+  useEffect(() => {
+    if (params.id) {
+      apolloClient.query({ query: GET_COMPANIES, variables: { companyId: params.id }, fetchPolicy: 'network-only' })
+        .then(({ data }) => {
+          const result = (data as Record<string, unknown>)?.getCompanies as CompanyResponse;
+          const c = result?.company;
+          if (c) {
+            setCompany(c);
+            setForm({
+              name: c.name, email: c.email, phoneNumber: c.phoneNumber, address: c.address,
+              pollsEnabled: c.companyConfig?.pollsEnabled || false,
+              productsEnabled: c.companyConfig?.productsEnabled || false,
+              chatEnabled: c.companyConfig?.chatEnabled || false,
+              trainingEnabled: c.companyConfig?.trainingEnabled || false,
+              maxActiveReservations: c.scheduleOptions?.maxActiveReservations || 3,
+              maxAdvanceBookingDays: c.scheduleOptions?.maxAdvanceBookingDays || 7,
+              sameDayBookingAllowed: c.scheduleOptions?.sameDayBookingAllowed ?? true,
+              fullOpenHours: c.scheduleOptions?.fullOpenHours || 24,
+              bookingCutoffMinutes: c.scheduleOptions?.bookingCutoffMinutes || 30,
+              minBookingsRequired: c.scheduleOptions?.minBookingsRequired || 1,
+            });
+          }
+        })
+        .catch(() => toast.error('Failed to load company'))
+        .finally(() => setLoading(false));
+    }
+  }, [params.id]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: UPDATE_COMPANY,
+        variables: {
+          companyId: params.id,
+          companyData: {
+            name: form.name, email: form.email, phoneNumber: form.phoneNumber, address: form.address,
+            companyConfig: { pollsEnabled: form.pollsEnabled, productsEnabled: form.productsEnabled, chatEnabled: form.chatEnabled, trainingEnabled: form.trainingEnabled },
+          },
+          scheduleOptions: {
+            maxActiveReservations: form.maxActiveReservations, maxAdvanceBookingDays: form.maxAdvanceBookingDays,
+            sameDayBookingAllowed: form.sameDayBookingAllowed, fullOpenHours: form.fullOpenHours,
+            bookingCutoffMinutes: form.bookingCutoffMinutes, minBookingsRequired: form.minBookingsRequired,
+          },
+        },
+      });
+      const result = (data as Record<string, unknown>)?.updateCompany as CompanyResponse;
+      if (result?.success) { toast.success('Company updated'); } else { toast.error(result?.message || 'Failed'); }
+    } catch { toast.error('Error updating company'); }
+    finally { setSaving(false); }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { data: urlData } = await apolloClient.query({
+        query: GET_PRESIGNED_URL,
+        variables: { key: `companies/${params.id}/logo-${file.name}`, command: 'putObject' },
+        fetchPolicy: 'network-only',
+      });
+      const urlResult = (urlData as Record<string, unknown>)?.getPresignedUrl as PresignedUrlResponse;
+      if (urlResult?.presignedUrl) {
+        await fetch(urlResult.presignedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+        await apolloClient.mutate({ mutation: UPDATE_COMPANY_LOGO, variables: { companyId: params.id, picture: urlResult.key } });
+        toast.success('Logo updated');
+      }
+    } catch { toast.error('Failed to upload logo'); }
+    finally { setUploading(false); }
+  };
+
+  if (loading) {
+    return <div className="space-y-6"><Skeleton className="h-8 w-48" /><Card><CardContent className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</CardContent></Card></div>;
+  }
+
+  return (
+    <div>
+      <PageHeader title="Edit Company" description={company?.name || ''} actions={<Button variant="outline" onClick={() => setLocation('/companies')}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>} />
+
+      <form onSubmit={handleSave}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Logo card */}
+          <Card className="border-0 shadow-sm lg:col-span-1">
+            <CardContent className="p-6 flex flex-col items-center gap-4">
+              <Avatar className="h-24 w-24 rounded-2xl">
+                <AvatarImage src={company?.logo?.url || ''} />
+                <AvatarFallback className="rounded-2xl text-2xl"><Building2 className="h-10 w-10" /></AvatarFallback>
+              </Avatar>
+              <Label htmlFor="logo-upload" className="cursor-pointer">
+                <div className="flex items-center gap-2 text-sm text-primary hover:underline">
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploading ? 'Uploading...' : 'Change Logo'}
+                </div>
+                <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+              </Label>
+            </CardContent>
+          </Card>
+
+          {/* Basic info */}
+          <Card className="border-0 shadow-sm lg:col-span-2">
+            <CardHeader><CardTitle className="text-base">Company Information</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Phone</Label><Input value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Company Config */}
+          <Card className="border-0 shadow-sm lg:col-span-1">
+            <CardHeader><CardTitle className="text-base">Features</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { key: 'pollsEnabled' as const, label: 'Polls', desc: 'Enable community polls' },
+                { key: 'productsEnabled' as const, label: 'Products', desc: 'Enable product catalog' },
+                { key: 'chatEnabled' as const, label: 'Chat', desc: 'Enable messaging' },
+                { key: 'trainingEnabled' as const, label: 'Training', desc: 'Enable training tasks' },
+              ].map((item) => (
+                <div key={item.key} className="flex items-center justify-between">
+                  <div><p className="text-sm font-medium">{item.label}</p><p className="text-xs text-muted-foreground">{item.desc}</p></div>
+                  <Switch checked={form[item.key]} onCheckedChange={(v) => setForm({ ...form, [item.key]: v })} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Schedule Options */}
+          <Card className="border-0 shadow-sm lg:col-span-2">
+            <CardHeader><CardTitle className="text-base">Schedule Options</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Max Active Reservations</Label><Input type="number" min="1" value={form.maxActiveReservations} onChange={(e) => setForm({ ...form, maxActiveReservations: parseInt(e.target.value) || 1 })} /></div>
+                <div className="space-y-2"><Label>Max Advance Booking Days</Label><Input type="number" min="1" value={form.maxAdvanceBookingDays} onChange={(e) => setForm({ ...form, maxAdvanceBookingDays: parseInt(e.target.value) || 1 })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>Booking Cutoff (minutes)</Label><Input type="number" min="0" value={form.bookingCutoffMinutes} onChange={(e) => setForm({ ...form, bookingCutoffMinutes: parseInt(e.target.value) || 0 })} /></div>
+                <div className="space-y-2"><Label>Min Bookings Required</Label><Input type="number" min="0" value={form.minBookingsRequired} onChange={(e) => setForm({ ...form, minBookingsRequired: parseInt(e.target.value) || 0 })} /></div>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div><p className="text-sm font-medium">Same Day Booking</p><p className="text-xs text-muted-foreground">Allow users to book on the same day</p></div>
+                <Switch checked={form.sameDayBookingAllowed} onCheckedChange={(v) => setForm({ ...form, sameDayBookingAllowed: v })} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex justify-end mt-6">
+          <Button type="submit" disabled={saving}>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
