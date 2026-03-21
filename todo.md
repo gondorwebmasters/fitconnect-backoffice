@@ -115,3 +115,14 @@
 
 ## Environment Configuration
 - [x] Add VITE_FITCONNECT_API_URL env variable for GraphQL endpoint
+
+## Auth Flow Improvements
+- [x] Harden Apollo Client token refresh with proper queue and retry
+- [x] Login form validation (required fields, email format, min password length)
+- [x] Login error messages (invalid credentials, network errors, account blocked)
+- [x] Forgot password modal/dialog integration
+- [x] Company selection session persistence and redirect logic
+- [x] Logout clears all state (tokens, cache, localStorage) and redirects
+- [x] Session restoration on page reload (auto-fetch ME if token exists)
+- [x] Auth guards on protected routes with proper loading states
+- [x] Comprehensive vitest tests for auth flow
