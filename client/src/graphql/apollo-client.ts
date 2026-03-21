@@ -11,7 +11,7 @@ import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { REFRESH_ACCESS_TOKEN } from './operations';
 
 const GRAPHQL_ENDPOINT =
-  import.meta.env.VITE_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
+  import.meta.env.VITE_FITCONNECT_API_URL || 'http://localhost:4000/graphql';
 
 // ===== Token helpers =====
 export const tokenStorage = {

@@ -112,3 +112,6 @@
 - [x] Vitest tests for core functionality
 - [x] TypeScript strict mode compliance
 - [ ] Form validation with react-hook-form + zod
+
+## Environment Configuration
+- [x] Add VITE_FITCONNECT_API_URL env variable for GraphQL endpoint
