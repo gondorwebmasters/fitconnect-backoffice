@@ -150,3 +150,8 @@
 ## Bug Fixes (Round 5)
 - [x] Boss company switcher: remove selectCompany mutation call, use only localStorage + resetStore
 - [x] Boss company switcher: visual data refresh after company change (resetStore triggers re-fetch)
+
+## Bug Fixes (Round 6)
+- [x] Schedules: fix status badge colors for dark mode (red on dark bg has poor contrast)
+- [x] PaymentMethods: fix card content misalignment
+- [x] PaymentMethods: make cards fully mobile-responsive (no overlapping elements)
