@@ -4,53 +4,38 @@ import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
-import { Loader2, Dumbbell, Eye, EyeOff, AlertCircle, Mail, CheckCircle2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertCircle, Mail, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// ===== Validation helpers =====
 function validateEmail(value: string): string | null {
-  if (!value.trim()) return 'Email or nickname is required';
+  if (!value.trim()) return 'El email o nickname es obligatorio';
   return null;
 }
-
 function validatePassword(value: string): string | null {
-  if (!value) return 'Password is required';
-  if (value.length < 4) return 'Password must be at least 4 characters';
+  if (!value) return 'La contraseña es obligatoria';
+  if (value.length < 4) return 'La contraseña debe tener al menos 4 caracteres';
   return null;
 }
-
 function validateForgotEmail(value: string): string | null {
-  if (!value.trim()) return 'Email is required';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address';
+  if (!value.trim()) return 'El email es obligatorio';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Introduce un email válido';
   return null;
 }
 
 export default function LoginPage() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { login, isAuthenticated, activeCompanyId, forgotPassword } = useFitConnectAuth();
 
-  // --- Redirect if already authenticated ---
   useEffect(() => {
     if (isAuthenticated) {
-      if (!activeCompanyId) {
-        setLocation('/select-company');
-      } else {
-        setLocation('/');
-      }
+      setLocation(!activeCompanyId ? '/select-company' : '/');
     }
   }, [isAuthenticated, activeCompanyId, setLocation]);
 
-  // --- Login form state ---
   const [emailOrNickname, setEmailOrNickname] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -58,290 +43,216 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
 
-  // --- Forgot password dialog state ---
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
-  // --- Login form validation & submit ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    // Validate fields
     const emailErr = validateEmail(emailOrNickname);
     const passErr = validatePassword(password);
     setFieldErrors({ email: emailErr || undefined, password: passErr || undefined });
-
     if (emailErr || passErr) return;
 
     setIsLoading(true);
-
     try {
       const result = await login(emailOrNickname, password);
-
       if (result?.success) {
-        toast.success('Login successful');
-        // If user has multiple companies and no active one, go to company selection
+        toast.success('Inicio de sesión exitoso');
         if (result.companies && result.companies.length > 1 && !result.user?.activeCompanyId) {
           setLocation('/select-company');
-        } else if (result.companies?.length === 1) {
-          // Auto-select if only one company
-          setLocation('/');
         } else {
           setLocation('/');
         }
       } else {
-        // Map backend error messages to user-friendly text
         const msg = result?.message || '';
         if (msg.toLowerCase().includes('blocked') || msg.toLowerCase().includes('bloqueado')) {
-          setError('Your account has been blocked. Please contact your administrator.');
+          setError('Tu cuenta ha sido bloqueada. Contacta con tu administrador.');
         } else if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('incorrect')) {
-          setError('Invalid email/nickname or password. Please check your credentials.');
+          setError('Email/nickname o contraseña incorrectos.');
         } else if (msg.toLowerCase().includes('not active') || msg.toLowerCase().includes('inactive')) {
-          setError('Your account is not active. Please verify your email first.');
+          setError('Tu cuenta no está activa. Verifica tu email primero.');
         } else {
-          setError(msg || 'Login failed. Please try again.');
+          setError(msg || 'Error al iniciar sesión. Inténtalo de nuevo.');
         }
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-          setError('Unable to connect to the server. Please check your connection and try again.');
-        } else {
-          setError(err.message);
-        }
+      if (err instanceof Error && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+        setError('No se puede conectar con el servidor. Comprueba tu conexión.');
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        setError('Ha ocurrido un error inesperado. Inténtalo de nuevo.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // --- Forgot password submit ---
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError(null);
-
     const emailErr = validateForgotEmail(forgotEmail);
-    if (emailErr) {
-      setForgotError(emailErr);
-      return;
-    }
-
+    if (emailErr) { setForgotError(emailErr); return; }
     setForgotLoading(true);
     try {
       await forgotPassword(forgotEmail);
       setForgotSuccess(true);
-    } catch {
-      setForgotError('Failed to send reset email. Please try again.');
-    } finally {
-      setForgotLoading(false);
-    }
+    } catch { setForgotError('Error al enviar el email. Inténtalo de nuevo.'); }
+    finally { setForgotLoading(false); }
   };
 
   const closeForgotDialog = () => {
-    setForgotOpen(false);
-    setForgotEmail('');
-    setForgotError(null);
-    setForgotSuccess(false);
+    setForgotOpen(false); setForgotEmail(''); setForgotError(null); setForgotSuccess(false);
   };
 
-  // --- Clear field errors on input change ---
   const handleEmailChange = (val: string) => {
     setEmailOrNickname(val);
-    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+    if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: undefined }));
     if (error) setError(null);
   };
-
   const handlePasswordChange = (val: string) => {
     setPassword(val);
-    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+    if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined }));
     if (error) setError(null);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo / Brand */}
+    <div className="min-h-screen flex items-center justify-center bg-[#0B1120] p-4">
+      <div className="w-full max-w-sm">
+        {/* FC Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/25">
-            <Dumbbell className="h-7 w-7 text-primary-foreground" />
+          <div className="h-16 w-16 rounded-2xl bg-[#F97316] flex items-center justify-center mb-5 shadow-lg shadow-orange-500/30">
+            <span className="text-white font-bold text-xl tracking-tight">FC</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">FitConnect</h1>
-          <p className="text-sm text-slate-500 mt-1">Backoffice Administration</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">FitConnect</h1>
+          <p className="text-sm text-slate-400 mt-1">Backoffice Admin Dashboard</p>
         </div>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl">Sign in</CardTitle>
-            <CardDescription>Enter your credentials to access the dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              {/* Global error alert */}
-              {error && (
-                <Alert variant="destructive" className="animate-in fade-in-0 slide-in-from-top-1">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+        {/* Login card */}
+        <div className="rounded-2xl border border-slate-700/60 bg-[#111827]/80 backdrop-blur-sm p-6">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {error && (
+              <Alert variant="destructive" className="bg-red-500/10 border-red-500/30 text-red-400 animate-in fade-in-0 slide-in-from-top-1">
+                <AlertCircle className="h-4 w-4 !text-red-400" />
+                <AlertDescription className="text-red-400">{error}</AlertDescription>
+              </Alert>
+            )}
 
-              {/* Email / Nickname field */}
-              <div className="space-y-2">
-                <Label htmlFor="emailOrNickname">Email or Nickname</Label>
+            <div className="space-y-2">
+              <Label htmlFor="emailOrNickname" className="text-slate-300 text-sm font-medium">Email</Label>
+              <Input
+                id="emailOrNickname"
+                type="text"
+                placeholder="juan@mail.com"
+                value={emailOrNickname}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                autoComplete="username"
+                disabled={isLoading}
+                className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/30 h-11 ${fieldErrors.email ? 'border-red-500 focus:ring-red-500/30' : ''}`}
+              />
+              {fieldErrors.email && <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-slate-300 text-sm font-medium">Contraseña</Label>
+                <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-orange-400 hover:text-orange-300 font-medium transition-colors" tabIndex={-1}>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+              <div className="relative">
                 <Input
-                  id="emailOrNickname"
-                  type="text"
-                  placeholder="you@example.com"
-                  value={emailOrNickname}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  autoComplete="username"
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••"
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  autoComplete="current-password"
                   disabled={isLoading}
-                  aria-invalid={!!fieldErrors.email}
-                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-                  className={fieldErrors.email ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/30 h-11 pr-10 ${fieldErrors.password ? 'border-red-500 focus:ring-red-500/30' : ''}`}
                 />
-                {fieldErrors.email && (
-                  <p id="email-error" className="text-xs text-destructive mt-1">
-                    {fieldErrors.email}
-                  </p>
-                )}
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors" tabIndex={-1}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
+              {fieldErrors.password && <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>}
+            </div>
 
-              {/* Password field */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <button
-                    type="button"
-                    onClick={() => setForgotOpen(true)}
-                    className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-                    tabIndex={-1}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => handlePasswordChange(e.target.value)}
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    aria-invalid={!!fieldErrors.password}
-                    aria-describedby={fieldErrors.password ? 'password-error' : undefined}
-                    className={`pr-10 ${fieldErrors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {fieldErrors.password && (
-                  <p id="password-error" className="text-xs text-destructive mt-1">
-                    {fieldErrors.password}
-                  </p>
-                )}
-              </div>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-orange-500/25 transition-all"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Iniciando sesión...</>
+              ) : (
+                'Iniciar Sesión'
+              )}
+            </Button>
+          </form>
 
-              {/* Submit button */}
-              <Button type="submit" className="w-full" disabled={isLoading} size="lg">
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+          <p className="text-center text-xs text-slate-500 mt-5">
+            Usa tus credenciales de FitConnect para acceder al backoffice
+          </p>
+        </div>
 
-        <p className="text-center text-xs text-slate-400 mt-6">
-          FitConnect Backoffice &copy; {new Date().getFullYear()}
+        <p className="text-center text-xs text-slate-600 mt-6">
+          &copy; {new Date().getFullYear()} FitConnect. Todos los derechos reservados.
         </p>
       </div>
 
-      {/* ===== Forgot Password Dialog ===== */}
+      {/* Forgot Password Dialog */}
       <Dialog open={forgotOpen} onOpenChange={(open) => !open && closeForgotDialog()}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#111827] border-slate-700/60 text-white">
           {forgotSuccess ? (
             <>
               <DialogHeader>
-                <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-2">
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <div className="mx-auto h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                  <CheckCircle2 className="h-6 w-6 text-green-400" />
                 </div>
-                <DialogTitle className="text-center">Check your email</DialogTitle>
-                <DialogDescription className="text-center">
-                  We&apos;ve sent a password reset link to <strong>{forgotEmail}</strong>.
-                  Please check your inbox and follow the instructions.
+                <DialogTitle className="text-center text-white">Email enviado</DialogTitle>
+                <DialogDescription className="text-center text-slate-400">
+                  Hemos enviado un enlace de recuperación a <strong className="text-slate-300">{forgotEmail}</strong>. Revisa tu bandeja de entrada.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button onClick={closeForgotDialog} className="w-full">
-                  Back to login
-                </Button>
+                <Button onClick={closeForgotDialog} className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white">Volver al login</Button>
               </DialogFooter>
             </>
           ) : (
             <>
               <DialogHeader>
-                <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                  <Mail className="h-6 w-6 text-primary" />
+                <div className="mx-auto h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-2">
+                  <Mail className="h-6 w-6 text-orange-400" />
                 </div>
-                <DialogTitle className="text-center">Reset your password</DialogTitle>
-                <DialogDescription className="text-center">
-                  Enter your email address and we&apos;ll send you a link to reset your password.
+                <DialogTitle className="text-center text-white">Recuperar contraseña</DialogTitle>
+                <DialogDescription className="text-center text-slate-400">
+                  Introduce tu email y te enviaremos un enlace para restablecer tu contraseña.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 {forgotError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{forgotError}</AlertDescription>
+                  <Alert variant="destructive" className="bg-red-500/10 border-red-500/30">
+                    <AlertCircle className="h-4 w-4 !text-red-400" />
+                    <AlertDescription className="text-red-400">{forgotError}</AlertDescription>
                   </Alert>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="forgot-email">Email address</Label>
+                  <Label htmlFor="forgot-email" className="text-slate-300">Email</Label>
                   <Input
-                    id="forgot-email"
-                    type="email"
-                    placeholder="you@example.com"
+                    id="forgot-email" type="email" placeholder="tu@email.com"
                     value={forgotEmail}
-                    onChange={(e) => {
-                      setForgotEmail(e.target.value);
-                      if (forgotError) setForgotError(null);
-                    }}
+                    onChange={(e) => { setForgotEmail(e.target.value); if (forgotError) setForgotError(null); }}
                     disabled={forgotLoading}
-                    autoComplete="email"
+                    className="bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500"
                   />
                 </div>
                 <DialogFooter className="gap-2 sm:gap-0">
-                  <Button type="button" variant="outline" onClick={closeForgotDialog} disabled={forgotLoading}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={forgotLoading}>
-                    {forgotLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send reset link'
-                    )}
+                  <Button type="button" variant="outline" onClick={closeForgotDialog} disabled={forgotLoading} className="border-slate-600 text-slate-300 hover:bg-slate-700">Cancelar</Button>
+                  <Button type="submit" disabled={forgotLoading} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
+                    {forgotLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</> : 'Enviar enlace'}
                   </Button>
                 </DialogFooter>
               </form>

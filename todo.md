@@ -126,3 +126,13 @@
 - [x] Session restoration on page reload (auto-fetch ME if token exists)
 - [x] Auth guards on protected routes with proper loading states
 - [x] Comprehensive vitest tests for auth flow
+
+## UI/UX Improvements (Round 2)
+- [x] Redesign Login page to match dark theme screenshot (dark bg, orange button, FC branding)
+- [x] Implement dark/light mode toggle across the app
+- [x] Enhance Dashboard with Recharts charts and visual stats elements
+- [x] Create Company Settings/Configuration page
+- [x] Fix boss role multi-tenant company switcher in header (x-company-id header)
+- [x] Fix company switching redirect bug (redirects to dashboard instead of staying)
+- [x] Fix Schedule time format (hours not recognized)
+- [x] Use orange (#F97316) as primary accent color matching the screenshot
