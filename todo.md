@@ -142,3 +142,7 @@
 - [x] Fix schedule time NaN: correct parsing of time strings from backend date fields
 - [x] Boss sidebar company switcher: collapsible dropdown in left sidebar to switch active company
 - [x] Boss company switch updates x-company-id header for all subsequent requests
+
+## Bug Fixes (Round 4)
+- [x] Boss company switcher: load ALL companies via GET_COMPANIES (not just user's companies)
+- [x] Boss company switcher: selecting a company updates x-company-id header and refetches all data

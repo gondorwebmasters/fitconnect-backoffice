@@ -20,8 +20,11 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { UserRoleEnum } from "@/graphql/types";
+import type { Company } from "@/graphql/types";
 import { UserProfileDialog } from "./UserProfileDialog";
 import { toast } from "sonner";
+import { apolloClient } from "@/graphql/apollo-client";
+import { GET_COMPANIES } from "@/graphql/operations";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -79,14 +82,47 @@ function DashboardLayoutContent({
   const [switchingCompany, setSwitchingCompany] = useState<string | null>(null);
   const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
 
   const activeMenuItem = menuItems.find((item) => {
     if (item.path === "/") return location === "/";
     return location.startsWith(item.path);
   });
 
-  const activeCompany = companies.find((c) => c.id === activeCompanyId);
   const isBoss = user?.contextRole === UserRoleEnum.BOSS;
+
+  // For boss: load ALL companies from the system (not just user's companies)
+  useEffect(() => {
+    if (!isBoss) return;
+    setLoadingCompanies(true);
+    apolloClient
+      .query({
+        query: GET_COMPANIES,
+        variables: {},
+        fetchPolicy: 'network-only',
+      })
+      .then(({ data }) => {
+        const result = (data as Record<string, unknown>)?.getCompanies as
+          | { success?: boolean; companies?: Company[]; company?: Company }
+          | undefined;
+        if (result?.companies && result.companies.length > 0) {
+          setAllCompanies(result.companies);
+        } else if (result?.company) {
+          setAllCompanies([result.company]);
+        }
+      })
+      .catch(() => {
+        // Fallback to user's own companies if the query fails
+        setAllCompanies(companies);
+      })
+      .finally(() => setLoadingCompanies(false));
+  }, [isBoss]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The list to render in the switcher: all companies for boss, user's companies otherwise
+  const switcherCompanies = isBoss && allCompanies.length > 0 ? allCompanies : companies;
+  const activeCompany = switcherCompanies.find((c) => c.id === activeCompanyId)
+    ?? companies.find((c) => c.id === activeCompanyId);
 
   useEffect(() => {
     if (isCollapsed) {
@@ -185,7 +221,14 @@ function DashboardLayoutContent({
                 {/* Collapsible company list */}
                 {companySwitcherOpen && (
                   <div className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
-                    {companies.map((company) => {
+                    {loadingCompanies ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#F97316]" />
+                        <span className="ml-2 text-xs text-muted-foreground">Cargando empresas...</span>
+                      </div>
+                    ) : switcherCompanies.length === 0 ? (
+                      <p className="text-xs text-muted-foreground px-3 py-2">No hay empresas disponibles</p>
+                    ) : switcherCompanies.map((company) => {
                       const isActive = company.id === activeCompanyId;
                       const isSwitching = switchingCompany === company.id;
                       return (
@@ -237,7 +280,11 @@ function DashboardLayoutContent({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start" className="w-52">
                     <DropdownMenuLabel className="text-xs text-muted-foreground">Cambiar empresa</DropdownMenuLabel>
-                    {companies.map((company) => (
+                    {loadingCompanies ? (
+                      <DropdownMenuItem disabled>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando...
+                      </DropdownMenuItem>
+                    ) : switcherCompanies.map((company) => (
                       <DropdownMenuItem
                         key={company.id}
                         onClick={() => handleSwitchCompany(company.id)}
