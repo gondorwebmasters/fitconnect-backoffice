@@ -136,3 +136,9 @@
 - [x] Fix company switching redirect bug (redirects to dashboard instead of staying)
 - [x] Fix Schedule time format (hours not recognized)
 - [x] Use orange (#F97316) as primary accent color matching the screenshot
+
+## Bug Fixes & Improvements (Round 3)
+- [x] Fix user profile menu: show editable profile (name, email, picture) not just logout/settings
+- [x] Fix schedule time NaN: correct parsing of time strings from backend date fields
+- [x] Boss sidebar company switcher: collapsible dropdown in left sidebar to switch active company
+- [x] Boss company switch updates x-company-id header for all subsequent requests

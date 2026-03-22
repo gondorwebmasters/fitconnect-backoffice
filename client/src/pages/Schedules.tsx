@@ -33,11 +33,34 @@ const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   competition: 'Competencia',
 };
 
-// Helper to format time from HH:mm string
-const formatTimeDisplay = (timeStr: string): string => {
-  if (!timeStr) return '—';
-  // timeStr is expected to be HH:mm format
-  return timeStr;
+// Robustly parse any date value (ISO string, numeric timestamp, Date object) to a JS Date
+const parseDate = (value: unknown): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') return new Date(value);
+  if (typeof value === 'string') {
+    // Try direct parse first
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d;
+    // Try numeric string (epoch ms)
+    const n = Number(value);
+    if (!isNaN(n)) return new Date(n);
+  }
+  return null;
+};
+
+// Format a date value to HH:mm local time
+const formatTimeDisplay = (value: unknown): string => {
+  const d = parseDate(value);
+  if (!d) return '—';
+  return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+// Format a date value to a full locale string
+const formatDateDisplay = (value: unknown): string => {
+  const d = parseDate(value);
+  if (!d) return '—';
+  return d.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 export default function SchedulesPage() {
@@ -203,7 +226,7 @@ export default function SchedulesPage() {
                         <span className="text-xs font-medium text-muted-foreground">{day}</span>
                         <div className="space-y-0.5 mt-0.5">
                           {(schedulesByDay[day] || []).slice(0, 3).map((s) => {
-                            const startTime = formatTimeDisplay(s.startDate.split('T')[1]?.substring(0, 5) || '');
+                            const startTime = formatTimeDisplay(s.startDate);
                             return (
                               <button key={s.id} onClick={() => setDetailSchedule(s)} className="block w-full text-left">
                                 <div className={`text-[10px] leading-tight px-1 py-0.5 rounded truncate font-medium ${s.state === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' : s.state === 'full' ? 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
@@ -230,16 +253,16 @@ export default function SchedulesPage() {
             <Card className="border-border/50"><CardContent className="p-8 text-center text-muted-foreground">No hay horarios próximos.</CardContent></Card>
           ) : (
             schedules.map((s) => {
-              const startTime = formatTimeDisplay(s.startDate.split('T')[1]?.substring(0, 5) || '');
-              const endTime = formatTimeDisplay(s.endDate.split('T')[1]?.substring(0, 5) || '');
+              const startTime = formatTimeDisplay(s.startDate);
+              const endTime = formatTimeDisplay(s.endDate);
               return (
                 <Card key={s.id} className="border-border/50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setDetailSchedule(s)}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-center min-w-[50px]">
-                          <p className="text-xs text-muted-foreground">{new Date(s.startDate).toLocaleDateString('es-ES', { weekday: 'short' })}</p>
-                          <p className="text-lg font-bold">{new Date(s.startDate).getDate()}</p>
+                          <p className="text-xs text-muted-foreground">{parseDate(s.startDate)?.toLocaleDateString('es-ES', { weekday: 'short' }) ?? '—'}</p>
+                          <p className="text-lg font-bold">{parseDate(s.startDate)?.getDate() ?? '—'}</p>
                         </div>
                         <div>
                           <p className="font-medium text-sm">{s.title}</p>
@@ -272,8 +295,8 @@ export default function SchedulesPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div><span className="text-muted-foreground">Tipo:</span> <Badge variant="outline">{SCHEDULE_TYPE_LABELS[detailSchedule.type] || detailSchedule.type}</Badge></div>
                 <div><span className="text-muted-foreground">Estado:</span> <StatusBadge status={detailSchedule.state} /></div>
-                <div><span className="text-muted-foreground">Inicio:</span> {new Date(detailSchedule.startDate).toLocaleString('es-ES')}</div>
-                <div><span className="text-muted-foreground">Fin:</span> {new Date(detailSchedule.endDate).toLocaleString('es-ES')}</div>
+                <div><span className="text-muted-foreground">Inicio:</span> {formatDateDisplay(detailSchedule.startDate)}</div>
+                <div><span className="text-muted-foreground">Fin:</span> {formatDateDisplay(detailSchedule.endDate)}</div>
                 <div><span className="text-muted-foreground">Capacidad:</span> {detailSchedule.users?.length || 0}/{detailSchedule.maxUsers}</div>
                 <div><span className="text-muted-foreground">Entrenador:</span> {detailSchedule.admin?.nickname || '—'}</div>
               </div>

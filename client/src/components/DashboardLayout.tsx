@@ -14,12 +14,13 @@ import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, Users, Package, Building2, Calendar, Crown,
   CreditCard, Receipt, Bell, LogOut, PanelLeft, Settings,
-  Sun, Moon, ChevronDown, Check, RefreshCw,
+  Sun, Moon, ChevronDown, Check, Loader2, UserCircle,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 import { UserRoleEnum } from "@/graphql/types";
+import { UserProfileDialog } from "./UserProfileDialog";
 import { toast } from "sonner";
 
 const menuItems = [
@@ -29,7 +30,7 @@ const menuItems = [
   { icon: Building2, label: "Empresas", path: "/companies" },
   { icon: Calendar, label: "Horarios", path: "/schedules" },
   { icon: Crown, label: "Planes", path: "/plans" },
-  { icon: RefreshCw, label: "Suscripciones", path: "/subscriptions" },
+  { icon: CreditCard, label: "Suscripciones", path: "/subscriptions" },
   { icon: Receipt, label: "Transacciones", path: "/transactions" },
   { icon: CreditCard, label: "Métodos de Pago", path: "/payment-methods" },
   { icon: Bell, label: "Notificaciones", path: "/notifications" },
@@ -76,6 +77,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [switchingCompany, setSwitchingCompany] = useState<string | null>(null);
+  const [companySwitcherOpen, setCompanySwitcherOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const activeMenuItem = menuItems.find((item) => {
     if (item.path === "/") return location === "/";
@@ -86,9 +89,13 @@ function DashboardLayoutContent({
   const isBoss = user?.contextRole === UserRoleEnum.BOSS;
 
   useEffect(() => {
-    if (isCollapsed) setIsResizing(false);
+    if (isCollapsed) {
+      setIsResizing(false);
+      setCompanySwitcherOpen(false);
+    }
   }, [isCollapsed]);
 
+  // Resize drag logic
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
@@ -117,7 +124,6 @@ function DashboardLayoutContent({
     try {
       await selectCompany(companyId);
       toast.success('Empresa cambiada correctamente');
-      // Stay on current page — the data will refetch with new x-company-id
     } catch {
       toast.error('Error al cambiar de empresa');
     } finally {
@@ -129,6 +135,7 @@ function DashboardLayoutContent({
     <>
       <div className="relative" ref={sidebarRef}>
         <Sidebar collapsible="icon" className="border-r-0" disableTransition={isResizing}>
+          {/* Header */}
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
@@ -150,18 +157,85 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            {/* Boss company switcher */}
-            {isBoss && companies.length > 1 && !isCollapsed && (
-              <div className="px-3 py-2">
+            {/* ===== BOSS COMPANY SWITCHER in sidebar ===== */}
+            {isBoss && !isCollapsed && (
+              <div className="px-3 py-2 border-b border-border/30">
+                <button
+                  onClick={() => setCompanySwitcherOpen((o) => !o)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-accent/20 hover:bg-accent/50 transition-colors text-left"
+                >
+                  <div className="h-6 w-6 rounded overflow-hidden shrink-0 flex items-center justify-center bg-muted">
+                    {activeCompany?.logo?.url ? (
+                      <img src={activeCompany.logo.url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Building2 className="h-3.5 w-3.5 text-[#F97316]" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate text-foreground">
+                      {activeCompany?.name || 'Sin empresa'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">Empresa activa</p>
+                  </div>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${companySwitcherOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {/* Collapsible company list */}
+                {companySwitcherOpen && (
+                  <div className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
+                    {companies.map((company) => {
+                      const isActive = company.id === activeCompanyId;
+                      const isSwitching = switchingCompany === company.id;
+                      return (
+                        <button
+                          key={company.id}
+                          onClick={() => handleSwitchCompany(company.id)}
+                          disabled={switchingCompany !== null}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors text-sm
+                            ${isActive
+                              ? 'bg-[#F97316]/10 text-[#F97316]'
+                              : 'hover:bg-accent/50 text-foreground'
+                            }
+                            ${switchingCompany !== null && !isSwitching ? 'opacity-50' : ''}
+                          `}
+                        >
+                          <div className="h-5 w-5 rounded overflow-hidden shrink-0 flex items-center justify-center bg-muted">
+                            {company.logo?.url ? (
+                              <img src={company.logo.url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <Building2 className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </div>
+                          <span className="flex-1 truncate text-xs font-medium">{company.name}</span>
+                          {isSwitching
+                            ? <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                            : isActive
+                              ? <Check className="h-3 w-3 shrink-0" />
+                              : null
+                          }
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ===== BOSS COMPANY SWITCHER collapsed icon ===== */}
+            {isBoss && isCollapsed && (
+              <div className="px-2 py-2 border-b border-border/30">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-accent/30 hover:bg-accent/60 transition-colors text-left">
-                      <Building2 className="h-4 w-4 text-[#F97316] shrink-0" />
-                      <span className="text-xs font-medium truncate flex-1">{activeCompany?.name || 'Seleccionar empresa'}</span>
-                      <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <button
+                      className="w-full flex items-center justify-center h-9 w-9 rounded-lg hover:bg-accent/50 transition-colors mx-auto"
+                      title={`Empresa: ${activeCompany?.name || 'Sin empresa'}`}
+                    >
+                      <Building2 className="h-4 w-4 text-[#F97316]" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
+                  <DropdownMenuContent side="right" align="start" className="w-52">
                     <DropdownMenuLabel className="text-xs text-muted-foreground">Cambiar empresa</DropdownMenuLabel>
                     {companies.map((company) => (
                       <DropdownMenuItem
@@ -171,11 +245,10 @@ function DashboardLayoutContent({
                         className="cursor-pointer"
                       >
                         <div className="flex items-center gap-2 w-full">
-                          {company.logo?.url ? (
-                            <img src={company.logo.url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
-                          ) : (
-                            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                          )}
+                          {company.logo?.url
+                            ? <img src={company.logo.url} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
+                            : <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                          }
                           <span className="truncate flex-1 text-sm">{company.name}</span>
                           {company.id === activeCompanyId && <Check className="h-4 w-4 text-[#F97316] shrink-0" />}
                         </div>
@@ -186,6 +259,7 @@ function DashboardLayoutContent({
               </div>
             )}
 
+            {/* ===== NAV ITEMS ===== */}
             <SidebarMenu className="px-2 py-1">
               {menuItems.map((item) => {
                 const isActive = item.path === "/" ? location === "/" : location.startsWith(item.path);
@@ -206,6 +280,7 @@ function DashboardLayoutContent({
             </SidebarMenu>
           </SidebarContent>
 
+          {/* ===== FOOTER: theme toggle + user menu ===== */}
           <SidebarFooter className="p-3">
             {/* Theme toggle */}
             {!isCollapsed && toggleTheme && (
@@ -230,34 +305,51 @@ function DashboardLayoutContent({
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none">
+                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left focus:outline-none">
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarImage src={user?.pictureUrl?.url || ""} />
                     <AvatarFallback className="text-xs font-medium bg-[#F97316]/10 text-[#F97316]">
                       {(user?.name?.[0] || user?.nickname?.[0] || "?").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.nickname || "—"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">{user?.email || "—"}</p>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate leading-none">
+                        {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.nickname || "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate mt-1">{user?.email || "—"}</p>
+                    </div>
+                  )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {isBoss && companies.length > 1 && (
-                  <>
-                    <DropdownMenuItem onClick={() => setLocation("/select-company")} className="cursor-pointer">
-                      <Building2 className="mr-2 h-4 w-4" /> Cambiar Empresa
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
+              <DropdownMenuContent align="end" side="top" className="w-52">
+                {/* Profile info header */}
+                <div className="px-2 py-2 border-b border-border/50">
+                  <p className="text-sm font-medium truncate">
+                    {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.nickname || "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email || "—"}</p>
+                  <span className="inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F97316]/10 text-[#F97316] capitalize">
+                    {user?.contextRole || 'user'}
+                  </span>
+                </div>
+
+                {/* Edit profile */}
+                <DropdownMenuItem
+                  onClick={() => setProfileDialogOpen(true)}
+                  className="cursor-pointer mt-1"
+                >
+                  <UserCircle className="mr-2 h-4 w-4" /> Mi Perfil
+                </DropdownMenuItem>
+
+                {/* Settings */}
                 <DropdownMenuItem onClick={() => setLocation("/settings")} className="cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" /> Configuración
                 </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
+                {/* Logout */}
                 <DropdownMenuItem
                   onClick={() => { logout(); setLocation("/login"); }}
                   className="cursor-pointer text-destructive focus:text-destructive"
@@ -268,6 +360,8 @@ function DashboardLayoutContent({
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
+
+        {/* Resize handle */}
         <div
           className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
           onMouseDown={() => { if (!isCollapsed) setIsResizing(true); }}
@@ -275,6 +369,7 @@ function DashboardLayoutContent({
         />
       </div>
 
+      {/* Main content */}
       <SidebarInset>
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur sticky top-0 z-40">
@@ -291,6 +386,9 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
+
+      {/* Profile edit dialog */}
+      <UserProfileDialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen} />
     </>
   );
 }
