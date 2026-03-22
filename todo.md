@@ -161,3 +161,6 @@
 - [x] Add next payment date column to users table
 - [x] Add send push notification action (envelope icon) per row with modal
 - [x] Orange border on user avatar circle
+
+## Quick Fixes
+- [x] Remove orange ring border from user avatar circles in Users table
