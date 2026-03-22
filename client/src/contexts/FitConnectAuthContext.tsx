@@ -16,7 +16,14 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (emailOrNickname: string, password: string) => Promise<LoginResponse>;
   logout: () => void;
+  /** For regular users: calls SELECT_COMPANY mutation to set the user's active company on the backend */
   selectCompany: (companyId: string) => Promise<void>;
+  /**
+   * For boss role ONLY: switches the active company context WITHOUT calling any backend mutation.
+   * Just updates localStorage (fc_active_company) and resets the Apollo cache so all
+   * queries re-run with the new x-company-id header.
+   */
+  switchCompanyContext: (companyId: string, companyName?: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
   refreshUser: () => Promise<void>;
 }
@@ -194,6 +201,28 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
     }
   }, []);
 
+  // ===== switchCompanyContext: boss-only, no backend mutation =====
+  const switchCompanyContext = useCallback(async (companyId: string, companyName?: string) => {
+    // 1. Persist the new active company in localStorage so the Apollo auth link
+    //    picks it up and sends it as x-company-id on every subsequent request.
+    localStorage.setItem('fc_active_company', companyId);
+
+    // 2. Update React state so the UI reflects the new active company immediately.
+    setAuthState((prev) => ({
+      ...prev,
+      activeCompanyId: companyId,
+    }));
+
+    // 3. Reset the Apollo cache — this forces every active useQuery / watchQuery
+    //    to re-execute against the backend with the new x-company-id header,
+    //    so products, users, schedules, etc. all refresh for the new company.
+    try {
+      await apolloClient.resetStore();
+    } catch {
+      // resetStore can throw if a query fails; safe to ignore here
+    }
+  }, []);
+
   // ===== Forgot password =====
   const forgotPassword = useCallback(async (email: string): Promise<string> => {
     const { data } = await apolloClient.mutate({
@@ -215,6 +244,7 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
         login,
         logout,
         selectCompany,
+        switchCompanyContext,
         forgotPassword,
         refreshUser,
       }}

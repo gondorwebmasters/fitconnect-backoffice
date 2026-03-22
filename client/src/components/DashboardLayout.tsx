@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function DashboardLayoutContent({
   children, setSidebarWidth,
 }: { children: React.ReactNode; setSidebarWidth: (w: number) => void }) {
-  const { user, logout, activeCompanyId, companies, selectCompany } = useFitConnectAuth();
+  const { user, logout, activeCompanyId, companies, selectCompany, switchCompanyContext } = useFitConnectAuth();
   const { theme, toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const { state, toggleSidebar } = useSidebar();
@@ -154,12 +154,22 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
-  const handleSwitchCompany = async (companyId: string) => {
+  const handleSwitchCompany = async (companyId: string, companyName?: string) => {
     if (companyId === activeCompanyId) return;
     setSwitchingCompany(companyId);
     try {
-      await selectCompany(companyId);
-      toast.success('Empresa cambiada correctamente');
+      if (isBoss) {
+        // Boss: only change the x-company-id header context — NO backend mutation.
+        // switchCompanyContext updates localStorage and calls apolloClient.resetStore()
+        // so every active query re-runs with the new company header.
+        await switchCompanyContext(companyId, companyName);
+      } else {
+        // Regular admin/user: call SELECT_COMPANY mutation to set the active company
+        // on the backend for this user's profile.
+        await selectCompany(companyId);
+      }
+      toast.success(`Empresa cambiada${companyName ? ` a ${companyName}` : ''} correctamente`);
+      setCompanySwitcherOpen(false);
     } catch {
       toast.error('Error al cambiar de empresa');
     } finally {
@@ -234,7 +244,7 @@ function DashboardLayoutContent({
                       return (
                         <button
                           key={company.id}
-                          onClick={() => handleSwitchCompany(company.id)}
+                          onClick={() => handleSwitchCompany(company.id, company.name)}
                           disabled={switchingCompany !== null}
                           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors text-sm
                             ${isActive
@@ -287,7 +297,7 @@ function DashboardLayoutContent({
                     ) : switcherCompanies.map((company) => (
                       <DropdownMenuItem
                         key={company.id}
-                        onClick={() => handleSwitchCompany(company.id)}
+                        onClick={() => handleSwitchCompany(company.id, company.name)}
                         disabled={switchingCompany !== null}
                         className="cursor-pointer"
                       >

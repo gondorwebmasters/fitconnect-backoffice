@@ -146,3 +146,7 @@
 ## Bug Fixes (Round 4)
 - [x] Boss company switcher: load ALL companies via GET_COMPANIES (not just user's companies)
 - [x] Boss company switcher: selecting a company updates x-company-id header and refetches all data
+
+## Bug Fixes (Round 5)
+- [x] Boss company switcher: remove selectCompany mutation call, use only localStorage + resetStore
+- [x] Boss company switcher: visual data refresh after company change (resetStore triggers re-fetch)
