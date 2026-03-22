@@ -14,7 +14,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import {
   LayoutDashboard, Users, Package, Building2, Calendar, Crown,
   CreditCard, Receipt, Bell, LogOut, PanelLeft, Settings,
-  Sun, Moon, ChevronDown, Check, Loader2, UserCircle,
+  Sun, Moon, ChevronDown, Check, Loader2, UserCircle, Vote,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -37,6 +37,7 @@ const menuItems = [
   { icon: Receipt, label: "Transacciones", path: "/transactions" },
   { icon: CreditCard, label: "Métodos de Pago", path: "/payment-methods" },
   { icon: Bell, label: "Notificaciones", path: "/notifications" },
+  { icon: Vote, label: "Encuestas", path: "/polls" },
   { icon: Settings, label: "Configuración", path: "/settings" },
 ];
 

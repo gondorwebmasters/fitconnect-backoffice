@@ -164,3 +164,12 @@
 
 ## Quick Fixes
 - [x] Remove orange ring border from user avatar circles in Users table
+
+## Polls Management Page
+- [x] Read backend poll resolver, schema types, inputs, and services
+- [x] Map all poll GraphQL operations and types
+- [x] Build Polls list page with status badges and search
+- [x] Build Create/Edit Poll dialog with options management
+- [x] Build Poll Results view with vote counts and percentages
+- [x] Add vote management (view who voted, remove votes)
+- [x] Register Polls route in App.tsx and sidebar navigation

@@ -573,6 +573,13 @@ export interface CreatePollInput {
   options: string[];
   endDate: string;
 }
+export interface CreatePollVoteInput {
+  pollId: string;
+  option: number;
+}
+export interface PollFilter {
+  since: string;
+}
 
 export interface CreateMessageInput {
   text: string;

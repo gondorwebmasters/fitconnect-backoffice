@@ -24,6 +24,7 @@ import SubscriptionsPage from "./pages/Subscriptions";
 import TransactionsPage from "./pages/Transactions";
 import PaymentMethodsPage from "./pages/PaymentMethods";
 import NotificationsPage from "./pages/Notifications";
+import PollsPage from "./pages/Polls";
 import CompanySettingsPage from "./pages/CompanySettings";
 import NotFound from "./pages/NotFound";
 
@@ -98,6 +99,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         <ProtectedDashboard><NotificationsPage /></ProtectedDashboard>
+      </Route>
+      <Route path="/polls">
+        <ProtectedDashboard><PollsPage /></ProtectedDashboard>
       </Route>
       <Route path="/settings">
         <ProtectedDashboard><CompanySettingsPage /></ProtectedDashboard>

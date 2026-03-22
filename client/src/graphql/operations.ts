@@ -1019,6 +1019,24 @@ export const REMOVE_POLLS = gql`
   }
 `;
 
+export const CREATE_OR_CHANGE_POLL_VOTE = gql`
+  mutation CreateOrChangePollVote($vote: CreatePollVoteInput!) {
+    createOrChangePollVote(vote: $vote) {
+      code success message
+      poll { ...PollFields }
+    }
+  }
+  ${POLL_FIELDS}
+`;
+
+export const DELETE_POLL_VOTE = gql`
+  mutation DeletePollVote($pollId: ID!) {
+    deletePollVote(pollId: $pollId) {
+      code success message
+    }
+  }
+`;
+
 // ============================================================
 // MESSAGE QUERIES & MUTATIONS
 // ============================================================
