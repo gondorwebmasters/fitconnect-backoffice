@@ -1,36 +1,128 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { apolloClient } from '@/graphql/apollo-client';
-import { GET_USERS, UPDATE_USER } from '@/graphql/operations';
-import type { User, UserResponse, UserRoleEnum } from '@/graphql/types';
+import {
+  GET_USERS,
+  UPDATE_USER,
+  GET_ACTIVE_SUBSCRIPTION,
+  SEND_NOTIFICATION,
+} from '@/graphql/operations';
+import type { User, UserResponse, Subscription } from '@/graphql/types';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, MoreHorizontal, Pencil, ShieldBan, ShieldCheck } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, MoreHorizontal, Pencil, ShieldBan, ShieldCheck, Mail, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function parseDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  if (typeof value === 'number') return new Date(value);
+  if (typeof value === 'string') {
+    // ISO string or numeric string
+    const n = Number(value);
+    if (!isNaN(n) && value.trim() !== '') return new Date(n);
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+function formatDate(value: unknown): string {
+  const d = parseDate(value);
+  if (!d) return '—';
+  try {
+    return format(d, 'dd MMM yyyy');
+  } catch {
+    return '—';
+  }
+}
+
+// ─── types ───────────────────────────────────────────────────────────────────
+
+interface UserWithSub extends User {
+  _sub?: Subscription | null;
+  _subLoading?: boolean;
+}
+
+interface NotifyState {
+  open: boolean;
+  user: User | null;
+  title: string;
+  body: string;
+  sending: boolean;
+}
+
+// ─── component ───────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
   const [, setLocation] = useLocation();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserWithSub[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [blockDialog, setBlockDialog] = useState<{ open: boolean; user: User | null; blocking: boolean }>({
-    open: false, user: null, blocking: false,
+  const [blockDialog, setBlockDialog] = useState<{
+    open: boolean;
+    user: User | null;
+    blocking: boolean;
+  }>({ open: false, user: null, blocking: false });
+  const [notifyState, setNotifyState] = useState<NotifyState>({
+    open: false,
+    user: null,
+    title: '',
+    body: '',
+    sending: false,
   });
 
-  const fetchUsers = async () => {
+  // ── fetch subscriptions for each user in parallel ──────────────────────────
+  const fetchSubscriptionForUser = useCallback(async (userId: string): Promise<Subscription | null> => {
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_ACTIVE_SUBSCRIPTION,
+        variables: { userId },
+        fetchPolicy: 'cache-first',
+      });
+      const result = (data as Record<string, unknown>)?.getActiveSubscription as {
+        success: boolean;
+        subscription?: Subscription | null;
+      };
+      return result?.subscription ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const variables: Record<string, unknown> = { query: search || undefined };
-      if (roleFilter !== 'all') {
-        variables.roleFilter = [roleFilter];
-      }
+      if (roleFilter !== 'all') variables.roleFilter = [roleFilter];
+
       const { data } = await apolloClient.query({
         query: GET_USERS,
         variables,
@@ -38,24 +130,39 @@ export default function UsersPage() {
       });
       const result = (data as Record<string, unknown>)?.getUsers as UserResponse;
       if (result?.success) {
-        setUsers(result.users || []);
+        const rawUsers: UserWithSub[] = (result.users || []).map((u) => ({
+          ...u,
+          _sub: undefined,
+          _subLoading: true,
+        }));
+        setUsers(rawUsers);
+
+        // Fetch subscriptions in parallel, update each user row as they resolve
+        rawUsers.forEach((u) => {
+          fetchSubscriptionForUser(u.id).then((sub) => {
+            setUsers((prev) =>
+              prev.map((pu) =>
+                pu.id === u.id ? { ...pu, _sub: sub, _subLoading: false } : pu
+              )
+            );
+          });
+        });
       }
     } catch {
-      toast.error('Failed to load users');
+      toast.error('Error al cargar usuarios');
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, roleFilter, fetchSubscriptionForUser]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [roleFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchUsers(); }, [roleFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timeout = setTimeout(() => { fetchUsers(); }, 400);
     return () => clearTimeout(timeout);
   }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── block / unblock ────────────────────────────────────────────────────────
   const handleToggleBlock = async () => {
     if (!blockDialog.user) return;
     setBlockDialog((prev) => ({ ...prev, blocking: true }));
@@ -72,31 +179,71 @@ export default function UsersPage() {
           },
         },
       });
-      toast.success(isBlocked ? 'User blocked' : 'User unblocked');
+      toast.success(isBlocked ? 'Usuario bloqueado' : 'Usuario desbloqueado');
       setBlockDialog({ open: false, user: null, blocking: false });
       fetchUsers();
     } catch {
-      toast.error('Failed to update user');
+      toast.error('Error al actualizar usuario');
       setBlockDialog((prev) => ({ ...prev, blocking: false }));
     }
   };
 
-  const columns: Column<User>[] = useMemo(
+  // ── send notification ──────────────────────────────────────────────────────
+  const openNotifyModal = (user: User) => {
+    const name = user.name ? `${user.name} ${user.surname ?? ''}`.trim() : user.nickname;
+    setNotifyState({
+      open: true,
+      user,
+      title: '⏰ Recordatorio de pago',
+      body: `Hola ${name}, tu suscripción está próxima a vencer. Por favor, realiza tu pago para continuar disfrutando de los beneficios.`,
+      sending: false,
+    });
+  };
+
+  const handleSendNotification = async () => {
+    if (!notifyState.title.trim() || !notifyState.body.trim()) {
+      toast.error('El título y el mensaje son obligatorios');
+      return;
+    }
+    setNotifyState((prev) => ({ ...prev, sending: true }));
+    try {
+      await apolloClient.mutate({
+        mutation: SEND_NOTIFICATION,
+        variables: {
+          notification: {
+            title: notifyState.title.trim(),
+            body: notifyState.body.trim(),
+            forAll: false,
+          },
+        },
+      });
+      toast.success('Notificación enviada correctamente');
+      setNotifyState({ open: false, user: null, title: '', body: '', sending: false });
+    } catch {
+      toast.error('Error al enviar la notificación');
+      setNotifyState((prev) => ({ ...prev, sending: false }));
+    }
+  };
+
+  // ── columns ────────────────────────────────────────────────────────────────
+  const columns: Column<UserWithSub>[] = useMemo(
     () => [
       {
         key: 'user',
-        header: 'User',
+        header: 'Usuario',
         render: (user) => (
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-9 w-9 ring-2 ring-[#F97316] ring-offset-1 ring-offset-background">
               <AvatarImage src={user.pictureUrl?.url || ''} />
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
                 {(user.name?.[0] || user.nickname[0] || '?').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="font-medium text-sm truncate">
-                {user.name && user.surname ? `${user.name} ${user.surname}` : user.nickname}
+                {user.name && user.surname
+                  ? `${user.name} ${user.surname}`
+                  : user.nickname}
               </p>
               <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
@@ -104,34 +251,71 @@ export default function UsersPage() {
         ),
       },
       {
-        key: 'nickname',
-        header: 'Nickname',
-        render: (user) => <span className="text-sm">{user.nickname}</span>,
-      },
-      {
         key: 'role',
-        header: 'Role',
+        header: 'Rol',
         render: (user) => <StatusBadge status={user.contextRole} />,
       },
       {
         key: 'status',
-        header: 'Status',
-        render: (user) => (
-          <div className="flex items-center gap-2">
-            {user.isBlocked ? (
-              <StatusBadge status="blocked" />
-            ) : user.isActive ? (
-              <StatusBadge status="active" />
-            ) : (
-              <StatusBadge status="inactive" />
-            )}
-          </div>
-        ),
+        header: 'Estado',
+        render: (user) =>
+          user.isBlocked ? (
+            <StatusBadge status="blocked" />
+          ) : user.isActive ? (
+            <StatusBadge status="active" />
+          ) : (
+            <StatusBadge status="inactive" />
+          ),
+      },
+      {
+        key: 'subscription',
+        header: 'Suscripción',
+        render: (user) => {
+          if (user._subLoading) {
+            return <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />;
+          }
+          if (!user._sub) {
+            return (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+                Sin suscripción
+              </span>
+            );
+          }
+          return <StatusBadge status={user._sub.status} />;
+        },
+      },
+      {
+        key: 'nextPayment',
+        header: 'Próximo pago',
+        render: (user) => {
+          if (user._subLoading) {
+            return <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />;
+          }
+          if (!user._sub?.endDate) {
+            return <span className="text-sm text-muted-foreground">—</span>;
+          }
+          const d = parseDate(user._sub.endDate);
+          const isOverdue = d && d < new Date();
+          return (
+            <span
+              className={`text-sm font-medium ${
+                isOverdue ? 'text-red-500 dark:text-red-400' : 'text-foreground'
+              }`}
+            >
+              {formatDate(user._sub.endDate)}
+              {isOverdue && (
+                <span className="ml-1 text-xs font-normal text-red-400">(vencido)</span>
+              )}
+            </span>
+          );
+        },
       },
       {
         key: 'phone',
-        header: 'Phone',
-        render: (user) => <span className="text-sm text-muted-foreground">{user.phoneNumber || '—'}</span>,
+        header: 'Teléfono',
+        render: (user) => (
+          <span className="text-sm text-muted-foreground">{user.phoneNumber || '—'}</span>
+        ),
       },
       {
         key: 'actions',
@@ -146,16 +330,28 @@ export default function UsersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setLocation(`/users/${user.id}`)}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openNotifyModal(user)}>
+                <Mail className="mr-2 h-4 w-4 text-[#F97316]" />
+                Enviar notificación
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setBlockDialog({ open: true, user, blocking: false })}
                 className={user.isBlocked ? 'text-emerald-600' : 'text-destructive'}
               >
                 {user.isBlocked ? (
-                  <><ShieldCheck className="mr-2 h-4 w-4" /> Unblock</>
+                  <>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Desbloquear
+                  </>
                 ) : (
-                  <><ShieldBan className="mr-2 h-4 w-4" /> Block</>
+                  <>
+                    <ShieldBan className="mr-2 h-4 w-4" />
+                    Bloquear
+                  </>
                 )}
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -163,17 +359,19 @@ export default function UsersPage() {
         ),
       },
     ],
-    [setLocation]
+    [setLocation] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div>
       <PageHeader
-        title="Users"
-        description="Manage platform users and their roles"
+        title="Usuarios"
+        description="Gestiona los usuarios de la plataforma y sus roles"
         actions={
           <Button onClick={() => setLocation('/users/new')}>
-            <Plus className="mr-2 h-4 w-4" /> Add User
+            <Plus className="mr-2 h-4 w-4" />
+            Añadir usuario
           </Button>
         }
       />
@@ -184,16 +382,16 @@ export default function UsersPage() {
         loading={loading}
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by name, email, or nickname..."
-        emptyMessage="No users found."
+        searchPlaceholder="Buscar por nombre, email o nickname..."
+        emptyMessage="No se encontraron usuarios."
         keyExtractor={(u) => u.id}
         actions={
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-40">
-              <SelectValue placeholder="All roles" />
+              <SelectValue placeholder="Todos los roles" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
+              <SelectItem value="all">Todos los roles</SelectItem>
               <SelectItem value="boss">Boss</SelectItem>
               <SelectItem value="coach">Coach</SelectItem>
               <SelectItem value="premium">Premium</SelectItem>
@@ -203,20 +401,110 @@ export default function UsersPage() {
         }
       />
 
+      {/* Block / Unblock dialog */}
       <ConfirmDialog
         open={blockDialog.open}
         onOpenChange={(open) => setBlockDialog((prev) => ({ ...prev, open }))}
-        title={blockDialog.user?.isBlocked ? 'Unblock User' : 'Block User'}
+        title={blockDialog.user?.isBlocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
         description={
           blockDialog.user?.isBlocked
-            ? `Are you sure you want to unblock ${blockDialog.user?.name || blockDialog.user?.nickname}?`
-            : `Are you sure you want to block ${blockDialog.user?.name || blockDialog.user?.nickname}? They will lose access to the platform.`
+            ? `¿Seguro que quieres desbloquear a ${blockDialog.user?.name || blockDialog.user?.nickname}?`
+            : `¿Seguro que quieres bloquear a ${blockDialog.user?.name || blockDialog.user?.nickname}? Perderá acceso a la plataforma.`
         }
-        confirmLabel={blockDialog.user?.isBlocked ? 'Unblock' : 'Block'}
+        confirmLabel={blockDialog.user?.isBlocked ? 'Desbloquear' : 'Bloquear'}
         onConfirm={handleToggleBlock}
         variant={blockDialog.user?.isBlocked ? 'default' : 'destructive'}
         loading={blockDialog.blocking}
       />
+
+      {/* Send notification dialog */}
+      <Dialog
+        open={notifyState.open}
+        onOpenChange={(open) => {
+          if (!notifyState.sending) {
+            setNotifyState((prev) => ({ ...prev, open }));
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-[#F97316]" />
+              Enviar notificación push
+            </DialogTitle>
+            <DialogDescription>
+              {notifyState.user && (
+                <>
+                  Enviando a{' '}
+                  <span className="font-semibold text-foreground">
+                    {notifyState.user.name
+                      ? `${notifyState.user.name} ${notifyState.user.surname ?? ''}`.trim()
+                      : notifyState.user.nickname}
+                  </span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="notif-title">Título</Label>
+              <Input
+                id="notif-title"
+                placeholder="Ej: Recordatorio de pago"
+                value={notifyState.title}
+                onChange={(e) =>
+                  setNotifyState((prev) => ({ ...prev, title: e.target.value }))
+                }
+                disabled={notifyState.sending}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="notif-body">Mensaje</Label>
+              <Textarea
+                id="notif-body"
+                placeholder="Escribe el mensaje de la notificación..."
+                rows={4}
+                value={notifyState.body}
+                onChange={(e) =>
+                  setNotifyState((prev) => ({ ...prev, body: e.target.value }))
+                }
+                disabled={notifyState.sending}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setNotifyState({ open: false, user: null, title: '', body: '', sending: false })
+              }
+              disabled={notifyState.sending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSendNotification}
+              disabled={notifyState.sending || !notifyState.title.trim() || !notifyState.body.trim()}
+              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white"
+            >
+              {notifyState.sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Enviar
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

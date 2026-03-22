@@ -155,3 +155,9 @@
 - [x] Schedules: fix status badge colors for dark mode (red on dark bg has poor contrast)
 - [x] PaymentMethods: fix card content misalignment
 - [x] PaymentMethods: make cards fully mobile-responsive (no overlapping elements)
+
+## Users Table Enhancements
+- [x] Add subscription status column to users table
+- [x] Add next payment date column to users table
+- [x] Add send push notification action (envelope icon) per row with modal
+- [x] Orange border on user avatar circle
