@@ -206,3 +206,6 @@
 ## Round 10 Fixes
 - [x] Fix Schedules stats chart: robust normalization handles array/object/string ratio values, debug logs added
 - [x] Fix sidebar company dropdown: absolute positioning with z-50 so it floats over nav items without scroll
+
+## Round 11 Fixes
+- [x] Fix Schedules stats chart: stats is array-of-arrays (nested), flatten it; ratio is 0-100 not 0-1; fix YAxis and tooltip scale

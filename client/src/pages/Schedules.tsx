@@ -157,31 +157,35 @@ export default function SchedulesPage() {
         variables: { month },
         fetchPolicy: 'network-only',
       });
+      // The API key is getSchedulesStats (with trailing s)
       const result = (data as Record<string, unknown>)?.getSchedulesStats as ScheduleStatsResponse;
-      console.log('[DEBUG] getSchedulesStats raw result:', JSON.stringify(result, null, 2));
       if (result?.success) {
-        let rawStats = result.stats;
-        // Normalize: could be an array, an object, or nested
+        const rawStats = result.stats;
         let items: ScheduleStatItem[] = [];
         if (Array.isArray(rawStats)) {
-          items = rawStats.map((s: unknown) => {
+          // stats may be an array-of-arrays (grouped by company/period) — flatten it
+          const flat: unknown[] = (rawStats as unknown[]).reduce((acc: unknown[], el) => {
+            if (Array.isArray(el)) return acc.concat(el);
+            acc.push(el);
+            return acc;
+          }, []);
+          items = flat.map((s: unknown) => {
             const item = s as Record<string, unknown>;
+            const rawRatio = item.ratio;
+            const ratioNum = typeof rawRatio === 'number' ? rawRatio
+              : typeof rawRatio === 'string' ? parseFloat(rawRatio) : 0;
             return {
               dayAndTime: String(item.dayAndTime ?? item.label ?? item.day ?? ''),
-              ratio: typeof item.ratio === 'number' ? item.ratio
-                : typeof item.ratio === 'string' ? parseFloat(item.ratio)
-                : typeof item.occupancyRatio === 'number' ? item.occupancyRatio as number
-                : 0,
+              // ratio comes as 0-100 percentage from the API
+              ratio: isNaN(ratioNum) ? 0 : ratioNum,
             };
           });
         } else if (rawStats && typeof rawStats === 'object') {
-          // Maybe it's a map of dayAndTime -> ratio
           items = Object.entries(rawStats as Record<string, unknown>).map(([key, val]) => ({
             dayAndTime: key,
             ratio: typeof val === 'number' ? val : parseFloat(String(val)) || 0,
           }));
         }
-        console.log('[DEBUG] normalized statsData:', items);
         setStatsData(items);
       }
     } catch { toast.error('Error al cargar estadísticas'); }
@@ -483,8 +487,8 @@ export default function SchedulesPage() {
                   <BarChart data={statsData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="dayAndTime" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} angle={-40} textAnchor="end" interval={0} />
-                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${Math.round(v * 100)}%`} domain={[0, 1]} />
-                    <Tooltip formatter={(value: number) => [`${Math.round(value * 100)}%`, 'Ocupación']} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${Math.round(v)}%`} domain={[0, 100]} />
+                    <Tooltip formatter={(value: number) => [`${Math.round(value)}%`, 'Ocupación']} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
                     <Bar dataKey="ratio" radius={[4, 4, 0, 0]}>
                       {statsData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill="var(--primary)" fillOpacity={0.85} />
@@ -496,7 +500,7 @@ export default function SchedulesPage() {
                   {statsData.map((item) => (
                     <div key={item.dayAndTime} className="bg-muted/50 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground truncate">{item.dayAndTime}</p>
-                      <p className="text-lg font-bold text-primary">{Math.round(item.ratio * 100)}%</p>
+                      <p className="text-lg font-bold text-primary">{Math.round(item.ratio)}%</p>
                     </div>
                   ))}
                 </div>
