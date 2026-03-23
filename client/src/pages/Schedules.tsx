@@ -3,9 +3,9 @@ import { apolloClient } from '@/graphql/apollo-client';
 import {
   GET_SCHEDULES_FROM_TODAY, CREATE_SCHEDULE, REMOVE_SCHEDULE,
   CHANGE_SCHEDULE_STATUS, ADD_USER_TO_SCHEDULE, REMOVE_USER_FROM_SCHEDULE,
-  GET_SCHEDULES_RANGE,
+  GET_SCHEDULES_RANGE, GET_TODAY_SCHEDULES_RESUME, GET_SCHEDULES_STATS,
 } from '@/graphql/operations';
-import type { Schedule, ScheduleResponse, BasicResponse, ScheduleType } from '@/graphql/types';
+import type { Schedule, ScheduleResponse, BasicResponse, ScheduleType, ScheduleResume, ScheduleResumeResponse } from '@/graphql/types';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -18,9 +18,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Plus, Calendar, Clock, Users, Trash2, Loader2, ChevronLeft, ChevronRight, UserMinus,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts';
+import {
+  Plus, Calendar, Clock, Users, Trash2, Loader2, ChevronLeft, ChevronRight, UserMinus, BarChart3, Sun,
 } from 'lucide-react';
+
+const MONTH_NAMES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+interface ScheduleStatItem {
+  dayAndTime: string;
+  ratio: number;
+}
+
+interface ScheduleStatsResponse {
+  code: string;
+  success: boolean;
+  message: string;
+  stats?: ScheduleStatItem[] | null;
+}
 import { toast } from 'sonner';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -69,6 +90,15 @@ export default function SchedulesPage() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarDate, setCalendarDate] = useState(new Date());
 
+  // Today's resume
+  const [todayResume, setTodayResume] = useState<ScheduleResume[]>([]);
+  const [todayLoading, setTodayLoading] = useState(false);
+
+  // Monthly stats
+  const [statsMonth, setStatsMonth] = useState(new Date().getMonth() + 1);
+  const [statsData, setStatsData] = useState<ScheduleStatItem[]>([]);
+  const [statsLoading, setStatsLoading] = useState(false);
+
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -105,6 +135,30 @@ export default function SchedulesPage() {
       }
     } catch { toast.error('Error al cargar horarios'); }
     finally { setLoading(false); }
+  };
+
+  const fetchTodayResume = async () => {
+    setTodayLoading(true);
+    try {
+      const { data } = await apolloClient.query({ query: GET_TODAY_SCHEDULES_RESUME, fetchPolicy: 'network-only' });
+      const result = (data as Record<string, unknown>)?.getTodaySchedulesResume as ScheduleResumeResponse;
+      if (result?.success) setTodayResume(result.schedulesResume || []);
+    } catch { toast.error('Error al cargar el resumen de hoy'); }
+    finally { setTodayLoading(false); }
+  };
+
+  const fetchStats = async (month: number) => {
+    setStatsLoading(true);
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_SCHEDULES_STATS,
+        variables: { month },
+        fetchPolicy: 'network-only',
+      });
+      const result = (data as Record<string, unknown>)?.getSchedulesStats as ScheduleStatsResponse;
+      if (result?.success) setStatsData(result.stats || []);
+    } catch { toast.error('Error al cargar estadísticas'); }
+    finally { setStatsLoading(false); }
   };
 
   useEffect(() => { fetchSchedules(); }, [viewMode, calendarDate]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -203,10 +257,19 @@ export default function SchedulesPage() {
           <div className="flex items-center gap-2">
             <Button variant={viewMode === 'list' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('list')}>Lista</Button>
             <Button variant={viewMode === 'calendar' ? 'default' : 'outline'} size="sm" onClick={() => setViewMode('calendar')}><Calendar className="mr-1 h-4 w-4" /> Calendario</Button>
-            <Button onClick={() => setCreateOpen(true)} className="bg-[#F97316] hover:bg-[#EA580C] text-white"><Plus className="mr-2 h-4 w-4" /> Nuevo Horario</Button>
+            <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nuevo Horario</Button>
           </div>
         }
       />
+
+      <Tabs defaultValue="schedules" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="schedules"><Calendar className="mr-1.5 h-4 w-4" /> Horarios</TabsTrigger>
+          <TabsTrigger value="today" onClick={() => { if (todayResume.length === 0) fetchTodayResume(); }}><Sun className="mr-1.5 h-4 w-4" /> Resumen de hoy</TabsTrigger>
+          <TabsTrigger value="stats" onClick={() => { if (statsData.length === 0) fetchStats(statsMonth); }}><BarChart3 className="mr-1.5 h-4 w-4" /> Estadísticas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="schedules">
 
       {viewMode === 'calendar' ? (
         <Card className="border-border/50">
@@ -216,7 +279,7 @@ export default function SchedulesPage() {
             <Button variant="ghost" size="icon" onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1))}><ChevronRight className="h-4 w-4" /></Button>
           </CardHeader>
           <CardContent>
-            {loading ? <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-[#F97316]" /></div> : (
+            {loading ? <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : (
               <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
                 {DAYS.map((d) => <div key={d} className="bg-muted/50 p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>)}
                 {calendarDays.map((day, i) => (
@@ -284,7 +347,137 @@ export default function SchedulesPage() {
             })
           )}
         </div>
-      )}
+       )}
+        </TabsContent>
+
+        {/* ── Today's Resume tab ── */}
+        <TabsContent value="today">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              Clases programadas para hoy — {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+            <Button variant="outline" size="sm" onClick={fetchTodayResume} disabled={todayLoading}>
+              {todayLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Actualizar'}
+            </Button>
+          </div>
+          {todayLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="border-border/50"><CardContent className="p-4"><div className="h-20 animate-pulse bg-muted rounded" /></CardContent></Card>
+              ))}
+            </div>
+          ) : todayResume.length === 0 ? (
+            <Card className="border-border/50">
+              <CardContent className="p-10 text-center">
+                <Sun className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No hay clases programadas para hoy.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {todayResume.map((r) => {
+                const occupancyPct = r.maxUsers > 0 ? Math.round((r.ocupancy / r.maxUsers) * 100) : 0;
+                const startTime = formatTimeDisplay(r.startDate);
+                return (
+                  <Card key={r.id} className="border-border/50">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" />
+                          <span className="font-semibold text-sm">{startTime}</span>
+                        </div>
+                        <StatusBadge status={r.state} />
+                      </div>
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-muted-foreground flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Ocupación</span>
+                        <span className="font-medium">{r.ocupancy}/{r.maxUsers}</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(occupancyPct, 100)}%`,
+                            backgroundColor: occupancyPct >= 90 ? 'oklch(0.628 0.258 29.23)' : occupancyPct >= 60 ? 'oklch(0.769 0.188 70.08)' : 'var(--primary)',
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 text-right">{occupancyPct}% lleno</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── Stats tab ── */}
+        <TabsContent value="stats">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm font-medium">Mes:</Label>
+              <Select
+                value={String(statsMonth)}
+                onValueChange={(v) => {
+                  const m = Number(v);
+                  setStatsMonth(m);
+                  fetchStats(m);
+                }}
+              >
+                <SelectTrigger className="w-36 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_NAMES.map((name, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => fetchStats(statsMonth)} disabled={statsLoading}>
+              {statsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Actualizar'}
+            </Button>
+          </div>
+          {statsLoading ? (
+            <Card className="border-border/50"><CardContent className="p-6"><div className="h-64 animate-pulse bg-muted rounded" /></CardContent></Card>
+          ) : statsData.length === 0 ? (
+            <Card className="border-border/50">
+              <CardContent className="p-10 text-center">
+                <BarChart3 className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No hay estadísticas para {MONTH_NAMES[statsMonth - 1]}.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-base">Ratio de ocupación por horario — {MONTH_NAMES[statsMonth - 1]}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={statsData} margin={{ top: 5, right: 20, left: 0, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="dayAndTime" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} angle={-40} textAnchor="end" interval={0} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${Math.round(v * 100)}%`} domain={[0, 1]} />
+                    <Tooltip formatter={(value: number) => [`${Math.round(value * 100)}%`, 'Ocupación']} contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} />
+                    <Bar dataKey="ratio" radius={[4, 4, 0, 0]}>
+                      {statsData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill="var(--primary)" fillOpacity={0.85} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {statsData.map((item) => (
+                    <div key={item.dayAndTime} className="bg-muted/50 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground truncate">{item.dayAndTime}</p>
+                      <p className="text-lg font-bold text-primary">{Math.round(item.ratio * 100)}%</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Schedule Detail Dialog */}
       <Dialog open={!!detailSchedule} onOpenChange={(o) => { if (!o) setDetailSchedule(null); }}>
@@ -360,7 +553,7 @@ export default function SchedulesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={creating} className="bg-[#F97316] hover:bg-[#EA580C] text-white">{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Crear</Button>
+            <Button onClick={handleCreate} disabled={creating} className="bg-primary hover:bg-primary/90 text-white">{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Crear</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

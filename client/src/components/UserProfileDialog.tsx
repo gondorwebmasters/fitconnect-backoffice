@@ -155,7 +155,7 @@ export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps
             <div className="relative group">
               <Avatar className="h-20 w-20 border-2 border-border">
                 <AvatarImage src={avatarSrc} />
-                <AvatarFallback className="text-xl font-bold bg-[#F97316]/10 text-[#F97316]">
+                <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -256,7 +256,7 @@ export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-[#F97316] hover:bg-[#EA580C] text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Guardar cambios

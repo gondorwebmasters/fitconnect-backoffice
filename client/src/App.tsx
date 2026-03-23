@@ -32,10 +32,10 @@ import NotFound from "./pages/NotFound";
 function AuthLoadingScreen() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <div className="h-14 w-14 rounded-2xl bg-[#F97316] flex items-center justify-center mb-4 shadow-lg shadow-orange-500/25">
-        <span className="text-white font-bold text-lg">FC</span>
+      <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/25">
+        <span className="text-primary-foreground font-bold text-lg">FC</span>
       </div>
-      <Loader2 className="h-6 w-6 animate-spin text-[#F97316] mt-2" />
+      <Loader2 className="h-6 w-6 animate-spin text-primary mt-2" />
       <p className="text-sm text-muted-foreground mt-3">Cargando sesión...</p>
     </div>
   );

@@ -123,7 +123,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* FC Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="h-16 w-16 rounded-2xl bg-[#F97316] flex items-center justify-center mb-5 shadow-lg shadow-orange-500/30">
+          <div className="h-16 w-16 rounded-2xl bg-primary flex items-center justify-center mb-5 shadow-lg shadow-primary/30">
             <span className="text-white font-bold text-xl tracking-tight">FC</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">FitConnect</h1>
@@ -150,7 +150,7 @@ export default function LoginPage() {
                 onChange={(e) => handleEmailChange(e.target.value)}
                 autoComplete="username"
                 disabled={isLoading}
-                className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/30 h-11 ${fieldErrors.email ? 'border-red-500 focus:ring-red-500/30' : ''}`}
+                className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-primary focus:ring-primary/30 h-11 ${fieldErrors.email ? 'border-red-500 focus:ring-red-500/30' : ''}`}
               />
               {fieldErrors.email && <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>}
             </div>
@@ -158,7 +158,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-slate-300 text-sm font-medium">Contraseña</Label>
-                <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-orange-400 hover:text-orange-300 font-medium transition-colors" tabIndex={-1}>
+                <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-primary hover:text-primary/80 font-medium transition-colors" tabIndex={-1}>
                   ¿Olvidaste tu contraseña?
                 </button>
               </div>
@@ -171,7 +171,7 @@ export default function LoginPage() {
                   onChange={(e) => handlePasswordChange(e.target.value)}
                   autoComplete="current-password"
                   disabled={isLoading}
-                  className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-orange-500 focus:ring-orange-500/30 h-11 pr-10 ${fieldErrors.password ? 'border-red-500 focus:ring-red-500/30' : ''}`}
+                  className={`bg-[#1E293B] border-slate-600/50 text-white placeholder:text-slate-500 focus:border-primary focus:ring-primary/30 h-11 pr-10 ${fieldErrors.password ? 'border-red-500 focus:ring-red-500/30' : ''}`}
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors" tabIndex={-1}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -182,7 +182,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-[#F97316] hover:bg-[#EA580C] text-white font-semibold text-sm rounded-xl shadow-lg shadow-orange-500/25 transition-all"
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold text-sm rounded-xl shadow-lg shadow-primary/25 transition-all"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -218,14 +218,14 @@ export default function LoginPage() {
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
-                <Button onClick={closeForgotDialog} className="w-full bg-[#F97316] hover:bg-[#EA580C] text-white">Volver al login</Button>
+                <Button onClick={closeForgotDialog} className="w-full bg-primary hover:bg-primary/90 text-white">Volver al login</Button>
               </DialogFooter>
             </>
           ) : (
             <>
               <DialogHeader>
-                <div className="mx-auto h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center mb-2">
-                  <Mail className="h-6 w-6 text-orange-400" />
+                <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                  <Mail className="h-6 w-6 text-primary" />
                 </div>
                 <DialogTitle className="text-center text-white">Recuperar contraseña</DialogTitle>
                 <DialogDescription className="text-center text-slate-400">
@@ -251,7 +251,7 @@ export default function LoginPage() {
                 </div>
                 <DialogFooter className="gap-2 sm:gap-0">
                   <Button type="button" variant="outline" onClick={closeForgotDialog} disabled={forgotLoading} className="border-slate-600 text-slate-300 hover:bg-slate-700">Cancelar</Button>
-                  <Button type="submit" disabled={forgotLoading} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
+                  <Button type="submit" disabled={forgotLoading} className="bg-primary hover:bg-primary/90 text-white">
                     {forgotLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</> : 'Enviar enlace'}
                   </Button>
                 </DialogFooter>

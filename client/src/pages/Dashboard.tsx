@@ -16,8 +16,8 @@ import {
 } from 'recharts';
 
 // ===== Color palette =====
-const ORANGE = '#F97316';
-const ORANGE_LIGHT = '#FB923C';
+const ORANGE = 'var(--primary)';
+const ORANGE_LIGHT = 'var(--primary)';
 const NAVY = '#1E293B';
 const EMERALD = '#10B981';
 const VIOLET = '#8B5CF6';
@@ -54,7 +54,7 @@ function StatCard({ title, value, subtitle, icon, trend, trendValue }: StatCardP
               {subtitle && <p className="text-[11px] text-muted-foreground">{subtitle}</p>}
             </div>
           </div>
-          <div className="h-11 w-11 rounded-xl bg-[#F97316]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
             {icon}
           </div>
         </div>
@@ -190,26 +190,26 @@ export default function DashboardPage() {
             <StatCard
               title="Total Usuarios"
               value={adminStats.users.totalUsers}
-              icon={<Users className="h-5 w-5 text-[#F97316]" />}
+              icon={<Users className="h-5 w-5 text-primary" />}
               trend="up"
               trendValue={`+${adminStats.users.newUsers} nuevos`}
             />
             <StatCard
               title="Horarios"
               value={adminStats.schedules}
-              icon={<Calendar className="h-5 w-5 text-[#F97316]" />}
+              icon={<Calendar className="h-5 w-5 text-primary" />}
               subtitle="Clases programadas"
             />
             <StatCard
               title="Suscripciones"
               value={adminStats.subscriptions}
-              icon={<ClipboardList className="h-5 w-5 text-[#F97316]" />}
+              icon={<ClipboardList className="h-5 w-5 text-primary" />}
               subtitle="Activas en la plataforma"
             />
             <StatCard
               title="Transacciones"
               value={adminStats.transactions}
-              icon={<CreditCard className="h-5 w-5 text-[#F97316]" />}
+              icon={<CreditCard className="h-5 w-5 text-primary" />}
               subtitle="Procesadas"
             />
           </div>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
                 <div className="text-center -mt-8">
-                  <p className="text-3xl font-bold text-[#F97316]">{capacityData[0]?.value || 0}%</p>
+                  <p className="text-3xl font-bold text-primary">{capacityData[0]?.value || 0}%</p>
                   <p className="text-xs text-muted-foreground mt-1">de usuarios activos</p>
                 </div>
               </CardContent>
@@ -349,25 +349,25 @@ export default function DashboardPage() {
             <StatCard
               title="Planes Activos"
               value={adminStats.plans}
-              icon={<Crown className="h-5 w-5 text-[#F97316]" />}
+              icon={<Crown className="h-5 w-5 text-primary" />}
               subtitle="Planes disponibles"
             />
             <StatCard
               title="Encuestas"
               value={adminStats.polls}
-              icon={<BarChart3 className="h-5 w-5 text-[#F97316]" />}
+              icon={<BarChart3 className="h-5 w-5 text-primary" />}
               subtitle="Creadas"
             />
             <StatCard
               title="Notificaciones"
               value={adminStats.notifications}
-              icon={<Bell className="h-5 w-5 text-[#F97316]" />}
+              icon={<Bell className="h-5 w-5 text-primary" />}
               subtitle="Enviadas"
             />
             <StatCard
               title="Usuarios Bloqueados"
               value={adminStats.users.blockedUsers}
-              icon={<Users className="h-5 w-5 text-[#F97316]" />}
+              icon={<Users className="h-5 w-5 text-primary" />}
               trend={adminStats.users.blockedUsers > 0 ? 'down' : 'neutral'}
               trendValue={adminStats.users.blockedUsers > 0 ? `${adminStats.users.blockedUsers} bloqueados` : 'Ninguno'}
             />

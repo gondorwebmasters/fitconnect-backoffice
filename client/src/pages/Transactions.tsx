@@ -142,19 +142,19 @@ export default function TransactionsPage() {
     <div>
       <PageHeader title="Transacciones" description="Visualiza y gestiona los pagos" actions={<Button onClick={() => setChargeOpen(true)}><Plus className="mr-2 h-4 w-4" /> Crear cargo</Button>} />
 
-      <div className="flex gap-4 mb-6">
-        <div className="flex-1 max-w-sm">
+      <div className="flex flex-wrap items-end gap-4 mb-6">
+        <div className="flex-1 min-w-[200px] max-w-sm">
           <UserAutocomplete
             value={userId}
             onChange={setUserId}
             label="Usuario"
-            placeholder="Buscar usuario para ver transacciones..."
+            placeholder="Buscar usuario..."
           />
         </div>
-        <div className="w-48">
-          <Label>Filtrar por estado</Label>
+        <div className="w-44 shrink-0">
+          <Label className="text-sm font-medium">Estado</Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="succeeded">Completado</SelectItem>

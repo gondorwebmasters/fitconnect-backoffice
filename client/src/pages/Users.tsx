@@ -334,7 +334,7 @@ export default function UsersPage() {
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openNotifyModal(user)}>
-                <Mail className="mr-2 h-4 w-4 text-[#F97316]" />
+                <Mail className="mr-2 h-4 w-4 text-primary" />
                 Enviar notificación
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -429,7 +429,7 @@ export default function UsersPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-[#F97316]" />
+              <Mail className="h-5 w-5 text-primary" />
               Enviar notificación push
             </DialogTitle>
             <DialogDescription>
@@ -488,7 +488,7 @@ export default function UsersPage() {
             <Button
               onClick={handleSendNotification}
               disabled={notifyState.sending || !notifyState.title.trim() || !notifyState.body.trim()}
-              className="bg-[#F97316] hover:bg-[#ea6c0a] text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               {notifyState.sending ? (
                 <>

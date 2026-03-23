@@ -194,7 +194,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed && (
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-6 w-6 rounded-md bg-[#F97316] flex items-center justify-center shrink-0">
+                  <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center shrink-0">
                     <span className="text-white text-[10px] font-bold">FC</span>
                   </div>
                   <span className="font-semibold tracking-tight truncate text-sm">FitConnect</span>
@@ -215,7 +215,7 @@ function DashboardLayoutContent({
                     {activeCompany?.logo?.url ? (
                       <img src={activeCompany.logo.url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <Building2 className="h-3.5 w-3.5 text-[#F97316]" />
+                      <Building2 className="h-3.5 w-3.5 text-primary" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ function DashboardLayoutContent({
                   <div className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
                     {loadingCompanies ? (
                       <div className="flex items-center justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin text-[#F97316]" />
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         <span className="ml-2 text-xs text-muted-foreground">Cargando empresas...</span>
                       </div>
                     ) : switcherCompanies.length === 0 ? (
@@ -249,7 +249,7 @@ function DashboardLayoutContent({
                           disabled={switchingCompany !== null}
                           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors text-sm
                             ${isActive
-                              ? 'bg-[#F97316]/10 text-[#F97316]'
+                              ? 'bg-primary/10 text-primary'
                               : 'hover:bg-accent/50 text-foreground'
                             }
                             ${switchingCompany !== null && !isSwitching ? 'opacity-50' : ''}
@@ -286,7 +286,7 @@ function DashboardLayoutContent({
                       className="w-full flex items-center justify-center h-9 w-9 rounded-lg hover:bg-accent/50 transition-colors mx-auto"
                       title={`Empresa: ${activeCompany?.name || 'Sin empresa'}`}
                     >
-                      <Building2 className="h-4 w-4 text-[#F97316]" />
+                      <Building2 className="h-4 w-4 text-primary" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="right" align="start" className="w-52">
@@ -308,7 +308,7 @@ function DashboardLayoutContent({
                             : <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                           }
                           <span className="truncate flex-1 text-sm">{company.name}</span>
-                          {company.id === activeCompanyId && <Check className="h-4 w-4 text-[#F97316] shrink-0" />}
+                          {company.id === activeCompanyId && <Check className="h-4 w-4 text-primary shrink-0" />}
                         </div>
                       </DropdownMenuItem>
                     ))}
@@ -329,7 +329,7 @@ function DashboardLayoutContent({
                       tooltip={item.label}
                       className="h-10 transition-all font-normal"
                     >
-                      <item.icon className={`h-4 w-4 ${isActive ? "text-[#F97316]" : ""}`} />
+                      <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -366,7 +366,7 @@ function DashboardLayoutContent({
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left focus:outline-none">
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarImage src={user?.pictureUrl?.url || ""} />
-                    <AvatarFallback className="text-xs font-medium bg-[#F97316]/10 text-[#F97316]">
+                    <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                       {(user?.name?.[0] || user?.nickname?.[0] || "?").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -387,7 +387,7 @@ function DashboardLayoutContent({
                     {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.nickname || "—"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">{user?.email || "—"}</p>
-                  <span className="inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F97316]/10 text-[#F97316] capitalize">
+                  <span className="inline-block mt-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary capitalize">
                     {user?.contextRole || 'user'}
                   </span>
                 </div>

@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 /** Map card brand slug to a display name and icon color */
 const BRAND_META: Record<string, { label: string; color: string }> = {
   visa:       { label: 'Visa',       color: 'text-blue-500' },
-  mastercard: { label: 'Mastercard', color: 'text-orange-500' },
+  mastercard: { label: 'Mastercard', color: 'text-primary' },
   amex:       { label: 'Amex',       color: 'text-sky-500' },
   discover:   { label: 'Discover',   color: 'text-amber-500' },
   jcb:        { label: 'JCB',        color: 'text-green-500' },
@@ -199,7 +199,7 @@ export default function PaymentMethodsPage() {
                 key={m.id}
                 className={`
                   border shadow-none transition-shadow hover:shadow-sm
-                  ${m.isDefault ? 'border-[#F97316]/50 bg-[#F97316]/5' : 'border-border/50'}
+                  ${m.isDefault ? 'border-primary/50 bg-primary/5' : 'border-border/50'}
                   ${expired ? 'opacity-70' : ''}
                 `}
               >
@@ -232,7 +232,7 @@ export default function PaymentMethodsPage() {
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                         <StatusBadge status={expired ? 'expired' : (m.status || 'active')} showDot />
                         {m.isDefault && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#F97316]/15 text-[#F97316] ring-1 ring-inset ring-[#F97316]/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary ring-1 ring-inset ring-primary/30">
                             <Star className="h-2.5 w-2.5 fill-current" />
                             Predeterminada
                           </span>

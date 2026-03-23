@@ -47,8 +47,8 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   // ── Violet: full ───────────────────────────────────────────────────────
   full:      { bg: 'bg-violet-500/15',  text: 'text-violet-400 dark:text-violet-300',  ring: 'ring-violet-500/30',  dot: 'bg-violet-400' },
 
-  // ── Orange: paused ────────────────────────────────────────────────────
-  paused:    { bg: 'bg-orange-500/15',  text: 'text-orange-400 dark:text-orange-300',  ring: 'ring-orange-500/30',  dot: 'bg-orange-400' },
+  // ── Amber: paused ────────────────────────────────────────────────────
+  paused:    { bg: 'bg-amber-500/15',  text: 'text-amber-400 dark:text-amber-300',  ring: 'ring-amber-500/30',  dot: 'bg-amber-400' },
 
   // ── Slate: inactive / archived / expired / standard ───────────────────
   inactive:  { bg: 'bg-slate-500/15',   text: 'text-slate-400  dark:text-slate-300',   ring: 'ring-slate-500/30',   dot: 'bg-slate-400' },

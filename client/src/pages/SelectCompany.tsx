@@ -51,7 +51,7 @@ export default function SelectCompanyPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-[#F97316]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ export default function SelectCompanyPage() {
       <div className="w-full max-w-lg">
         {/* Brand header */}
         <div className="flex flex-col items-center mb-6">
-          <div className="h-14 w-14 rounded-2xl bg-[#F97316] flex items-center justify-center mb-3 shadow-lg shadow-orange-500/25">
+          <div className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center mb-3 shadow-lg shadow-primary/25">
             <span className="text-white font-bold text-lg">FC</span>
           </div>
           {user && (
@@ -95,8 +95,8 @@ export default function SelectCompanyPage() {
                     disabled={selecting !== null}
                     className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left group
                       ${isActive
-                        ? 'border-[#F97316] bg-[#F97316]/5 shadow-sm'
-                        : 'border-border/50 hover:border-[#F97316]/40 hover:bg-[#F97316]/5 hover:shadow-sm'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border/50 hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm'
                       }
                       ${selecting !== null && !isSelecting ? 'opacity-50' : ''}
                     `}
@@ -115,14 +115,14 @@ export default function SelectCompanyPage() {
                       )}
                     </div>
                     {isSelecting ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-[#F97316] shrink-0" />
+                      <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
                     ) : isActive ? (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <Check className="h-4 w-4 text-[#F97316]" />
-                        <span className="text-xs font-medium text-[#F97316]">Activa</span>
+                        <Check className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-medium text-primary">Activa</span>
                       </div>
                     ) : (
-                      <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-[#F97316] transition-colors shrink-0" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors shrink-0" />
                     )}
                   </button>
                 );

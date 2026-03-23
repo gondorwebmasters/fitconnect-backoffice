@@ -46,8 +46,8 @@
 - [x] Edit company form with config (polls, products, chat, training toggles)
 - [x] Update company logo (S3 upload)
 - [x] Schedule options management per company
-- [ ] Admit user to company action
-- [ ] Request join company action
+- [x] Admit user to company action
+- [ ] Request join company action (not available in current GraphQL API)
 
 ## Schedule Management
 - [x] Schedules list/calendar view
@@ -55,9 +55,9 @@
 - [x] Schedule status changes (available/cancelled/full)
 - [x] Add/remove user from schedule
 - [x] Schedule options configuration
-- [ ] Today's schedules resume view
-- [ ] Schedule stats by month
-- [ ] Date range schedule queries
+- [x] Today's schedules resume view (new tab with occupancy cards)
+- [x] Schedule stats by month (bar chart by dayAndTime ratio)
+- [x] Date range schedule queries (already in calendar view)
 
 ## Plan Management
 - [x] Plans list page
@@ -194,3 +194,11 @@
 - [x] Create CompanyColorContext that persists color per company in localStorage
 - [x] CompanySettings Apariencia tab: selecting a color updates the whole app immediately on save (no reload)
 - [x] Live preview in color picker shows real-time changes before saving
+
+## Round 9 Fixes
+- [x] Fix all hardcoded #F97316/orange-* colors to use CSS var(--primary) across Login, Sidebar, Dashboard, Schedules, App.tsx
+- [x] Fix Transactions page: align filter dropdown and UserAutocomplete on same row
+- [x] Company Management: Admit user to company action (in CompanyDetail page)
+- [x] Schedule Management: Today's schedules resume view (new tab with occupancy cards)
+- [x] Schedule Management: Schedule stats by month (bar chart by dayAndTime ratio)
+- [x] Schedule Management: Date range schedule queries (already in calendar view)
