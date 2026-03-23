@@ -34,13 +34,15 @@ const MONTH_NAMES = [
 interface ScheduleStatItem {
   dayAndTime: string;
   ratio: number;
+  label?: string;
 }
 
 interface ScheduleStatsResponse {
   code: string;
   success: boolean;
   message: string;
-  stats?: ScheduleStatItem[] | null;
+  // The API may return stats as an array of { dayAndTime, ratio } or as an object
+  stats?: ScheduleStatItem[] | Record<string, unknown> | null;
 }
 import { toast } from 'sonner';
 
@@ -156,7 +158,32 @@ export default function SchedulesPage() {
         fetchPolicy: 'network-only',
       });
       const result = (data as Record<string, unknown>)?.getSchedulesStats as ScheduleStatsResponse;
-      if (result?.success) setStatsData(result.stats || []);
+      console.log('[DEBUG] getSchedulesStats raw result:', JSON.stringify(result, null, 2));
+      if (result?.success) {
+        let rawStats = result.stats;
+        // Normalize: could be an array, an object, or nested
+        let items: ScheduleStatItem[] = [];
+        if (Array.isArray(rawStats)) {
+          items = rawStats.map((s: unknown) => {
+            const item = s as Record<string, unknown>;
+            return {
+              dayAndTime: String(item.dayAndTime ?? item.label ?? item.day ?? ''),
+              ratio: typeof item.ratio === 'number' ? item.ratio
+                : typeof item.ratio === 'string' ? parseFloat(item.ratio)
+                : typeof item.occupancyRatio === 'number' ? item.occupancyRatio as number
+                : 0,
+            };
+          });
+        } else if (rawStats && typeof rawStats === 'object') {
+          // Maybe it's a map of dayAndTime -> ratio
+          items = Object.entries(rawStats as Record<string, unknown>).map(([key, val]) => ({
+            dayAndTime: key,
+            ratio: typeof val === 'number' ? val : parseFloat(String(val)) || 0,
+          }));
+        }
+        console.log('[DEBUG] normalized statsData:', items);
+        setStatsData(items);
+      }
     } catch { toast.error('Error al cargar estadísticas'); }
     finally { setStatsLoading(false); }
   };

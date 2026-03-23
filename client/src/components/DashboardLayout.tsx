@@ -206,7 +206,7 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             {/* ===== BOSS COMPANY SWITCHER in sidebar ===== */}
             {isBoss && !isCollapsed && (
-              <div className="px-3 py-2 border-b border-border/30">
+              <div className="px-3 py-2 border-b border-border/30 relative">
                 <button
                   onClick={() => setCompanySwitcherOpen((o) => !o)}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-border/50 bg-accent/20 hover:bg-accent/50 transition-colors text-left"
@@ -229,9 +229,9 @@ function DashboardLayoutContent({
                   />
                 </button>
 
-                {/* Collapsible company list */}
+                {/* Collapsible company list — absolute so it doesn't push nav items */}
                 {companySwitcherOpen && (
-                  <div className="mt-1 space-y-0.5 max-h-48 overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-popover border border-border rounded-lg shadow-lg max-h-52 overflow-y-auto">
                     {loadingCompanies ? (
                       <div className="flex items-center justify-center py-4">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />

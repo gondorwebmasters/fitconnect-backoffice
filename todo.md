@@ -202,3 +202,7 @@
 - [x] Schedule Management: Today's schedules resume view (new tab with occupancy cards)
 - [x] Schedule Management: Schedule stats by month (bar chart by dayAndTime ratio)
 - [x] Schedule Management: Date range schedule queries (already in calendar view)
+
+## Round 10 Fixes
+- [x] Fix Schedules stats chart: robust normalization handles array/object/string ratio values, debug logs added
+- [x] Fix sidebar company dropdown: absolute positioning with z-50 so it floats over nav items without scroll
