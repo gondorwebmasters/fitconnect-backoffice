@@ -173,3 +173,11 @@
 - [x] Build Poll Results view with vote counts and percentages
 - [x] Add vote management (view who voted, remove votes)
 - [x] Register Polls route in App.tsx and sidebar navigation
+
+## UserAutocomplete Component
+- [x] Create reusable UserAutocomplete component (debounced search, name display, id value)
+- [x] Replace userId filter in Subscriptions page
+- [x] Replace userId filter in Transactions page
+- [x] Replace userId filter in PaymentMethods page
+- [x] Replace userId filter in Notifications page
+- [x] Replace userId filter in any other pages using raw userId input

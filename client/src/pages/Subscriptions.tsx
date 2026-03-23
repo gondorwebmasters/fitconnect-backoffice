@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserAutocomplete } from '@/components/common/UserAutocomplete';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -116,9 +117,13 @@ export default function SubscriptionsPage() {
     <div>
       <PageHeader title="Subscriptions" description="Manage user subscriptions" actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> New Subscription</Button>} />
 
-      <div className="mb-6">
-        <Label>User ID</Label>
-        <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="Enter user ID to view subscriptions" className="max-w-sm mt-1" />
+      <div className="mb-6 max-w-sm">
+        <UserAutocomplete
+          value={userId}
+          onChange={setUserId}
+          label="Usuario"
+          placeholder="Buscar usuario para ver suscripciones..."
+        />
       </div>
 
       {loading ? (
@@ -162,7 +167,15 @@ export default function SubscriptionsPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Create Subscription</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>User ID *</Label><Input value={newSub.userId} onChange={(e) => setNewSub({ ...newSub, userId: e.target.value })} placeholder="User ID" /></div>
+            <div className="space-y-2">
+              <UserAutocomplete
+                value={newSub.userId}
+                onChange={(id) => setNewSub({ ...newSub, userId: id })}
+                label="Usuario *"
+                placeholder="Buscar usuario..."
+                required
+              />
+            </div>
             <div className="space-y-2"><Label>Plan *</Label>
               <Select value={newSub.planId} onValueChange={(v) => setNewSub({ ...newSub, planId: v })}><SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
                 <SelectContent>{plans.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.amount} {p.currency.toUpperCase()}/{p.interval}</SelectItem>)}</SelectContent>

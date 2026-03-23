@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserAutocomplete } from '@/components/common/UserAutocomplete';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Trash2, Star, CreditCard, Loader2, Search, ShieldCheck, AlertCircle } from 'lucide-react';
@@ -145,21 +146,16 @@ export default function PaymentMethodsPage() {
 
       {/* ── Search bar ─────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
-        <div className="flex-1 min-w-0 max-w-sm space-y-1.5">
-          <Label htmlFor="userId-input" className="text-sm font-medium">ID de Usuario</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              id="userId-input"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              placeholder="Ingresa el ID del usuario"
-              className="pl-9"
-            />
-          </div>
+        <div className="flex-1 min-w-0 max-w-sm">
+          <UserAutocomplete
+            value={userId}
+            onChange={(id) => { setUserId(id); }}
+            label="Usuario"
+            placeholder="Buscar usuario por nombre..."
+          />
         </div>
         {userId && (
-          <Button variant="outline" size="sm" onClick={fetchMethods} disabled={loading} className="shrink-0">
+          <Button variant="outline" size="sm" onClick={fetchMethods} disabled={loading} className="shrink-0 mt-6">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Actualizar'}
           </Button>
         )}

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserAutocomplete } from '@/components/common/UserAutocomplete';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, Send, Loader2, Users, User } from 'lucide-react';
@@ -98,11 +99,12 @@ export default function NotificationsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>User ID *</Label>
-                <Input
+                <UserAutocomplete
                   value={singleForm.userId}
-                  onChange={(e) => setSingleForm({ ...singleForm, userId: e.target.value })}
-                  placeholder="Target user ID"
+                  onChange={(id) => setSingleForm({ ...singleForm, userId: id })}
+                  label="Usuario *"
+                  placeholder="Buscar usuario destinatario..."
+                  required
                 />
               </div>
               <div className="space-y-2">

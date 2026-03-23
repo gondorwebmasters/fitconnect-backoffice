@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserAutocomplete } from '@/components/common/UserAutocomplete';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -143,8 +144,12 @@ export default function TransactionsPage() {
 
       <div className="flex gap-4 mb-6">
         <div className="flex-1 max-w-sm">
-          <Label>User ID</Label>
-          <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="Enter user ID" className="mt-1" />
+          <UserAutocomplete
+            value={userId}
+            onChange={setUserId}
+            label="Usuario"
+            placeholder="Buscar usuario para ver transacciones..."
+          />
         </div>
         <div className="w-48">
           <Label>Status Filter</Label>
@@ -169,7 +174,15 @@ export default function TransactionsPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Create Charge</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>User ID *</Label><Input value={newCharge.userId} onChange={(e) => setNewCharge({ ...newCharge, userId: e.target.value })} /></div>
+            <div className="space-y-2">
+              <UserAutocomplete
+                value={newCharge.userId}
+                onChange={(id) => setNewCharge({ ...newCharge, userId: id })}
+                label="Usuario *"
+                placeholder="Buscar usuario..."
+                required
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Amount *</Label><Input type="number" step="0.01" min="0" value={newCharge.amount} onChange={(e) => setNewCharge({ ...newCharge, amount: parseFloat(e.target.value) || 0 })} /></div>
               <div className="space-y-2"><Label>Currency</Label>
