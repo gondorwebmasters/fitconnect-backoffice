@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import { GET_COMPANIES, UPDATE_COMPANY, UPDATE_SCHEDULE_OPTIONS, UPDATE_COMPANY_LOGO, GET_PRESIGNED_URL } from '@/graphql/operations';
 import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
+import { useCompanyColor } from '@/contexts/CompanyColorContext';
 import type { Company, CompanyResponse, ScheduleOptionsResponse, PresignedUrlResponse } from '@/graphql/types';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,22 +18,33 @@ import { toast } from 'sonner';
 
 // Preset color palettes
 const COLOR_PRESETS = [
-  { name: 'Naranja FitConnect', primary: '#F97316', secondary: '#EA580C' },
-  { name: 'Azul Océano', primary: '#3B82F6', secondary: '#2563EB' },
-  { name: 'Verde Esmeralda', primary: '#10B981', secondary: '#059669' },
-  { name: 'Violeta', primary: '#8B5CF6', secondary: '#7C3AED' },
-  { name: 'Rosa', primary: '#EC4899', secondary: '#DB2777' },
-  { name: 'Rojo', primary: '#EF4444', secondary: '#DC2626' },
-  { name: 'Cian', primary: '#06B6D4', secondary: '#0891B2' },
-  { name: 'Ámbar', primary: '#F59E0B', secondary: '#D97706' },
+  { name: 'Naranja FitConnect', primary: '#F97316' },
+  { name: 'Azul Océano', primary: '#3B82F6' },
+  { name: 'Verde Esmeralda', primary: '#10B981' },
+  { name: 'Violeta', primary: '#8B5CF6' },
+  { name: 'Rosa', primary: '#EC4899' },
+  { name: 'Rojo', primary: '#EF4444' },
+  { name: 'Cian', primary: '#06B6D4' },
+  { name: 'Ámbar', primary: '#F59E0B' },
+  { name: 'Lima', primary: '#84CC16' },
+  { name: 'Índigo', primary: '#6366F1' },
 ];
 
 export default function CompanySettingsPage() {
   const { activeCompanyId } = useFitConnectAuth();
+  const { primaryColor, setPrimaryColor } = useCompanyColor();
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Local draft color (before saving)
+  const [draftColor, setDraftColor] = useState<string>(primaryColor);
+
+  // Sync draft when context color changes (e.g. on company switch)
+  useEffect(() => {
+    setDraftColor(primaryColor);
+  }, [primaryColor]);
 
   // General fields
   const [name, setName] = useState('');
@@ -54,23 +66,8 @@ export default function CompanySettingsPage() {
   const [bookingCutoffMinutes, setBookingCutoffMinutes] = useState(30);
   const [minBookingsRequired, setMinBookingsRequired] = useState(1);
 
-  // Color customization (stored in localStorage per company)
-  const [primaryColor, setPrimaryColor] = useState('#F97316');
-  const [secondaryColor, setSecondaryColor] = useState('#EA580C');
-
   useEffect(() => {
     if (!activeCompanyId) return;
-
-    // Load saved colors
-    const savedColors = localStorage.getItem(`fitconnect_colors_${activeCompanyId}`);
-    if (savedColors) {
-      try {
-        const { primary, secondary } = JSON.parse(savedColors);
-        if (primary) setPrimaryColor(primary);
-        if (secondary) setSecondaryColor(secondary);
-      } catch { /* ignore */ }
-    }
-
     setLoading(true);
     apolloClient.query({
       query: GET_COMPANIES,
@@ -192,7 +189,6 @@ export default function CompanySettingsPage() {
           variables: { companyId: activeCompanyId, picture: urlResult.key },
         });
         toast.success('Logo actualizado');
-        // Reload company to get new logo
         const { data } = await apolloClient.query({ query: GET_COMPANIES, variables: { companyId: activeCompanyId }, fetchPolicy: 'network-only' });
         const result = (data as Record<string, unknown>)?.getCompanies as CompanyResponse;
         if (result?.company) setCompany(result.company);
@@ -201,18 +197,10 @@ export default function CompanySettingsPage() {
     finally { setUploading(false); }
   };
 
+  /** Apply the draft color immediately to the whole app and persist it */
   const handleSaveColors = () => {
-    if (!activeCompanyId) return;
-    localStorage.setItem(`fitconnect_colors_${activeCompanyId}`, JSON.stringify({ primary: primaryColor, secondary: secondaryColor }));
-    // Apply CSS variables to the document
-    document.documentElement.style.setProperty('--fitconnect-primary', primaryColor);
-    document.documentElement.style.setProperty('--fitconnect-secondary', secondaryColor);
-    toast.success('Colores guardados. Recarga la página para ver todos los cambios.');
-  };
-
-  const applyPreset = (preset: { primary: string; secondary: string }) => {
-    setPrimaryColor(preset.primary);
-    setSecondaryColor(preset.secondary);
+    setPrimaryColor(draftColor);
+    toast.success('Color aplicado en toda la aplicación');
   };
 
   if (loading) {
@@ -286,7 +274,7 @@ export default function CompanySettingsPage() {
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
-                  <Button onClick={handleSaveGeneral} disabled={saving} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
+                  <Button onClick={handleSaveGeneral} disabled={saving}>
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Guardar
                   </Button>
@@ -324,7 +312,7 @@ export default function CompanySettingsPage() {
                 <Switch checked={trainingEnabled} onCheckedChange={setTrainingEnabled} />
               </div>
               <div className="flex justify-end pt-2">
-                <Button onClick={handleSaveConfig} disabled={saving} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
+                <Button onClick={handleSaveConfig} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Guardar Configuración
                 </Button>
@@ -377,7 +365,7 @@ export default function CompanySettingsPage() {
                 <Switch checked={sameDayBookingAllowed} onCheckedChange={setSameDayBookingAllowed} />
               </div>
               <div className="flex justify-end pt-2">
-                <Button onClick={handleSaveScheduleOptions} disabled={saving} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
+                <Button onClick={handleSaveScheduleOptions} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Guardar Opciones
                 </Button>
@@ -390,27 +378,32 @@ export default function CompanySettingsPage() {
         <TabsContent value="appearance">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle className="text-lg">Personalización de colores</CardTitle>
-              <CardDescription>Ajusta los colores de la interfaz del backoffice para esta empresa</CardDescription>
+              <CardTitle className="text-lg">Color de marca</CardTitle>
+              <CardDescription>
+                El color primario se aplica a botones, badges, iconos activos y todos los elementos de acento de la interfaz.
+                Al guardar, el cambio se aplica inmediatamente sin recargar la página.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               {/* Presets */}
               <div className="space-y-3">
-                <Label>Paletas predefinidas</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <Label className="text-sm font-medium">Paletas predefinidas</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   {COLOR_PRESETS.map((preset) => (
                     <button
                       key={preset.name}
-                      onClick={() => applyPreset(preset)}
-                      className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all hover:shadow-md ${
-                        primaryColor === preset.primary ? 'border-primary ring-2 ring-primary/30' : 'border-border/50 hover:border-primary/40'
+                      onClick={() => setDraftColor(preset.primary)}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all hover:shadow-md ${
+                        draftColor === preset.primary
+                          ? 'border-primary ring-2 ring-primary/30 bg-primary/5'
+                          : 'border-border/50 hover:border-primary/40'
                       }`}
                     >
-                      <div className="flex gap-1 shrink-0">
-                        <div className="h-5 w-5 rounded-full shadow-sm" style={{ backgroundColor: preset.primary }} />
-                        <div className="h-5 w-5 rounded-full shadow-sm" style={{ backgroundColor: preset.secondary }} />
-                      </div>
-                      <span className="text-xs font-medium truncate">{preset.name}</span>
+                      <div
+                        className="h-8 w-8 rounded-full shadow-sm"
+                        style={{ backgroundColor: preset.primary }}
+                      />
+                      <span className="text-xs font-medium leading-tight">{preset.name}</span>
                     </button>
                   ))}
                 </div>
@@ -418,89 +411,96 @@ export default function CompanySettingsPage() {
 
               <Separator />
 
-              {/* Custom colors */}
+              {/* Custom color picker */}
               <div className="space-y-4">
-                <Label>Colores personalizados</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label className="text-sm text-muted-foreground">Color primario</Label>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <input
-                          type="color"
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          className="h-12 w-12 rounded-xl cursor-pointer border border-border/50 p-1"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          value={primaryColor}
-                          onChange={(e) => setPrimaryColor(e.target.value)}
-                          placeholder="#F97316"
-                          className="font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="h-10 rounded-xl shadow-sm transition-all" style={{ backgroundColor: primaryColor }} />
+                <Label className="text-sm font-medium">Color personalizado</Label>
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0">
+                    <input
+                      type="color"
+                      value={draftColor}
+                      onChange={(e) => setDraftColor(e.target.value)}
+                      className="h-14 w-14 rounded-xl cursor-pointer border border-border/50 p-1 bg-transparent"
+                      title="Seleccionar color"
+                    />
                   </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-sm text-muted-foreground">Color secundario (hover)</Label>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <input
-                          type="color"
-                          value={secondaryColor}
-                          onChange={(e) => setSecondaryColor(e.target.value)}
-                          className="h-12 w-12 rounded-xl cursor-pointer border border-border/50 p-1"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          value={secondaryColor}
-                          onChange={(e) => setSecondaryColor(e.target.value)}
-                          placeholder="#EA580C"
-                          className="font-mono text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="h-10 rounded-xl shadow-sm transition-all" style={{ backgroundColor: secondaryColor }} />
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      value={draftColor}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) setDraftColor(val);
+                      }}
+                      placeholder="#F97316"
+                      className="font-mono text-sm max-w-[160px]"
+                    />
+                    <p className="text-xs text-muted-foreground">Introduce un código HEX válido (ej: #F97316)</p>
+                  </div>
+                  {/* Live preview swatch */}
+                  <div
+                    className="h-14 w-28 rounded-xl shadow-md flex items-center justify-center text-xs font-medium shrink-0 transition-all"
+                    style={{ backgroundColor: draftColor, color: '#fff' }}
+                  >
+                    Vista previa
                   </div>
                 </div>
               </div>
 
-              {/* Preview */}
-              <div className="rounded-xl border border-border/50 p-4 space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Vista previa</p>
-                <div className="flex gap-3 flex-wrap">
+              {/* Live preview of UI elements */}
+              <div className="rounded-xl border border-border/50 p-5 space-y-4">
+                <p className="text-sm font-medium text-muted-foreground">Previsualización de elementos</p>
+                <div className="flex flex-wrap gap-3 items-center">
                   <button
-                    className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-all"
-                    style={{ backgroundColor: primaryColor }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = secondaryColor)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = primaryColor)}
+                    className="px-4 py-2 rounded-lg text-white text-sm font-medium shadow-sm transition-all"
+                    style={{ backgroundColor: draftColor }}
                   >
                     Botón primario
                   </button>
                   <button
-                    className="px-4 py-2 rounded-lg text-sm font-medium border transition-all"
-                    style={{ borderColor: primaryColor, color: primaryColor }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium border-2 bg-transparent transition-all"
+                    style={{ borderColor: draftColor, color: draftColor }}
                   >
                     Botón outline
                   </button>
-                  <div
-                    className="px-3 py-1 rounded-full text-white text-xs font-medium"
-                    style={{ backgroundColor: primaryColor }}
+                  <span
+                    className="px-3 py-1 rounded-full text-white text-xs font-semibold"
+                    style={{ backgroundColor: draftColor }}
                   >
-                    Badge
-                  </div>
+                    Badge activo
+                  </span>
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: draftColor }}
+                  >
+                    Enlace / ícono activo
+                  </span>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <Button onClick={handleSaveColors} className="bg-[#F97316] hover:bg-[#EA580C] text-white">
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar colores
+              {/* Current vs draft comparison */}
+              {draftColor !== primaryColor && (
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border/50">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: primaryColor }} />
+                    <span className="text-xs text-muted-foreground">Color actual</span>
+                  </div>
+                  <span className="text-muted-foreground">→</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full border" style={{ backgroundColor: draftColor }} />
+                    <span className="text-xs font-medium">Nuevo color</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-auto">Guarda para aplicar el cambio</span>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleSaveColors}
+                  disabled={draftColor === primaryColor || draftColor.length < 7}
+                  className="gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  Aplicar color de marca
                 </Button>
               </div>
             </CardContent>

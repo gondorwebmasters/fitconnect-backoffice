@@ -1,6 +1,7 @@
 import { ApolloProvider } from "@apollo/client/react";
 import { apolloClient } from "@/graphql/apollo-client";
 import { FitConnectAuthProvider, useFitConnectAuth } from "@/contexts/FitConnectAuthContext";
+import { CompanyColorProvider } from "@/contexts/CompanyColorContext";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -118,10 +119,12 @@ function App() {
       <ThemeProvider defaultTheme="dark" switchable>
         <ApolloProvider client={apolloClient}>
           <FitConnectAuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
+            <CompanyColorProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </CompanyColorProvider>
           </FitConnectAuthProvider>
         </ApolloProvider>
       </ThemeProvider>

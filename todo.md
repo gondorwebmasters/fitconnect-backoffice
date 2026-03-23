@@ -188,3 +188,9 @@
 - [x] Make CompanySettings fully functional (wire all mutations)
 - [x] Add primary/secondary color pickers to CompanySettings
 - [x] Apply selected company colors as CSS variables app-wide
+
+## Round 8 Fixes
+- [x] Implement real dynamic color theming: HEX → OKLCH conversion updates all CSS variables instantly
+- [x] Create CompanyColorContext that persists color per company in localStorage
+- [x] CompanySettings Apariencia tab: selecting a color updates the whole app immediately on save (no reload)
+- [x] Live preview in color picker shows real-time changes before saving
