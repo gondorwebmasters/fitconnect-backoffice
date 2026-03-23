@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { apolloClient } from '@/graphql/apollo-client';
 import { FIND_USER, CREATE_USER, UPDATE_USER } from '@/graphql/operations';
-import type { User, UserResponse, UserRoleEnum } from '@/graphql/types';
+import type { UserResponse, UserRoleEnum } from '@/graphql/types';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ export default function UserDetailPage() {
             });
           }
         })
-        .catch(() => toast.error('Failed to load user'))
+        .catch(() => toast.error('Error al cargar el usuario'))
         .finally(() => setLoading(false));
     }
   }, [isNew, params.id]);
@@ -64,7 +64,7 @@ export default function UserDetailPage() {
     try {
       if (isNew) {
         if (!form.password) {
-          toast.error('Password is required for new users');
+          toast.error('La contraseña es obligatoria para nuevos usuarios');
           setSaving(false);
           return;
         }
@@ -81,10 +81,10 @@ export default function UserDetailPage() {
         });
         const result = (data as Record<string, unknown>)?.createUser as UserResponse;
         if (result?.success) {
-          toast.success('User created successfully');
+          toast.success('Usuario creado correctamente');
           setLocation('/users');
         } else {
-          toast.error(result?.message || 'Failed to create user');
+          toast.error(result?.message || 'Error al crear el usuario');
         }
       } else {
         const { data } = await apolloClient.mutate({
@@ -104,14 +104,14 @@ export default function UserDetailPage() {
         });
         const result = (data as Record<string, unknown>)?.updateUser as UserResponse;
         if (result?.success) {
-          toast.success('User updated successfully');
+          toast.success('Usuario actualizado correctamente');
           setLocation('/users');
         } else {
-          toast.error(result?.message || 'Failed to update user');
+          toast.error(result?.message || 'Error al actualizar el usuario');
         }
       }
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(err instanceof Error ? err.message : 'Ha ocurrido un error');
     } finally {
       setSaving(false);
     }
@@ -131,11 +131,11 @@ export default function UserDetailPage() {
   return (
     <div>
       <PageHeader
-        title={isNew ? 'Create User' : 'Edit User'}
-        description={isNew ? 'Add a new user to the platform' : 'Update user information'}
+        title={isNew ? 'Crear usuario' : 'Editar usuario'}
+        description={isNew ? 'Añade un nuevo usuario a la plataforma' : 'Actualiza la información del usuario'}
         actions={
           <Button variant="outline" onClick={() => setLocation('/users')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            <ArrowLeft className="mr-2 h-4 w-4" /> Volver
           </Button>
         }
       />
@@ -143,52 +143,52 @@ export default function UserDetailPage() {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-0 shadow-sm">
-            <CardHeader><CardTitle className="text-base">Basic Information</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Información básica</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {!isNew && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="First name" />
+                    <Label>Nombre</Label>
+                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nombre" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Surname</Label>
-                    <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} placeholder="Last name" />
+                    <Label>Apellido</Label>
+                    <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} placeholder="Apellido" />
                   </div>
                 </div>
               )}
               <div className="space-y-2">
                 <Label>Email *</Label>
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required placeholder="user@example.com" />
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required placeholder="usuario@ejemplo.com" />
               </div>
               <div className="space-y-2">
                 <Label>Nickname *</Label>
-                <Input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} required placeholder="unique_nickname" />
+                <Input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} required placeholder="nickname_unico" />
               </div>
               {!isNew && (
                 <div className="space-y-2">
-                  <Label>Phone Number</Label>
+                  <Label>Teléfono</Label>
                   <Input value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} placeholder="+34 600 000 000" />
                 </div>
               )}
               {isNew && (
                 <div className="space-y-2">
-                  <Label>Password *</Label>
-                  <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required placeholder="Minimum 6 characters" />
+                  <Label>Contraseña *</Label>
+                  <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required placeholder="Mínimo 6 caracteres" />
                 </div>
               )}
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm">
-            <CardHeader><CardTitle className="text-base">Role & Status</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Rol y estado</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label>Rol</Label>
                 <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="standard">Standard</SelectItem>
+                    <SelectItem value="standard">Estándar</SelectItem>
                     <SelectItem value="boss">Boss</SelectItem>
                     <SelectItem value="coach">Coach</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
@@ -198,8 +198,8 @@ export default function UserDetailPage() {
               {!isNew && (
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
-                    <Label>Blocked</Label>
-                    <p className="text-xs text-muted-foreground mt-1">Block this user from accessing the platform</p>
+                    <Label>Bloqueado</Label>
+                    <p className="text-xs text-muted-foreground mt-1">Bloquear el acceso del usuario a la plataforma</p>
                   </div>
                   <Switch checked={form.isBlocked} onCheckedChange={(v) => setForm({ ...form, isBlocked: v })} />
                 </div>
@@ -211,7 +211,7 @@ export default function UserDetailPage() {
         <div className="flex justify-end mt-6">
           <Button type="submit" disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            {isNew ? 'Create User' : 'Save Changes'}
+            {isNew ? 'Crear usuario' : 'Guardar cambios'}
           </Button>
         </div>
       </form>

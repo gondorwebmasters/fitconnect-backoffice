@@ -52,7 +52,7 @@ export default function CompanyDetailPage() {
             });
           }
         })
-        .catch(() => toast.error('Failed to load company'))
+        .catch(() => toast.error('Error al cargar la empresa'))
         .finally(() => setLoading(false));
     }
   }, [params.id]);
@@ -77,8 +77,8 @@ export default function CompanyDetailPage() {
         },
       });
       const result = (data as Record<string, unknown>)?.updateCompany as CompanyResponse;
-      if (result?.success) { toast.success('Company updated'); } else { toast.error(result?.message || 'Failed'); }
-    } catch { toast.error('Error updating company'); }
+      if (result?.success) { toast.success('Empresa actualizada'); } else { toast.error(result?.message || 'Error'); }
+    } catch { toast.error('Error al actualizar la empresa'); }
     finally { setSaving(false); }
   };
 
@@ -96,9 +96,9 @@ export default function CompanyDetailPage() {
       if (urlResult?.presignedUrl) {
         await fetch(urlResult.presignedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
         await apolloClient.mutate({ mutation: UPDATE_COMPANY_LOGO, variables: { companyId: params.id, picture: urlResult.key } });
-        toast.success('Logo updated');
+        toast.success('Logo actualizado');
       }
-    } catch { toast.error('Failed to upload logo'); }
+    } catch { toast.error('Error al subir el logo'); }
     finally { setUploading(false); }
   };
 
@@ -108,11 +108,11 @@ export default function CompanyDetailPage() {
 
   return (
     <div>
-      <PageHeader title="Edit Company" description={company?.name || ''} actions={<Button variant="outline" onClick={() => setLocation('/companies')}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>} />
+      <PageHeader title="Editar empresa" description={company?.name || ''} actions={<Button variant="outline" onClick={() => setLocation('/companies')}><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button>} />
 
       <form onSubmit={handleSave}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Logo card */}
+          {/* Logo */}
           <Card className="border-0 shadow-sm lg:col-span-1">
             <CardContent className="p-6 flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24 rounded-2xl">
@@ -122,37 +122,37 @@ export default function CompanyDetailPage() {
               <Label htmlFor="logo-upload" className="cursor-pointer">
                 <div className="flex items-center gap-2 text-sm text-primary hover:underline">
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {uploading ? 'Uploading...' : 'Change Logo'}
+                  {uploading ? 'Subiendo...' : 'Cambiar logo'}
                 </div>
                 <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
               </Label>
             </CardContent>
           </Card>
 
-          {/* Basic info */}
+          {/* Información básica */}
           <Card className="border-0 shadow-sm lg:col-span-2">
-            <CardHeader><CardTitle className="text-base">Company Information</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Información de la empresa</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Nombre</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Phone</Label><Input value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Teléfono</Label><Input value={form.phoneNumber} onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Dirección</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Company Config */}
+          {/* Funciones */}
           <Card className="border-0 shadow-sm lg:col-span-1">
-            <CardHeader><CardTitle className="text-base">Features</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Funciones</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {[
-                { key: 'pollsEnabled' as const, label: 'Polls', desc: 'Enable community polls' },
-                { key: 'productsEnabled' as const, label: 'Products', desc: 'Enable product catalog' },
-                { key: 'chatEnabled' as const, label: 'Chat', desc: 'Enable messaging' },
-                { key: 'trainingEnabled' as const, label: 'Training', desc: 'Enable training tasks' },
+                { key: 'pollsEnabled' as const, label: 'Encuestas', desc: 'Habilitar encuestas comunitarias' },
+                { key: 'productsEnabled' as const, label: 'Productos', desc: 'Habilitar catálogo de productos' },
+                { key: 'chatEnabled' as const, label: 'Chat', desc: 'Habilitar mensajería' },
+                { key: 'trainingEnabled' as const, label: 'Entrenamiento', desc: 'Habilitar tareas de entrenamiento' },
               ].map((item) => (
                 <div key={item.key} className="flex items-center justify-between">
                   <div><p className="text-sm font-medium">{item.label}</p><p className="text-xs text-muted-foreground">{item.desc}</p></div>
@@ -162,20 +162,20 @@ export default function CompanyDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Schedule Options */}
+          {/* Opciones de horario */}
           <Card className="border-0 shadow-sm lg:col-span-2">
-            <CardHeader><CardTitle className="text-base">Schedule Options</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Opciones de horario</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Max Active Reservations</Label><Input type="number" min="1" value={form.maxActiveReservations} onChange={(e) => setForm({ ...form, maxActiveReservations: parseInt(e.target.value) || 1 })} /></div>
-                <div className="space-y-2"><Label>Max Advance Booking Days</Label><Input type="number" min="1" value={form.maxAdvanceBookingDays} onChange={(e) => setForm({ ...form, maxAdvanceBookingDays: parseInt(e.target.value) || 1 })} /></div>
+                <div className="space-y-2"><Label>Máx. reservas activas</Label><Input type="number" min="1" value={form.maxActiveReservations} onChange={(e) => setForm({ ...form, maxActiveReservations: parseInt(e.target.value) || 1 })} /></div>
+                <div className="space-y-2"><Label>Días máx. de reserva anticipada</Label><Input type="number" min="1" value={form.maxAdvanceBookingDays} onChange={(e) => setForm({ ...form, maxAdvanceBookingDays: parseInt(e.target.value) || 1 })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Booking Cutoff (minutes)</Label><Input type="number" min="0" value={form.bookingCutoffMinutes} onChange={(e) => setForm({ ...form, bookingCutoffMinutes: parseInt(e.target.value) || 0 })} /></div>
-                <div className="space-y-2"><Label>Min Bookings Required</Label><Input type="number" min="0" value={form.minBookingsRequired} onChange={(e) => setForm({ ...form, minBookingsRequired: parseInt(e.target.value) || 0 })} /></div>
+                <div className="space-y-2"><Label>Corte de reserva (minutos)</Label><Input type="number" min="0" value={form.bookingCutoffMinutes} onChange={(e) => setForm({ ...form, bookingCutoffMinutes: parseInt(e.target.value) || 0 })} /></div>
+                <div className="space-y-2"><Label>Mín. reservas requeridas</Label><Input type="number" min="0" value={form.minBookingsRequired} onChange={(e) => setForm({ ...form, minBookingsRequired: parseInt(e.target.value) || 0 })} /></div>
               </div>
               <div className="flex items-center justify-between rounded-lg border p-4">
-                <div><p className="text-sm font-medium">Same Day Booking</p><p className="text-xs text-muted-foreground">Allow users to book on the same day</p></div>
+                <div><p className="text-sm font-medium">Reserva el mismo día</p><p className="text-xs text-muted-foreground">Permitir reservas para el mismo día</p></div>
                 <Switch checked={form.sameDayBookingAllowed} onCheckedChange={(v) => setForm({ ...form, sameDayBookingAllowed: v })} />
               </div>
             </CardContent>
@@ -184,7 +184,7 @@ export default function CompanyDetailPage() {
 
         <div className="flex justify-end mt-6">
           <Button type="submit" disabled={saving}>
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Save Changes
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Guardar cambios
           </Button>
         </div>
       </form>

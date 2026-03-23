@@ -1,16 +1,15 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import {
-  GET_USERS, LIST_USER_SUBSCRIPTIONS, CREATE_SUBSCRIPTION, CANCEL_SUBSCRIPTION,
+  LIST_USER_SUBSCRIPTIONS, CREATE_SUBSCRIPTION, CANCEL_SUBSCRIPTION,
   PAUSE_SUBSCRIPTION, RESUME_SUBSCRIPTION, CHANGE_SUBSCRIPTION_PLAN, LIST_PLANS,
 } from '@/graphql/operations';
-import type { Subscription, SubscriptionResponse, Plan, PlanResponse, UserResponse, BasicResponse } from '@/graphql/types';
+import type { Subscription, SubscriptionResponse, Plan, PlanResponse, BasicResponse } from '@/graphql/types';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserAutocomplete } from '@/components/common/UserAutocomplete';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,7 +54,7 @@ export default function SubscriptionsPage() {
       });
       const result = (data as Record<string, unknown>)?.listUserSubscriptions as SubscriptionResponse;
       if (result?.success) setSubscriptions(result.subscriptions || []);
-    } catch { toast.error('Failed to load subscriptions'); }
+    } catch { toast.error('Error al cargar las suscripciones'); }
     finally { setLoading(false); }
   };
 
@@ -65,7 +64,7 @@ export default function SubscriptionsPage() {
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
-    if (!newSub.planId || !newSub.userId) { toast.error('Plan and user are required'); return; }
+    if (!newSub.planId || !newSub.userId) { toast.error('El plan y el usuario son obligatorios'); return; }
     setCreating(true);
     try {
       const { data } = await apolloClient.mutate({
@@ -73,8 +72,8 @@ export default function SubscriptionsPage() {
         variables: { subscription: { planId: newSub.planId, userId: newSub.userId } },
       });
       const result = (data as Record<string, unknown>)?.createSubscription as SubscriptionResponse;
-      if (result?.success) { toast.success('Subscription created'); setCreateOpen(false); setUserId(newSub.userId); fetchSubscriptions(); }
-      else { toast.error(result?.message || 'Failed'); }
+      if (result?.success) { toast.success('Suscripción creada'); setCreateOpen(false); setUserId(newSub.userId); fetchSubscriptions(); }
+      else { toast.error(result?.message || 'Error al crear'); }
     } catch { toast.error('Error'); }
     finally { setCreating(false); }
   };
@@ -85,20 +84,20 @@ export default function SubscriptionsPage() {
     try {
       const { data } = await apolloClient.mutate({ mutation: CANCEL_SUBSCRIPTION, variables: { input: { subscriptionId: cancelDialog.id } } });
       const result = (data as Record<string, unknown>)?.cancelSubscription as SubscriptionResponse;
-      if (result?.success) { toast.success('Subscription cancelled'); setCancelDialog({ open: false, id: null, cancelling: false }); fetchSubscriptions(); }
-      else { toast.error(result?.message || 'Failed'); }
+      if (result?.success) { toast.success('Suscripción cancelada'); setCancelDialog({ open: false, id: null, cancelling: false }); fetchSubscriptions(); }
+      else { toast.error(result?.message || 'Error'); }
     } catch { toast.error('Error'); }
     finally { setCancelDialog((p) => ({ ...p, cancelling: false })); }
   };
 
   const handlePause = async (id: string) => {
-    try { await apolloClient.mutate({ mutation: PAUSE_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Subscription paused'); fetchSubscriptions(); }
-    catch { toast.error('Failed to pause'); }
+    try { await apolloClient.mutate({ mutation: PAUSE_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción pausada'); fetchSubscriptions(); }
+    catch { toast.error('Error al pausar'); }
   };
 
   const handleResume = async (id: string) => {
-    try { await apolloClient.mutate({ mutation: RESUME_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Subscription resumed'); fetchSubscriptions(); }
-    catch { toast.error('Failed to resume'); }
+    try { await apolloClient.mutate({ mutation: RESUME_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción reanudada'); fetchSubscriptions(); }
+    catch { toast.error('Error al reanudar'); }
   };
 
   const handleChangePlan = async () => {
@@ -106,16 +105,16 @@ export default function SubscriptionsPage() {
     setChangePlanDialog((p) => ({ ...p, saving: true }));
     try {
       await apolloClient.mutate({ mutation: CHANGE_SUBSCRIPTION_PLAN, variables: { subscriptionId: changePlanDialog.subId, newPlanId: changePlanDialog.newPlanId } });
-      toast.success('Plan changed');
+      toast.success('Plan cambiado');
       setChangePlanDialog({ open: false, subId: null, newPlanId: '', saving: false });
       fetchSubscriptions();
-    } catch { toast.error('Failed to change plan'); }
+    } catch { toast.error('Error al cambiar el plan'); }
     finally { setChangePlanDialog((p) => ({ ...p, saving: false })); }
   };
 
   return (
     <div>
-      <PageHeader title="Subscriptions" description="Manage user subscriptions" actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> New Subscription</Button>} />
+      <PageHeader title="Suscripciones" description="Gestiona las suscripciones de los usuarios" actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nueva suscripción</Button>} />
 
       <div className="mb-6 max-w-sm">
         <UserAutocomplete
@@ -129,7 +128,7 @@ export default function SubscriptionsPage() {
       {loading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Card key={i} className="border-0 shadow-sm"><CardContent className="p-4"><div className="h-16 animate-pulse bg-muted rounded" /></CardContent></Card>)}</div>
       ) : subscriptions.length === 0 ? (
-        <Card className="border-0 shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">{userId ? 'No subscriptions found for this user.' : 'Enter a user ID to view subscriptions.'}</CardContent></Card>
+        <Card className="border-0 shadow-sm"><CardContent className="p-8 text-center text-muted-foreground">{userId ? 'No se encontraron suscripciones para este usuario.' : 'Selecciona un usuario para ver sus suscripciones.'}</CardContent></Card>
       ) : (
         <div className="space-y-3">
           {subscriptions.map((sub) => (
@@ -138,21 +137,21 @@ export default function SubscriptionsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm">Subscription #{sub.id.slice(0, 8)}</p>
+                      <p className="font-medium text-sm">Suscripción #{sub.id.slice(0, 8)}</p>
                       <StatusBadge status={sub.status} />
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Start: {new Date(sub.startDate).toLocaleDateString()}</span>
-                      <span>End: {new Date(sub.endDate).toLocaleDateString()}</span>
+                      <span>Inicio: {new Date(sub.startDate).toLocaleDateString('es-ES')}</span>
+                      <span>Fin: {new Date(sub.endDate).toLocaleDateString('es-ES')}</span>
                     </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {sub.status === 'active' && <DropdownMenuItem onClick={() => handlePause(sub.id)}><Pause className="mr-2 h-4 w-4" /> Pause</DropdownMenuItem>}
-                      {sub.status === 'paused' && <DropdownMenuItem onClick={() => handleResume(sub.id)}><Play className="mr-2 h-4 w-4" /> Resume</DropdownMenuItem>}
-                      <DropdownMenuItem onClick={() => setChangePlanDialog({ open: true, subId: sub.id, newPlanId: '', saving: false })}><RefreshCw className="mr-2 h-4 w-4" /> Change Plan</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setCancelDialog({ open: true, id: sub.id, cancelling: false })} className="text-destructive"><XCircle className="mr-2 h-4 w-4" /> Cancel</DropdownMenuItem>
+                      {sub.status === 'active' && <DropdownMenuItem onClick={() => handlePause(sub.id)}><Pause className="mr-2 h-4 w-4" /> Pausar</DropdownMenuItem>}
+                      {sub.status === 'paused' && <DropdownMenuItem onClick={() => handleResume(sub.id)}><Play className="mr-2 h-4 w-4" /> Reanudar</DropdownMenuItem>}
+                      <DropdownMenuItem onClick={() => setChangePlanDialog({ open: true, subId: sub.id, newPlanId: '', saving: false })}><RefreshCw className="mr-2 h-4 w-4" /> Cambiar plan</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setCancelDialog({ open: true, id: sub.id, cancelling: false })} className="text-destructive"><XCircle className="mr-2 h-4 w-4" /> Cancelar</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -162,10 +161,10 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
-      {/* Create Subscription */}
+      {/* Crear suscripción */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Subscription</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Crear suscripción</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <UserAutocomplete
@@ -177,37 +176,37 @@ export default function SubscriptionsPage() {
               />
             </div>
             <div className="space-y-2"><Label>Plan *</Label>
-              <Select value={newSub.planId} onValueChange={(v) => setNewSub({ ...newSub, planId: v })}><SelectTrigger><SelectValue placeholder="Select plan" /></SelectTrigger>
+              <Select value={newSub.planId} onValueChange={(v) => setNewSub({ ...newSub, planId: v })}><SelectTrigger><SelectValue placeholder="Seleccionar plan" /></SelectTrigger>
                 <SelectContent>{plans.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.amount} {p.currency.toUpperCase()}/{p.interval}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={creating}>{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Create</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={creating}>{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Crear</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Change Plan */}
+      {/* Cambiar plan */}
       <Dialog open={changePlanDialog.open} onOpenChange={(o) => setChangePlanDialog((p) => ({ ...p, open: o }))}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Change Subscription Plan</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Cambiar plan de suscripción</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>New Plan</Label>
-              <Select value={changePlanDialog.newPlanId} onValueChange={(v) => setChangePlanDialog((p) => ({ ...p, newPlanId: v }))}><SelectTrigger><SelectValue placeholder="Select new plan" /></SelectTrigger>
+            <div className="space-y-2"><Label>Nuevo plan</Label>
+              <Select value={changePlanDialog.newPlanId} onValueChange={(v) => setChangePlanDialog((p) => ({ ...p, newPlanId: v }))}><SelectTrigger><SelectValue placeholder="Seleccionar nuevo plan" /></SelectTrigger>
                 <SelectContent>{plans.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {p.amount} {p.currency.toUpperCase()}/{p.interval}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setChangePlanDialog((p) => ({ ...p, open: false }))}>Cancel</Button>
-            <Button onClick={handleChangePlan} disabled={changePlanDialog.saving}>{changePlanDialog.saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Change</Button>
+            <Button variant="outline" onClick={() => setChangePlanDialog((p) => ({ ...p, open: false }))}>Cancelar</Button>
+            <Button onClick={handleChangePlan} disabled={changePlanDialog.saving}>{changePlanDialog.saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Cambiar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={cancelDialog.open} onOpenChange={(o) => setCancelDialog((p) => ({ ...p, open: o }))} title="Cancel Subscription" description="Are you sure you want to cancel this subscription?" confirmLabel="Cancel Subscription" onConfirm={handleCancel} variant="destructive" loading={cancelDialog.cancelling} />
+      <ConfirmDialog open={cancelDialog.open} onOpenChange={(o) => setCancelDialog((p) => ({ ...p, open: o }))} title="Cancelar suscripción" description="¿Estás seguro de que quieres cancelar esta suscripción?" confirmLabel="Cancelar suscripción" onConfirm={handleCancel} variant="destructive" loading={cancelDialog.cancelling} />
     </div>
   );
 }

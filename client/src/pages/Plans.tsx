@@ -43,7 +43,7 @@ export default function PlansPage() {
       const { data } = await apolloClient.query({ query: LIST_PLANS, fetchPolicy: 'network-only' });
       const result = (data as Record<string, unknown>)?.listPlans as PlanResponse;
       if (result?.success) setPlans(result.plans || []);
-    } catch { toast.error('Failed to load plans'); }
+    } catch { toast.error('Error al cargar los planes'); }
     finally { setLoading(false); }
   };
 
@@ -68,7 +68,7 @@ export default function PlansPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name) { toast.error('Name is required'); return; }
+    if (!form.name) { toast.error('El nombre es obligatorio'); return; }
     setSaving(true);
     try {
       const mutation = editingPlan ? UPDATE_PLAN : CREATE_PLAN;
@@ -84,11 +84,11 @@ export default function PlansPage() {
       const key = editingPlan ? 'updatePlan' : 'createPlan';
       const result = (data as Record<string, unknown>)?.[key] as PlanResponse;
       if (result?.success) {
-        toast.success(editingPlan ? 'Plan updated' : 'Plan created');
+        toast.success(editingPlan ? 'Plan actualizado' : 'Plan creado');
         setDialogOpen(false);
         fetchPlans();
-      } else { toast.error(result?.message || 'Failed'); }
-    } catch { toast.error('Error saving plan'); }
+      } else { toast.error(result?.message || 'Error'); }
+    } catch { toast.error('Error al guardar el plan'); }
     finally { setSaving(false); }
   };
 
@@ -98,8 +98,8 @@ export default function PlansPage() {
     try {
       const { data } = await apolloClient.mutate({ mutation: REMOVE_PLAN, variables: { planId: deleteDialog.id } });
       const result = (data as Record<string, unknown>)?.removePlan as BasicResponse;
-      if (result?.success) { toast.success('Plan removed'); setDeleteDialog({ open: false, id: null, deleting: false }); fetchPlans(); }
-      else { toast.error(result?.message || 'Failed'); }
+      if (result?.success) { toast.success('Plan eliminado'); setDeleteDialog({ open: false, id: null, deleting: false }); fetchPlans(); }
+      else { toast.error(result?.message || 'Error'); }
     } catch { toast.error('Error'); }
     finally { setDeleteDialog((p) => ({ ...p, deleting: false })); }
   };
@@ -117,67 +117,67 @@ export default function PlansPage() {
 
   const columns: Column<Plan>[] = useMemo(() => [
     { key: 'name', header: 'Plan', render: (p) => <div><p className="font-medium text-sm">{p.name}</p><p className="text-xs text-muted-foreground truncate max-w-xs">{p.description}</p></div> },
-    { key: 'price', header: 'Price', render: (p) => <span className="text-sm font-medium">{p.amount.toFixed(2)} {p.currency.toUpperCase()}/{p.interval}</span> },
-    { key: 'status', header: 'Status', render: (p) => <StatusBadge status={p.status} /> },
-    { key: 'features', header: 'Features', render: (p) => <div className="flex flex-wrap gap-1">{(p.features || []).slice(0, 3).map((f, i) => <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>)}{(p.features || []).length > 3 && <Badge variant="outline" className="text-xs">+{p.features.length - 3}</Badge>}</div> },
-    { key: 'trial', header: 'Trial', render: (p) => <span className="text-sm">{p.trialPeriodDays ? `${p.trialPeriodDays} days` : '—'}</span> },
+    { key: 'price', header: 'Precio', render: (p) => <span className="text-sm font-medium">{p.amount.toFixed(2)} {p.currency.toUpperCase()}/{p.interval}</span> },
+    { key: 'status', header: 'Estado', render: (p) => <StatusBadge status={p.status} /> },
+    { key: 'features', header: 'Funciones', render: (p) => <div className="flex flex-wrap gap-1">{(p.features || []).slice(0, 3).map((f, i) => <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>)}{(p.features || []).length > 3 && <Badge variant="outline" className="text-xs">+{p.features.length - 3}</Badge>}</div> },
+    { key: 'trial', header: 'Prueba', render: (p) => <span className="text-sm">{p.trialPeriodDays ? `${p.trialPeriodDays} días` : '—'}</span> },
     {
       key: 'actions', header: '', className: 'w-12',
       render: (p) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => openEdit(p)}><Pencil className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, id: p.id, deleting: false })} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openEdit(p)}><Pencil className="mr-2 h-4 w-4" /> Editar</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, id: p.id, deleting: false })} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ),
     },
-  ], []);
+  ], []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
-      <PageHeader title="Plans" description="Manage subscription plans" actions={<Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Add Plan</Button>} />
-      <DataTable columns={columns} data={filteredPlans} loading={loading} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search plans..." emptyMessage="No plans found." keyExtractor={(p) => p.id} />
+      <PageHeader title="Planes" description="Gestiona los planes de suscripción" actions={<Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Añadir plan</Button>} />
+      <DataTable columns={columns} data={filteredPlans} loading={loading} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar planes..." emptyMessage="No se encontraron planes." keyExtractor={(p) => p.id} />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editingPlan ? 'Edit Plan' : 'Create Plan'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingPlan ? 'Editar plan' : 'Crear plan'}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
-            <div className="space-y-2"><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></div>
+            <div className="space-y-2"><Label>Nombre *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Descripción</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Amount</Label><Input type="number" step="0.01" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })} /></div>
-              <div className="space-y-2"><Label>Currency</Label>
+              <div className="space-y-2"><Label>Importe</Label><Input type="number" step="0.01" min="0" value={form.amount} onChange={(e) => setForm({ ...form, amount: parseFloat(e.target.value) || 0 })} /></div>
+              <div className="space-y-2"><Label>Moneda</Label>
                 <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="eur">EUR</SelectItem><SelectItem value="usd">USD</SelectItem></SelectContent></Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Interval</Label>
-                <Select value={form.interval} onValueChange={(v) => setForm({ ...form, interval: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="day">Day</SelectItem><SelectItem value="week">Week</SelectItem><SelectItem value="month">Month</SelectItem><SelectItem value="year">Year</SelectItem></SelectContent></Select>
+              <div className="space-y-2"><Label>Intervalo</Label>
+                <Select value={form.interval} onValueChange={(v) => setForm({ ...form, interval: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="day">Día</SelectItem><SelectItem value="week">Semana</SelectItem><SelectItem value="month">Mes</SelectItem><SelectItem value="year">Año</SelectItem></SelectContent></Select>
               </div>
-              <div className="space-y-2"><Label>Interval Count</Label><Input type="number" min="1" value={form.intervalCount} onChange={(e) => setForm({ ...form, intervalCount: parseInt(e.target.value) || 1 })} /></div>
+              <div className="space-y-2"><Label>Cantidad de intervalos</Label><Input type="number" min="1" value={form.intervalCount} onChange={(e) => setForm({ ...form, intervalCount: parseInt(e.target.value) || 1 })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Trial Period (days)</Label><Input type="number" min="0" value={form.trialPeriodDays} onChange={(e) => setForm({ ...form, trialPeriodDays: parseInt(e.target.value) || 0 })} /></div>
-              <div className="space-y-2"><Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem><SelectItem value="archived">Archived</SelectItem></SelectContent></Select>
+              <div className="space-y-2"><Label>Período de prueba (días)</Label><Input type="number" min="0" value={form.trialPeriodDays} onChange={(e) => setForm({ ...form, trialPeriodDays: parseInt(e.target.value) || 0 })} /></div>
+              <div className="space-y-2"><Label>Estado</Label>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Activo</SelectItem><SelectItem value="inactive">Inactivo</SelectItem><SelectItem value="archived">Archivado</SelectItem></SelectContent></Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Features</Label>
-              <div className="flex gap-2"><Input value={featureInput} onChange={(e) => setFeatureInput(e.target.value)} placeholder="Add feature" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }} /><Button type="button" variant="outline" onClick={addFeature}>Add</Button></div>
+              <Label>Funciones incluidas</Label>
+              <div className="flex gap-2"><Input value={featureInput} onChange={(e) => setFeatureInput(e.target.value)} placeholder="Añadir función" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }} /><Button type="button" variant="outline" onClick={addFeature}>Añadir</Button></div>
               <div className="flex flex-wrap gap-1 mt-2">{form.features.map((f, i) => <Badge key={i} variant="secondary" className="gap-1">{f}<button onClick={() => removeFeature(i)}><X className="h-3 w-3" /></button></Badge>)}</div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {editingPlan ? 'Update' : 'Create'}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {editingPlan ? 'Actualizar' : 'Crear'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={deleteDialog.open} onOpenChange={(o) => setDeleteDialog((p) => ({ ...p, open: o }))} title="Delete Plan" description="Are you sure? This will permanently remove the plan." confirmLabel="Delete" onConfirm={handleDelete} variant="destructive" loading={deleteDialog.deleting} />
+      <ConfirmDialog open={deleteDialog.open} onOpenChange={(o) => setDeleteDialog((p) => ({ ...p, open: o }))} title="Eliminar plan" description="¿Estás seguro? Esto eliminará el plan de forma permanente." confirmLabel="Eliminar" onConfirm={handleDelete} variant="destructive" loading={deleteDialog.deleting} />
     </div>
   );
 }

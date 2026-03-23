@@ -35,7 +35,7 @@ export default function CompaniesPage() {
       });
       const result = (data as Record<string, unknown>)?.getCompanies as CompanyResponse;
       if (result?.success) setCompanies(result.companies || (result.company ? [result.company] : []));
-    } catch { toast.error('Failed to load companies'); }
+    } catch { toast.error('Error al cargar las empresas'); }
     finally { setLoading(false); }
   };
 
@@ -47,7 +47,7 @@ export default function CompaniesPage() {
   }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
-    if (!newCompany.name || !newCompany.email) { toast.error('Name and email are required'); return; }
+    if (!newCompany.name || !newCompany.email) { toast.error('El nombre y el email son obligatorios'); return; }
     setCreating(true);
     try {
       const { data } = await apolloClient.mutate({
@@ -56,19 +56,19 @@ export default function CompaniesPage() {
       });
       const result = (data as Record<string, unknown>)?.createCompany as CompanyResponse;
       if (result?.success) {
-        toast.success('Company created');
+        toast.success('Empresa creada');
         setCreateOpen(false);
         setNewCompany({ name: '', phoneNumber: '', email: '', address: '' });
         fetchCompanies();
-      } else { toast.error(result?.message || 'Failed'); }
-    } catch { toast.error('Error creating company'); }
+      } else { toast.error(result?.message || 'Error'); }
+    } catch { toast.error('Error al crear la empresa'); }
     finally { setCreating(false); }
   };
 
   const columns: Column<Company>[] = useMemo(() => [
     {
       key: 'company',
-      header: 'Company',
+      header: 'Empresa',
       render: (c) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9 rounded-lg">
@@ -82,17 +82,17 @@ export default function CompaniesPage() {
         </div>
       ),
     },
-    { key: 'phone', header: 'Phone', render: (c) => <span className="text-sm">{c.phoneNumber || '—'}</span> },
-    { key: 'address', header: 'Address', render: (c) => <span className="text-sm text-muted-foreground truncate max-w-xs block">{c.address || '—'}</span> },
+    { key: 'phone', header: 'Teléfono', render: (c) => <span className="text-sm">{c.phoneNumber || '—'}</span> },
+    { key: 'address', header: 'Dirección', render: (c) => <span className="text-sm text-muted-foreground truncate max-w-xs block">{c.address || '—'}</span> },
     {
       key: 'features',
-      header: 'Features',
+      header: 'Funciones',
       render: (c) => (
         <div className="flex flex-wrap gap-1">
-          {c.companyConfig?.pollsEnabled && <Badge variant="secondary" className="text-xs">Polls</Badge>}
-          {c.companyConfig?.productsEnabled && <Badge variant="secondary" className="text-xs">Products</Badge>}
+          {c.companyConfig?.pollsEnabled && <Badge variant="secondary" className="text-xs">Encuestas</Badge>}
+          {c.companyConfig?.productsEnabled && <Badge variant="secondary" className="text-xs">Productos</Badge>}
           {c.companyConfig?.chatEnabled && <Badge variant="secondary" className="text-xs">Chat</Badge>}
-          {c.companyConfig?.trainingEnabled && <Badge variant="secondary" className="text-xs">Training</Badge>}
+          {c.companyConfig?.trainingEnabled && <Badge variant="secondary" className="text-xs">Entrenamiento</Badge>}
         </div>
       ),
     },
@@ -111,25 +111,25 @@ export default function CompaniesPage() {
   return (
     <div>
       <PageHeader
-        title="Companies"
-        description="Manage companies on the platform"
-        actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add Company</Button>}
+        title="Empresas"
+        description="Gestiona las empresas de la plataforma"
+        actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Añadir empresa</Button>}
       />
 
-      <DataTable columns={columns} data={companies} loading={loading} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Search companies..." emptyMessage="No companies found." keyExtractor={(c) => c.id} />
+      <DataTable columns={columns} data={companies} loading={loading} searchValue={search} onSearchChange={setSearch} searchPlaceholder="Buscar empresas..." emptyMessage="No se encontraron empresas." keyExtractor={(c) => c.id} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Company</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Crear empresa</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>Name *</Label><Input value={newCompany.name} onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })} placeholder="Company name" /></div>
-            <div className="space-y-2"><Label>Email *</Label><Input type="email" value={newCompany.email} onChange={(e) => setNewCompany({ ...newCompany, email: e.target.value })} placeholder="company@example.com" /></div>
-            <div className="space-y-2"><Label>Phone</Label><Input value={newCompany.phoneNumber} onChange={(e) => setNewCompany({ ...newCompany, phoneNumber: e.target.value })} placeholder="+34 600 000 000" /></div>
-            <div className="space-y-2"><Label>Address</Label><Input value={newCompany.address} onChange={(e) => setNewCompany({ ...newCompany, address: e.target.value })} placeholder="Street, City, Country" /></div>
+            <div className="space-y-2"><Label>Nombre *</Label><Input value={newCompany.name} onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value })} placeholder="Nombre de la empresa" /></div>
+            <div className="space-y-2"><Label>Email *</Label><Input type="email" value={newCompany.email} onChange={(e) => setNewCompany({ ...newCompany, email: e.target.value })} placeholder="empresa@ejemplo.com" /></div>
+            <div className="space-y-2"><Label>Teléfono</Label><Input value={newCompany.phoneNumber} onChange={(e) => setNewCompany({ ...newCompany, phoneNumber: e.target.value })} placeholder="+34 600 000 000" /></div>
+            <div className="space-y-2"><Label>Dirección</Label><Input value={newCompany.address} onChange={(e) => setNewCompany({ ...newCompany, address: e.target.value })} placeholder="Calle, Ciudad, País" /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={creating}>{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Create</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={creating}>{creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Crear</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

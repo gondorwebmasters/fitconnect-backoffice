@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import { SEND_NOTIFICATION } from '@/graphql/operations';
 import type { BasicResponse } from '@/graphql/types';
@@ -21,7 +21,7 @@ export default function NotificationsPage() {
 
   const handleSendSingle = async () => {
     if (!singleForm.userId || !singleForm.title || !singleForm.body) {
-      toast.error('All fields are required');
+      toast.error('Todos los campos son obligatorios');
       return;
     }
     setSendingSingle(true);
@@ -34,13 +34,13 @@ export default function NotificationsPage() {
       });
       const result = (data as Record<string, unknown>)?.sendNotification as BasicResponse;
       if (result?.success) {
-        toast.success('Notification sent');
+        toast.success('Notificación enviada');
         setSingleForm({ userId: '', title: '', body: '' });
       } else {
-        toast.error(result?.message || 'Failed to send');
+        toast.error(result?.message || 'Error al enviar');
       }
     } catch {
-      toast.error('Error sending notification');
+      toast.error('Error al enviar la notificación');
     } finally {
       setSendingSingle(false);
     }
@@ -48,7 +48,7 @@ export default function NotificationsPage() {
 
   const handleSendBroadcast = async () => {
     if (!broadcastForm.title || !broadcastForm.body) {
-      toast.error('Title and body are required');
+      toast.error('El título y el mensaje son obligatorios');
       return;
     }
     setSendingBroadcast(true);
@@ -61,13 +61,13 @@ export default function NotificationsPage() {
       });
       const result = (data as Record<string, unknown>)?.sendNotification as BasicResponse;
       if (result?.success) {
-        toast.success('Broadcast notification sent to all users');
+        toast.success('Notificación enviada a todos los usuarios');
         setBroadcastForm({ title: '', body: '' });
       } else {
-        toast.error(result?.message || 'Failed to send');
+        toast.error(result?.message || 'Error al enviar');
       }
     } catch {
-      toast.error('Error sending broadcast');
+      toast.error('Error al enviar la notificación masiva');
     } finally {
       setSendingBroadcast(false);
     }
@@ -76,17 +76,17 @@ export default function NotificationsPage() {
   return (
     <div>
       <PageHeader
-        title="Notifications"
-        description="Send push notifications to users"
+        title="Notificaciones"
+        description="Envía notificaciones push a los usuarios"
       />
 
       <Tabs defaultValue="single" className="w-full">
         <TabsList className="mb-6">
           <TabsTrigger value="single" className="gap-2">
-            <User className="h-4 w-4" /> Single User
+            <User className="h-4 w-4" /> Usuario individual
           </TabsTrigger>
           <TabsTrigger value="broadcast" className="gap-2">
-            <Users className="h-4 w-4" /> Broadcast
+            <Users className="h-4 w-4" /> Masiva
           </TabsTrigger>
         </TabsList>
 
@@ -94,7 +94,7 @@ export default function NotificationsPage() {
           <Card className="border-0 shadow-sm max-w-xl">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Bell className="h-4 w-4" /> Send to User
+                <Bell className="h-4 w-4" /> Enviar a usuario
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -108,19 +108,19 @@ export default function NotificationsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Title *</Label>
+                <Label>Título *</Label>
                 <Input
                   value={singleForm.title}
                   onChange={(e) => setSingleForm({ ...singleForm, title: e.target.value })}
-                  placeholder="Notification title"
+                  placeholder="Título de la notificación"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Body *</Label>
+                <Label>Mensaje *</Label>
                 <Textarea
                   value={singleForm.body}
                   onChange={(e) => setSingleForm({ ...singleForm, body: e.target.value })}
-                  placeholder="Notification message"
+                  placeholder="Cuerpo de la notificación"
                   rows={3}
                 />
               </div>
@@ -130,7 +130,7 @@ export default function NotificationsPage() {
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
                 )}
-                Send Notification
+                Enviar notificación
               </Button>
             </CardContent>
           </Card>
@@ -140,29 +140,29 @@ export default function NotificationsPage() {
           <Card className="border-0 shadow-sm max-w-xl">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Users className="h-4 w-4" /> Broadcast to All Users
+                <Users className="h-4 w-4" /> Enviar a todos los usuarios
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm text-amber-800">
-                  This will send a notification to all registered users. Use with caution.
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3">
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  Esto enviará una notificación a todos los usuarios registrados. Úsalo con precaución.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Title *</Label>
+                <Label>Título *</Label>
                 <Input
                   value={broadcastForm.title}
                   onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
-                  placeholder="Notification title"
+                  placeholder="Título de la notificación"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Body *</Label>
+                <Label>Mensaje *</Label>
                 <Textarea
                   value={broadcastForm.body}
                   onChange={(e) => setBroadcastForm({ ...broadcastForm, body: e.target.value })}
-                  placeholder="Notification message"
+                  placeholder="Cuerpo de la notificación"
                   rows={3}
                 />
               </div>
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
                 ) : (
                   <Send className="mr-2 h-4 w-4" />
                 )}
-                Send to All Users
+                Enviar a todos
               </Button>
             </CardContent>
           </Card>

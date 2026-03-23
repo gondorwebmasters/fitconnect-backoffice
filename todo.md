@@ -181,3 +181,10 @@
 - [x] Replace userId filter in PaymentMethods page
 - [x] Replace userId filter in Notifications page
 - [x] Replace userId filter in any other pages using raw userId input
+
+## Round 7 Fixes
+- [x] Fix UserAutocomplete: load all users at once, filter locally (no empty array bug)
+- [x] Translate all English UI text to Spanish across all pages
+- [x] Make CompanySettings fully functional (wire all mutations)
+- [x] Add primary/secondary color pickers to CompanySettings
+- [x] Apply selected company colors as CSS variables app-wide
