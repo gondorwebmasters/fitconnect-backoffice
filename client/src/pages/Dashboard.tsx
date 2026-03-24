@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
-import { GET_ADMIN_STATS, GET_POLLS, GET_NOTIFICATIONS } from '@/graphql/operations';
+import { GET_ADMIN_STATS, GET_POLLS, GET_NOTIFICATIONS, GET_SCHEDULES, GET_USERS } from '@/graphql/operations';
 import type { AdminStatsResponse, AdminStats } from '@/graphql/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,27 +95,42 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 }
 
 export default function DashboardPage() {
-  const { user } = useFitConnectAuth();
+  const { user, activeCompanyId } = useFitConnectAuth();
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [schedulesCount, setSchedulesCount] = useState(0);
   const [pollsCount, setPollsCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
+  const [usersCount, setUsersCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch admin stats
+        // Fetch admin stats (global)
         const statsRes = await apolloClient.query({ query: GET_ADMIN_STATS, fetchPolicy: 'network-only' });
         setStats((statsRes.data as Record<string, unknown>)?.getAdminStats as AdminStatsResponse);
         
-        // Fetch polls count
+        // Fetch company-scoped data (schedules, users, polls, notifications)
+        try {
+          const schedulesRes = await apolloClient.query({ query: GET_SCHEDULES, variables: {}, fetchPolicy: 'network-only' });
+          const schedulesData = (schedulesRes.data as Record<string, unknown>)?.getSchedules as Record<string, unknown> | undefined;
+          setSchedulesCount(Array.isArray(schedulesData?.schedules) ? (schedulesData.schedules as unknown[]).length : 0);
+        } catch (e) { console.error('Error fetching schedules:', e); }
+        
+        try {
+          const usersRes = await apolloClient.query({ query: GET_USERS, variables: {}, fetchPolicy: 'network-only' });
+          const usersData = (usersRes.data as Record<string, unknown>)?.getUsers as Record<string, unknown> | undefined;
+          setUsersCount(Array.isArray(usersData?.users) ? (usersData.users as unknown[]).length : 0);
+        } catch (e) { console.error('Error fetching users:', e); }
+        
+        // Fetch polls count (company-scoped)
         try {
           const pollsRes = await apolloClient.query({ query: GET_POLLS, variables: {}, fetchPolicy: 'network-only' });
           const pollsData = (pollsRes.data as Record<string, unknown>)?.getPolls as Record<string, unknown> | undefined;
           setPollsCount(Array.isArray(pollsData?.polls) ? (pollsData.polls as unknown[]).length : 0);
         } catch (e) { console.error('Error fetching polls:', e); }
         
-        // Fetch notifications count
+        // Fetch notifications count (company-scoped)
         try {
           const notifRes = await apolloClient.query({ query: GET_NOTIFICATIONS, fetchPolicy: 'network-only' });
           const notifData = (notifRes.data as Record<string, unknown>)?.getNotifications as Record<string, unknown> | undefined;
@@ -128,13 +143,18 @@ export default function DashboardPage() {
       finally { setLoading(false); }
     };
     fetchData();
-  }, []);
+  }, [activeCompanyId]);
 
   const adminStats = stats?.stats;
   
-  // Override counts with real data from queries if available
+  // Build company-scoped stats from real data
   const displayStats = adminStats ? {
     ...adminStats,
+    users: {
+      ...adminStats.users,
+      totalUsers: usersCount > 0 ? usersCount : adminStats.users.totalUsers,
+    },
+    schedules: schedulesCount > 0 ? schedulesCount : adminStats.schedules,
     polls: pollsCount > 0 ? pollsCount : adminStats.polls,
     notifications: notificationsCount > 0 ? notificationsCount : adminStats.notifications,
   } : null;

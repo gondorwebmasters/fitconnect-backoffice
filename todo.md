@@ -217,3 +217,6 @@
 - [x] Dashboard: wire polls card with real data (from GET_POLLS query)
 - [x] Dashboard: wire active plans card with real data (from GET_ADMIN_STATS)
 - [x] Dashboard: wire notifications card with real data (from GET_NOTIFICATIONS query)
+
+## Round 13 Fixes
+- [x] Fix Dashboard data mismatch: fetch company-scoped data (GET_SCHEDULES, GET_USERS, GET_POLLS, GET_NOTIFICATIONS) instead of global admin stats
