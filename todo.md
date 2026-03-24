@@ -220,3 +220,6 @@
 
 ## Round 13 Fixes
 - [x] Fix Dashboard data mismatch: fetch company-scoped data (GET_SCHEDULES, GET_USERS, GET_POLLS, GET_NOTIFICATIONS) instead of global admin stats
+
+## Round 14 Fixes
+- [x] Fix Dashboard counts: now uses LIST_PLANS (same as Plans page) and GET_ADMIN_POLLS (same as Polls page) so numbers match exactly

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
-import { GET_ADMIN_STATS, GET_POLLS, GET_NOTIFICATIONS, GET_SCHEDULES, GET_USERS } from '@/graphql/operations';
+import { GET_ADMIN_STATS, GET_ADMIN_POLLS, GET_NOTIFICATIONS, GET_SCHEDULES, GET_USERS, LIST_PLANS } from '@/graphql/operations';
 import type { AdminStatsResponse, AdminStats } from '@/graphql/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -98,6 +98,7 @@ export default function DashboardPage() {
   const { user, activeCompanyId } = useFitConnectAuth();
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
   const [schedulesCount, setSchedulesCount] = useState(0);
+  const [plansCount, setPlansCount] = useState(0);
   const [pollsCount, setPollsCount] = useState(0);
   const [notificationsCount, setNotificationsCount] = useState(0);
   const [usersCount, setUsersCount] = useState(0);
@@ -123,10 +124,17 @@ export default function DashboardPage() {
           setUsersCount(Array.isArray(usersData?.users) ? (usersData.users as unknown[]).length : 0);
         } catch (e) { console.error('Error fetching users:', e); }
         
-        // Fetch polls count (company-scoped)
+        // Fetch plans count (same query as Plans page)
         try {
-          const pollsRes = await apolloClient.query({ query: GET_POLLS, variables: {}, fetchPolicy: 'network-only' });
-          const pollsData = (pollsRes.data as Record<string, unknown>)?.getPolls as Record<string, unknown> | undefined;
+          const plansRes = await apolloClient.query({ query: LIST_PLANS, variables: {}, fetchPolicy: 'network-only' });
+          const plansData = (plansRes.data as Record<string, unknown>)?.listPlans as Record<string, unknown> | undefined;
+          setPlansCount(Array.isArray(plansData?.plans) ? (plansData.plans as unknown[]).length : 0);
+        } catch (e) { console.error('Error fetching plans:', e); }
+        
+        // Fetch polls count (same query as Polls page)
+        try {
+          const pollsRes = await apolloClient.query({ query: GET_ADMIN_POLLS, variables: {}, fetchPolicy: 'network-only' });
+          const pollsData = (pollsRes.data as Record<string, unknown>)?.getAdminPolls as Record<string, unknown> | undefined;
           setPollsCount(Array.isArray(pollsData?.polls) ? (pollsData.polls as unknown[]).length : 0);
         } catch (e) { console.error('Error fetching polls:', e); }
         
@@ -147,7 +155,7 @@ export default function DashboardPage() {
 
   const adminStats = stats?.stats;
   
-  // Build company-scoped stats from real data
+  // Build company-scoped stats from real data (same queries as individual pages)
   const displayStats = adminStats ? {
     ...adminStats,
     users: {
@@ -155,6 +163,7 @@ export default function DashboardPage() {
       totalUsers: usersCount > 0 ? usersCount : adminStats.users.totalUsers,
     },
     schedules: schedulesCount > 0 ? schedulesCount : adminStats.schedules,
+    plans: plansCount > 0 ? plansCount : adminStats.plans,
     polls: pollsCount > 0 ? pollsCount : adminStats.polls,
     notifications: notificationsCount > 0 ? notificationsCount : adminStats.notifications,
   } : null;
