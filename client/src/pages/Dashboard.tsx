@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
-import { GET_ADMIN_STATS } from '@/graphql/operations';
+import { GET_ADMIN_STATS, GET_POLLS, GET_NOTIFICATIONS } from '@/graphql/operations';
 import type { AdminStatsResponse, AdminStats } from '@/graphql/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,6 +10,7 @@ import {
   TrendingUp, TrendingDown, Activity, ArrowUpRight,
 } from 'lucide-react';
 import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
+import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, RadialBarChart, RadialBar,
@@ -96,61 +97,89 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 export default function DashboardPage() {
   const { user } = useFitConnectAuth();
   const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+  const [pollsCount, setPollsCount] = useState(0);
+  const [notificationsCount, setNotificationsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apolloClient
-      .query({ query: GET_ADMIN_STATS, fetchPolicy: 'network-only' })
-      .then(({ data }) => {
-        setStats((data as Record<string, unknown>)?.getAdminStats as AdminStatsResponse);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const fetchData = async () => {
+      try {
+        // Fetch admin stats
+        const statsRes = await apolloClient.query({ query: GET_ADMIN_STATS, fetchPolicy: 'network-only' });
+        setStats((statsRes.data as Record<string, unknown>)?.getAdminStats as AdminStatsResponse);
+        
+        // Fetch polls count
+        try {
+          const pollsRes = await apolloClient.query({ query: GET_POLLS, variables: {}, fetchPolicy: 'network-only' });
+          const pollsData = (pollsRes.data as Record<string, unknown>)?.getPolls as Record<string, unknown> | undefined;
+          setPollsCount(Array.isArray(pollsData?.polls) ? (pollsData.polls as unknown[]).length : 0);
+        } catch (e) { console.error('Error fetching polls:', e); }
+        
+        // Fetch notifications count
+        try {
+          const notifRes = await apolloClient.query({ query: GET_NOTIFICATIONS, fetchPolicy: 'network-only' });
+          const notifData = (notifRes.data as Record<string, unknown>)?.getNotifications as Record<string, unknown> | undefined;
+          setNotificationsCount(Array.isArray(notifData?.notifications) ? (notifData.notifications as unknown[]).length : 0);
+        } catch (e) { console.error('Error fetching notifications:', e); }
+      } catch (e) { 
+        console.error('Error fetching dashboard data:', e);
+        toast.error('Error al cargar estadísticas');
+      }
+      finally { setLoading(false); }
+    };
+    fetchData();
   }, []);
 
   const adminStats = stats?.stats;
+  
+  // Override counts with real data from queries if available
+  const displayStats = adminStats ? {
+    ...adminStats,
+    polls: pollsCount > 0 ? pollsCount : adminStats.polls,
+    notifications: notificationsCount > 0 ? notificationsCount : adminStats.notifications,
+  } : null;
 
   // Build chart data from stats
   const userBreakdownData = useMemo(() => {
-    if (!adminStats) return [];
-    const active = adminStats.users.totalUsers - adminStats.users.notActiveUsers - adminStats.users.blockedUsers - adminStats.users.pendingUsers;
+    if (!displayStats) return [];
+    const active = displayStats.users.totalUsers - displayStats.users.notActiveUsers - displayStats.users.blockedUsers - displayStats.users.pendingUsers;
     return [
       { name: 'Activos', value: Math.max(0, active), fill: EMERALD },
-      { name: 'Inactivos', value: adminStats.users.notActiveUsers, fill: AMBER },
-      { name: 'Pendientes', value: adminStats.users.pendingUsers, fill: VIOLET },
-      { name: 'Bloqueados', value: adminStats.users.blockedUsers, fill: ROSE },
+      { name: 'Inactivos', value: displayStats.users.notActiveUsers, fill: AMBER },
+      { name: 'Pendientes', value: displayStats.users.pendingUsers, fill: VIOLET },
+      { name: 'Bloqueados', value: displayStats.users.blockedUsers, fill: ROSE },
     ].filter(d => d.value > 0);
-  }, [adminStats]);
+  }, [displayStats]);
 
   const platformData = useMemo(() => {
-    if (!adminStats) return [];
+    if (!displayStats) return [];
     return [
-      { name: 'Horarios', value: adminStats.schedules, fill: ORANGE },
-      { name: 'Planes', value: adminStats.plans, fill: VIOLET },
-      { name: 'Suscripciones', value: adminStats.subscriptions, fill: CYAN },
-      { name: 'Encuestas', value: adminStats.polls, fill: EMERALD },
+      { name: 'Horarios', value: displayStats.schedules, fill: ORANGE },
+      { name: 'Planes', value: displayStats.plans, fill: VIOLET },
+      { name: 'Suscripciones', value: displayStats.subscriptions, fill: CYAN },
+      { name: 'Encuestas', value: displayStats.polls, fill: EMERALD },
     ];
-  }, [adminStats]);
+  }, [displayStats]);
 
   // Simulated weekly activity for area chart (based on stats proportions)
   const weeklyActivity = useMemo(() => {
-    if (!adminStats) return [];
-    const base = adminStats.users.totalUsers;
+    if (!displayStats) return [];
+    const base = displayStats.users.totalUsers;
     const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
     return days.map((day, i) => ({
       day,
       usuarios: Math.max(1, Math.round(base * (0.6 + Math.sin(i * 0.8) * 0.4))),
-      reservas: Math.max(1, Math.round(adminStats.schedules * (0.5 + Math.cos(i * 0.6) * 0.5) / 7)),
+      reservas: Math.max(1, Math.round(displayStats.schedules * (0.5 + Math.cos(i * 0.6) * 0.5) / 7)),
     }));
-  }, [adminStats]);
+  }, [displayStats]);
 
   // Radial bar for capacity usage
   const capacityData = useMemo(() => {
-    if (!adminStats) return [];
-    const totalUsers = adminStats.users.totalUsers || 1;
-    const activeRate = Math.round(((totalUsers - adminStats.users.notActiveUsers) / totalUsers) * 100);
+    if (!displayStats) return [];
+    const totalUsers = displayStats.users.totalUsers || 1;
+    const activeRate = Math.round(((totalUsers - displayStats.users.notActiveUsers) / totalUsers) * 100);
     return [{ name: 'Tasa activa', value: activeRate, fill: ORANGE }];
-  }, [adminStats]);
+  }, [displayStats]);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -183,32 +212,32 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => <StatCardSkeleton key={i} />)}
         </div>
-      ) : adminStats ? (
+      ) : displayStats ? (
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Total Usuarios"
-              value={adminStats.users.totalUsers}
+              value={displayStats.users.totalUsers}
               icon={<Users className="h-5 w-5 text-primary" />}
               trend="up"
-              trendValue={`+${adminStats.users.newUsers} nuevos`}
+              trendValue={`+${displayStats.users.newUsers} nuevos`}
             />
             <StatCard
               title="Horarios"
-              value={adminStats.schedules}
+              value={displayStats.schedules}
               icon={<Calendar className="h-5 w-5 text-primary" />}
               subtitle="Clases programadas"
             />
             <StatCard
               title="Suscripciones"
-              value={adminStats.subscriptions}
+              value={displayStats.subscriptions}
               icon={<ClipboardList className="h-5 w-5 text-primary" />}
               subtitle="Activas en la plataforma"
             />
             <StatCard
               title="Transacciones"
-              value={adminStats.transactions}
+              value={displayStats.transactions}
               icon={<CreditCard className="h-5 w-5 text-primary" />}
               subtitle="Procesadas"
             />
@@ -348,28 +377,28 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Planes Activos"
-              value={adminStats.plans}
+              value={displayStats.plans}
               icon={<Crown className="h-5 w-5 text-primary" />}
               subtitle="Planes disponibles"
             />
             <StatCard
               title="Encuestas"
-              value={adminStats.polls}
+              value={displayStats.polls}
               icon={<BarChart3 className="h-5 w-5 text-primary" />}
               subtitle="Creadas"
             />
             <StatCard
               title="Notificaciones"
-              value={adminStats.notifications}
+              value={displayStats.notifications}
               icon={<Bell className="h-5 w-5 text-primary" />}
               subtitle="Enviadas"
             />
             <StatCard
               title="Usuarios Bloqueados"
-              value={adminStats.users.blockedUsers}
+              value={displayStats.users.blockedUsers}
               icon={<Users className="h-5 w-5 text-primary" />}
-              trend={adminStats.users.blockedUsers > 0 ? 'down' : 'neutral'}
-              trendValue={adminStats.users.blockedUsers > 0 ? `${adminStats.users.blockedUsers} bloqueados` : 'Ninguno'}
+              trend={displayStats.users.blockedUsers > 0 ? 'down' : 'neutral'}
+              trendValue={displayStats.users.blockedUsers > 0 ? `${displayStats.users.blockedUsers} bloqueados` : 'Ninguno'}
             />
           </div>
         </>

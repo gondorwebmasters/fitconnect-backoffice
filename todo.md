@@ -209,3 +209,11 @@
 
 ## Round 11 Fixes
 - [x] Fix Schedules stats chart: stats is array-of-arrays (nested), flatten it; ratio is 0-100 not 0-1; fix YAxis and tooltip scale
+
+## Round 12 Fixes
+- [x] Dashboard: wire schedules chart with real data (from GET_ADMIN_STATS)
+- [x] Dashboard: wire plans chart with real data (from GET_ADMIN_STATS)
+- [x] Dashboard: wire subscriptions chart with real data (from GET_ADMIN_STATS)
+- [x] Dashboard: wire polls card with real data (from GET_POLLS query)
+- [x] Dashboard: wire active plans card with real data (from GET_ADMIN_STATS)
+- [x] Dashboard: wire notifications card with real data (from GET_NOTIFICATIONS query)
