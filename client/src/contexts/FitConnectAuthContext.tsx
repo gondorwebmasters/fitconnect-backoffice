@@ -63,13 +63,17 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
         // Persist user to localStorage for session restoration
         tokenStorage.setUser(meData.user);
 
+        // Preserve activeCompanyId from localStorage (set by switchCompanyContext or previous session)
+        // This ensures that if user switched company and reloaded, they stay in that company
+        const savedCompanyId = localStorage.getItem('fc_active_company');
+        const activeCompanyId = savedCompanyId || meData.user.activeCompanyId || null;
+
         setAuthState({
           user: meData.user,
           companies: meData.companies || [],
           isAuthenticated: true,
           loading: false,
-          activeCompanyId:
-            meData.user.activeCompanyId || localStorage.getItem('fc_active_company'),
+          activeCompanyId,
         });
       } else {
         // Token is invalid or expired — clear everything

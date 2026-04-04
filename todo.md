@@ -228,3 +228,9 @@
 - [x] Restore company selector in sidebar (was already implemented; fixed isBoss condition to also show when companies.length > 1)
 - [x] Changing company updates activeCompanyId in context and Apollo x-company-id header (switchCompanyContext → localStorage + apolloClient.resetStore)
 - [x] All pages refetch data when activeCompanyId changes (added activeCompanyId to useEffect deps in Companies, Plans, Users, Schedules, Transactions, PaymentMethods, Subscriptions)
+
+## Round 16 Fixes
+- [x] Fix company switching: refetch all queries without losing session (switchCompanyContext calls resetStore)
+- [x] Persist activeCompanyId to localStorage so page reload keeps company selection (fetchCurrentUser preserves localStorage value)
+- [x] Verify Apollo auth link sends x-company-id header on every request (authLink reads fc_active_company from localStorage)
+- [x] Test: change company → reload page → session persists with new company active (localStorage + auth link + resetStore)
