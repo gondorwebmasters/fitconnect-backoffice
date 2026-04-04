@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { apolloClient } from '@/graphql/apollo-client';
@@ -157,6 +158,7 @@ export default function UsersPage() {
   }, [search, roleFilter, fetchSubscriptionForUser]);
 
   const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchUsers);
   useEffect(() => { fetchUsers(); }, [roleFilter, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

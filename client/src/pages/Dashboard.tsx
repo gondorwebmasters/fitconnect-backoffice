@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import { GET_ADMIN_STATS, GET_ADMIN_POLLS, GET_NOTIFICATIONS, GET_SCHEDULES, GET_USERS, LIST_PLANS } from '@/graphql/operations';

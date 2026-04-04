@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { apolloClient } from '@/graphql/apollo-client';
@@ -41,6 +42,7 @@ export default function CompaniesPage() {
   };
 
    const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchCompanies);
   useEffect(() => { fetchCompanies(); }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const t = setTimeout(() => fetchCompanies(), 400);

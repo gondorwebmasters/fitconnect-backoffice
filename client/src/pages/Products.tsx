@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import { GET_PRODUCTS, CREATE_PRODUCT, REMOVE_PRODUCT, UPDATE_PRODUCT_PICTURE, GET_PRESIGNED_URL } from '@/graphql/operations';
@@ -46,6 +47,7 @@ export default function ProductsPage() {
   };
 
   const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchProducts);
   useEffect(() => { fetchProducts(); }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredProducts = useMemo(() => {

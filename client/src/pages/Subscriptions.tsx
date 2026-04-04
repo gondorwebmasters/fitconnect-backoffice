@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import {
@@ -46,6 +47,7 @@ export default function SubscriptionsPage() {
   }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSubscriptions = async () => {
+  useRefreshOnCompanyChange(activeCompanyId, fetchSubscriptions);
     if (!userId) { setSubscriptions([]); setLoading(false); return; }
     setLoading(true);
     try {

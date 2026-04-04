@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import {
@@ -59,6 +60,7 @@ export default function TransactionsPage() {
   };
 
   const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchTransactions);
   useEffect(() => {
     const t = setTimeout(() => fetchTransactions(), 400);
     return () => clearTimeout(t);

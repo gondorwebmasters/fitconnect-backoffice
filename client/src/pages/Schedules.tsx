@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import {
@@ -194,6 +195,7 @@ export default function SchedulesPage() {
   };
 
   const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchSchedules);
   useEffect(() => { fetchSchedules(); }, [viewMode, calendarDate, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {

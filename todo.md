@@ -234,3 +234,7 @@
 - [x] Persist activeCompanyId to localStorage so page reload keeps company selection (fetchCurrentUser preserves localStorage value)
 - [x] Verify Apollo auth link sends x-company-id header on every request (authLink reads fc_active_company from localStorage)
 - [x] Test: change company → reload page → session persists with new company active (localStorage + auth link + resetStore)
+
+## Round 17 Fixes
+- [x] Create useRefreshOnCompanyChange hook to auto-refetch page data when activeCompanyId changes
+- [x] Add hook to all pages that fetch data (Plans, Products, Users, Schedules, Subscriptions, Transactions, PaymentMethods, Companies, Dashboard, CompanyDetail) for automatic refresh on company switch

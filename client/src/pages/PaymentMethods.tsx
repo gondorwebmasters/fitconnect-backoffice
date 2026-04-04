@@ -1,3 +1,4 @@
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { useEffect, useState } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import {
@@ -94,6 +95,7 @@ export default function PaymentMethodsPage() {
   };
 
   const { activeCompanyId } = useFitConnectAuth();
+  useRefreshOnCompanyChange(activeCompanyId, fetchMethods);
   useEffect(() => {
     const t = setTimeout(() => fetchMethods(), 400);
     return () => clearTimeout(t);

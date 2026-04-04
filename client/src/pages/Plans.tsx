@@ -3,6 +3,7 @@ import { apolloClient } from '@/graphql/apollo-client';
 import { LIST_PLANS, CREATE_PLAN, UPDATE_PLAN, REMOVE_PLAN } from '@/graphql/operations';
 import type { Plan, PlanResponse, BasicResponse } from '@/graphql/types';
 import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
+import { useRefreshOnCompanyChange } from '@/hooks/useRefreshOnCompanyChange';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -49,7 +50,7 @@ export default function PlansPage() {
   };
 
   const { activeCompanyId } = useFitConnectAuth();
-  useEffect(() => { fetchPlans(); }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useRefreshOnCompanyChange(activeCompanyId, fetchPlans);
 
   const filteredPlans = useMemo(() => {
     if (!search) return plans;
