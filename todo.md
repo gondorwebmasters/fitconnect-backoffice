@@ -238,3 +238,6 @@
 ## Round 17 Fixes
 - [x] Create useRefreshOnCompanyChange hook to auto-refetch page data when activeCompanyId changes
 - [x] Add hook to all pages that fetch data (Plans, Products, Users, Schedules, Subscriptions, Transactions, PaymentMethods, Companies, Dashboard, CompanyDetail) for automatic refresh on company switch
+
+## Round 18 Fixes
+- [x] Fix infinite loop in useRefreshOnCompanyChange: removed refetchFn from dependency array, use useRef to stabilize function reference

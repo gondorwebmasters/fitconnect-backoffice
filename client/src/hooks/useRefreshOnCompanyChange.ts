@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
+import { useEffect, useRef } from 'react';
 
 /**
  * Hook that calls a refetch function whenever the active company changes.
@@ -15,8 +14,16 @@ export function useRefreshOnCompanyChange(
   activeCompanyId: string | null,
   refetchFn: () => void | Promise<void>
 ) {
+  // Store the refetch function in a ref to avoid including it in the dependency array
+  const refetchRef = useRef(refetchFn);
+  
+  // Update the ref whenever the function changes
   useEffect(() => {
-    // Refetch data whenever activeCompanyId changes
-    refetchFn();
-  }, [activeCompanyId, refetchFn]);
+    refetchRef.current = refetchFn;
+  }, [refetchFn]);
+
+  // Only refetch when activeCompanyId changes, not when refetchFn changes
+  useEffect(() => {
+    refetchRef.current();
+  }, [activeCompanyId]); // Only depend on activeCompanyId
 }
