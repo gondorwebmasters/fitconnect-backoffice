@@ -5,6 +5,7 @@ import {
   PAUSE_SUBSCRIPTION, RESUME_SUBSCRIPTION, CHANGE_SUBSCRIPTION_PLAN, LIST_PLANS,
 } from '@/graphql/operations';
 import type { Subscription, SubscriptionResponse, Plan, PlanResponse, BasicResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -35,13 +36,14 @@ export default function SubscriptionsPage() {
   // Change plan dialog
   const [changePlanDialog, setChangePlanDialog] = useState<{ open: boolean; subId: string | null; newPlanId: string; saving: boolean }>({ open: false, subId: null, newPlanId: '', saving: false });
 
+  const { activeCompanyId } = useFitConnectAuth();
   useEffect(() => {
     apolloClient.query({ query: LIST_PLANS, fetchPolicy: 'network-only' })
       .then(({ data }) => {
         const result = (data as Record<string, unknown>)?.listPlans as PlanResponse;
         if (result?.success) setPlans(result.plans || []);
       }).catch(() => {});
-  }, []);
+  }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSubscriptions = async () => {
     if (!userId) { setSubscriptions([]); setLoading(false); return; }

@@ -6,6 +6,7 @@ import {
   GET_SCHEDULES_RANGE, GET_TODAY_SCHEDULES_RESUME, GET_SCHEDULES_STATS,
 } from '@/graphql/operations';
 import type { Schedule, ScheduleResponse, BasicResponse, ScheduleType, ScheduleResume, ScheduleResumeResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -192,7 +193,8 @@ export default function SchedulesPage() {
     finally { setStatsLoading(false); }
   };
 
-  useEffect(() => { fetchSchedules(); }, [viewMode, calendarDate]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { activeCompanyId } = useFitConnectAuth();
+  useEffect(() => { fetchSchedules(); }, [viewMode, calendarDate, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
     if (!newSchedule.title) { toast.error('El título es requerido'); return; }

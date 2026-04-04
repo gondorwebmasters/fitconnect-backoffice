@@ -5,6 +5,7 @@ import {
   GET_PAYMENT_METHODS_STATS, GET_CUSTOMER_BY_USER_ID,
 } from '@/graphql/operations';
 import type { PaymentMethod, PaymentMethodResponse, BasicResponse, StatsResponse, StripeCustomerResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -92,10 +93,11 @@ export default function PaymentMethodsPage() {
     }
   };
 
+  const { activeCompanyId } = useFitConnectAuth();
   useEffect(() => {
     const t = setTimeout(() => fetchMethods(), 400);
     return () => clearTimeout(t);
-  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSetDefault = async (paymentMethodId: string) => {
     try {

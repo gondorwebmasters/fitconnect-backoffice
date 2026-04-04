@@ -8,6 +8,7 @@ import {
   SEND_NOTIFICATION,
 } from '@/graphql/operations';
 import type { User, UserResponse, Subscription } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -155,7 +156,8 @@ export default function UsersPage() {
     }
   }, [search, roleFilter, fetchSubscriptionForUser]);
 
-  useEffect(() => { fetchUsers(); }, [roleFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { activeCompanyId } = useFitConnectAuth();
+  useEffect(() => { fetchUsers(); }, [roleFilter, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timeout = setTimeout(() => { fetchUsers(); }, 400);

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { apolloClient } from '@/graphql/apollo-client';
 import { GET_PRODUCTS, CREATE_PRODUCT, REMOVE_PRODUCT, UPDATE_PRODUCT_PICTURE, GET_PRESIGNED_URL } from '@/graphql/operations';
 import type { Product, ProductResponse, BasicResponse, PresignedUrlResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -44,7 +45,8 @@ export default function ProductsPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  const { activeCompanyId } = useFitConnectAuth();
+  useEffect(() => { fetchProducts(); }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredProducts = useMemo(() => {
     if (!search) return products;

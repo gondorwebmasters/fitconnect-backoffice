@@ -91,7 +91,19 @@ function DashboardLayoutContent({
     return location.startsWith(item.path);
   });
 
-  const isBoss = user?.contextRole === UserRoleEnum.BOSS;
+  // Show company switcher for boss, super_admin, or admin roles, or if user has multiple companies
+  const isBoss = (
+    !!user?.contextRole && [
+      UserRoleEnum.BOSS,
+      UserRoleEnum.SUPER_ADMIN,
+      UserRoleEnum.SUPERADMIN,
+      UserRoleEnum.ADMIN,
+      'boss',
+      'super_admin',
+      'superadmin',
+      'admin',
+    ].includes(user.contextRole as string)
+  ) || (companies && companies.length > 1);
 
   // For boss: load ALL companies from the system (not just user's companies)
   useEffect(() => {

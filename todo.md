@@ -223,3 +223,8 @@
 
 ## Round 14 Fixes
 - [x] Fix Dashboard counts: now uses LIST_PLANS (same as Plans page) and GET_ADMIN_POLLS (same as Polls page) so numbers match exactly
+
+## Round 15 Fixes
+- [x] Restore company selector in sidebar (was already implemented; fixed isBoss condition to also show when companies.length > 1)
+- [x] Changing company updates activeCompanyId in context and Apollo x-company-id header (switchCompanyContext → localStorage + apolloClient.resetStore)
+- [x] All pages refetch data when activeCompanyId changes (added activeCompanyId to useEffect deps in Companies, Plans, Users, Schedules, Transactions, PaymentMethods, Subscriptions)

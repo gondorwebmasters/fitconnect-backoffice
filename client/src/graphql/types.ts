@@ -10,6 +10,9 @@ export enum UserRoleEnum {
   BOSS = 'boss',
   PREMIUM = 'premium',
   COACH = 'coach',
+  SUPER_ADMIN = 'super_admin',
+  SUPERADMIN = 'superadmin',
+  ADMIN = 'admin',
 }
 
 export enum ScheduleType {

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { apolloClient } from '@/graphql/apollo-client';
 import { GET_COMPANIES, CREATE_COMPANY } from '@/graphql/operations';
 import type { Company, CompanyResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { Button } from '@/components/ui/button';
@@ -39,12 +40,12 @@ export default function CompaniesPage() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchCompanies(); }, []);
-
+   const { activeCompanyId } = useFitConnectAuth();
+  useEffect(() => { fetchCompanies(); }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const t = setTimeout(() => fetchCompanies(), 400);
     return () => clearTimeout(t);
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreate = async () => {
     if (!newCompany.name || !newCompany.email) { toast.error('El nombre y el email son obligatorios'); return; }

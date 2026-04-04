@@ -5,6 +5,7 @@ import {
   REFUND_TRANSACTION, RETRY_FAILED_TRANSACTION, MARK_TRANSACTION_AS_RECONCILED,
 } from '@/graphql/operations';
 import type { Transaction, TransactionResponse } from '@/graphql/types';
+import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, Column } from '@/components/common/DataTable';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -57,10 +58,11 @@ export default function TransactionsPage() {
     finally { setLoading(false); }
   };
 
+  const { activeCompanyId } = useFitConnectAuth();
   useEffect(() => {
     const t = setTimeout(() => fetchTransactions(), 400);
     return () => clearTimeout(t);
-  }, [userId, statusFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, statusFilter, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCreateCharge = async () => {
     if (!newCharge.userId || !newCharge.amount) { toast.error('El usuario y el importe son obligatorios'); return; }
