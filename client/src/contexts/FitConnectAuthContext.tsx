@@ -192,64 +192,57 @@ export function FitConnectAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ===== Switch Company Context =====
-  // Works for all roles. The key steps are:
-  //   1. Update localStorage BEFORE the mutation so authLink already sends the new x-company-id
-  //   2. Call UPDATE_USER mutation with the correct variable name ($user, not $input)
-  //   3. Update React state with the new activeCompanyId and updated user
-  //   4. Call apolloClient.resetStore() to refetch all queries
+  // Correct order to avoid "logged in two companies" error:
+  //   1. Call UPDATE_USER mutation to persist the new activeCompanyId in the backend
+  //   2. ONLY on success: update localStorage (x-company-id header) and React state
+  //   3. Call apolloClient.resetStore() to refetch all queries with the new header
+  //
+  // The header must NOT change before the backend confirms the update, otherwise
+  // the backend sees a mismatch between the JWT company and the x-company-id header.
   const switchCompanyContext = useCallback(async (companyId: string) => {
     console.log('[FitConnectAuth] switchCompanyContext → companyId:', companyId);
 
-    // Step 1: Update localStorage immediately so the authLink sends the new x-company-id
-    // on the UPDATE_USER request itself and all subsequent requests
+    // Step 1: Call UPDATE_USER mutation to persist activeCompanyId in the backend.
+    // At this point localStorage still has the OLD companyId, so the request goes
+    // out with the current (old) x-company-id header — consistent with the backend session.
+    const { data } = await apolloClient.mutate({
+      mutation: UPDATE_USER,
+      variables: { user: { activeCompanyId: companyId } },
+    });
+
+    const updateResult = (data as Record<string, unknown>)?.updateUser as {
+      success: boolean;
+      user?: User;
+    } | undefined;
+
+    console.log('[FitConnectAuth] UPDATE_USER result:', updateResult);
+
+    if (!updateResult?.success) {
+      // Backend rejected the update — do not change anything on the frontend
+      throw new Error(updateResult ? 'Update failed' : 'No response from server');
+    }
+
+    // Step 2: Backend confirmed success. Now update localStorage so the authLink
+    // sends the new x-company-id on ALL subsequent requests.
     localStorage.setItem('fc_active_company', companyId);
 
-    // Step 2: Update React state optimistically so the UI reflects the change immediately
+    // Step 3: Update React state with the new activeCompanyId and the updated user
+    // returned by the backend (authoritative source of truth).
+    const updatedUser = updateResult.user ?? null;
+    if (updatedUser) {
+      tokenStorage.setUser(updatedUser);
+    }
     setAuthState((prev) => ({
       ...prev,
       activeCompanyId: companyId,
-      user: prev.user ? { ...prev.user, activeCompanyId: companyId } : prev.user,
+      user: updatedUser ?? (prev.user ? { ...prev.user, activeCompanyId: companyId } : prev.user),
     }));
 
-    try {
-      // Step 3: Persist activeCompanyId in the backend via UPDATE_USER mutation
-      // IMPORTANT: The mutation variable is named $user (not $input)
-      const { data } = await apolloClient.mutate({
-        mutation: UPDATE_USER,
-        variables: { user: { activeCompanyId: companyId } },
-      });
-
-      const updateResult = (data as Record<string, unknown>)?.updateUser as {
-        success: boolean;
-        user?: User;
-      } | undefined;
-
-      console.log('[FitConnectAuth] UPDATE_USER result:', updateResult);
-
-      if (updateResult?.success && updateResult.user) {
-        // Step 4: Sync the full updated user from backend into localStorage and state
-        tokenStorage.setUser(updateResult.user);
-        setAuthState((prev) => ({
-          ...prev,
-          user: updateResult.user!,
-          activeCompanyId: companyId,
-        }));
-      }
-      // If mutation failed or returned no user, the optimistic state is still correct
-
-    } catch (err) {
-      console.error('[FitConnectAuth] switchCompanyContext UPDATE_USER error:', err);
-      // Don't revert — the localStorage and state are already updated optimistically.
-      // The x-company-id header is correct. The backend update failed but the frontend
-      // context is correct for this session.
-    }
-
-    // Step 5: Refetch all active queries with the new x-company-id header
-    // Use clearStore + refetch pattern to avoid issues with resetStore
+    // Step 4: Refetch all active queries — they will now use the new x-company-id header.
     try {
       await apolloClient.resetStore();
     } catch (err) {
-      // resetStore can throw if a query fails — ignore, data will refetch on next render
+      // resetStore can throw if a query fails — not critical, data refetches on next render
       console.warn('[FitConnectAuth] resetStore warning:', err);
     }
   }, []);

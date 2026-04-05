@@ -267,3 +267,8 @@
 - [x] Fix infinite loop: removed activeCompanyId from GET_COMPANIES useEffect deps (was causing loop: switch → resetStore → re-render → refetch → loop)
 - [x] Simplify handleSwitchCompany: always uses switchCompanyContext for all roles (no more isBoss branch)
 - [x] Add vitest tests for company switching logic (variable name, localStorage order, header derivation, no-loop deps)
+
+## Round 24 Fixes
+- [x] Fix company switch order: backend (UPDATE_USER) called FIRST, then localStorage/x-company-id header updated, then React state, then resetStore
+- [x] If backend mutation fails, localStorage and React state are NOT updated (no inconsistent state)
+- [x] Update vitest tests to verify backend-first order and failure isolation (80 tests pass)
