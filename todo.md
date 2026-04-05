@@ -249,3 +249,6 @@
 
 ## Round 20 Fixes
 - [x] Fix login issue: changed login function to return LoginResponse instead of throwing error on failure
+
+## Round 21 Fixes
+- [x] Fix GraphQL login mutation not being called to backend: added try-catch, console logging, and fixed function structure

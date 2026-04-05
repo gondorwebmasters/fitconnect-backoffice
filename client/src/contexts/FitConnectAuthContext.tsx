@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useCallback, useState, useRef, useEffect, ReactNode } from 'react';
 import { apolloClient, tokenStorage } from '../graphql/apollo-client';
 import { LOGIN, ME, SELECT_COMPANY, FORGOT_PASSWORD, UPDATE_USER } from '../graphql/operations';
 import type { User, Company, LoginResponse, MeResponse } from '../graphql/types';
@@ -30,7 +30,7 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // ===== Provider =====
-export function FitConnectAuthProvider({ children }: { children: React.ReactNode }) {
+export function FitConnectAuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>(() => {
     // Hydrate from localStorage for instant UI on reload (optimistic)
     const cachedUser = tokenStorage.getUser<User>();
@@ -49,34 +49,34 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
   // Prevent double-fetch on mount in strict mode
   const didMount = useRef(false);
 
-  // ===== Fetch current user from backend =====
+  // ===== Fetch current user on mount =====
   const fetchCurrentUser = useCallback(async () => {
+    const token = tokenStorage.getAccessToken();
+    if (!token) {
+      setAuthState((prev) => ({ ...prev, loading: false }));
+      return;
+    }
+
     try {
-      const { data } = await apolloClient.query({
-        query: ME,
-        fetchPolicy: 'network-only',
-      });
-      const meData = (data as Record<string, unknown>)?.me as MeResponse | undefined;
+      const { data } = await apolloClient.query({ query: ME });
+      const meResult = (data as Record<string, unknown>)?.me as MeResponse | undefined;
 
-      if (meData?.success && meData.user) {
-        // Persist user to localStorage for session restoration
-        tokenStorage.setUser(meData.user);
-
-        // Preserve activeCompanyId from localStorage (set by switchCompanyContext or previous session)
-        // This ensures that if user switched company and reloaded, they stay in that company
+      if (meResult?.success && meResult.user) {
         const savedCompanyId = localStorage.getItem('fc_active_company');
-        const activeCompanyId = savedCompanyId || meData.user.activeCompanyId || null;
+        const finalCompanyId = savedCompanyId || meResult.user.activeCompanyId || meResult.companies?.[0]?.id || null;
+        localStorage.setItem('fc_active_company', finalCompanyId || '');
 
         setAuthState({
-          user: meData.user,
-          companies: meData.companies || [],
+          user: meResult.user,
+          companies: meResult.companies || [],
           isAuthenticated: true,
           loading: false,
-          activeCompanyId,
+          activeCompanyId: finalCompanyId,
         });
+        tokenStorage.setUser(meResult.user);
       } else {
-        // Token is invalid or expired — clear everything
         tokenStorage.clear();
+        localStorage.removeItem('fc_active_company');
         setAuthState({
           user: null,
           companies: [],
@@ -85,9 +85,10 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
           activeCompanyId: null,
         });
       }
-    } catch {
-      // Network error or token fully expired (refresh also failed)
+    } catch (err) {
+      console.error('[FitConnectAuth] fetchCurrentUser error:', err);
       tokenStorage.clear();
+      localStorage.removeItem('fc_active_company');
       setAuthState({
         user: null,
         companies: [],
@@ -98,39 +99,43 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
     }
   }, []);
 
-  // ===== On mount: verify user session =====
   useEffect(() => {
-    if (didMount.current) return;
-    didMount.current = true;
-
-    if (authState.isAuthenticated && authState.loading) {
+    if (!didMount.current) {
+      didMount.current = true;
       fetchCurrentUser();
     }
   }, [authState.isAuthenticated, authState.loading, fetchCurrentUser]);
 
   // ===== Login =====
   const login = useCallback(async (emailOrNickname: string, password: string) => {
-    const { data } = await apolloClient.mutate({
-      mutation: LOGIN,
-      variables: { emailOrNickname, password },
-    });
-
-    const loginResult = (data as Record<string, unknown>)?.login as LoginResponse | undefined;
-
-    if (loginResult?.success && loginResult.user && loginResult.tokens) {
-      tokenStorage.setTokens(loginResult.tokens.token || '', loginResult.tokens.refreshToken || '');
-      tokenStorage.setUser(loginResult.user);
-      const initialCompanyId = loginResult.user.activeCompanyId || loginResult.companies?.[0]?.id || null;
-      localStorage.setItem('fc_active_company', initialCompanyId || '');
-      setAuthState({
-        user: loginResult.user,
-        companies: loginResult.companies || [],
-        isAuthenticated: true,
-        loading: false,
-        activeCompanyId: initialCompanyId,
+    try {
+      console.log('[FitConnectAuth] Calling LOGIN mutation');
+      const { data } = await apolloClient.mutate({
+        mutation: LOGIN,
+        variables: { emailOrNickname, password },
       });
+      console.log('[FitConnectAuth] LOGIN response:', data);
+
+      const loginResult = (data as Record<string, unknown>)?.login as LoginResponse | undefined;
+
+      if (loginResult?.success && loginResult.user && loginResult.tokens) {
+        tokenStorage.setTokens(loginResult.tokens.token || '', loginResult.tokens.refreshToken || '');
+        tokenStorage.setUser(loginResult.user);
+        const initialCompanyId = loginResult.user.activeCompanyId || loginResult.companies?.[0]?.id || null;
+        localStorage.setItem('fc_active_company', initialCompanyId || '');
+        setAuthState({
+          user: loginResult.user,
+          companies: loginResult.companies || [],
+          isAuthenticated: true,
+          loading: false,
+          activeCompanyId: initialCompanyId,
+        });
+      }
+      return loginResult || { success: false, message: 'Login failed', code: 'LOGIN_FAILED' };
+    } catch (err) {
+      console.error('[FitConnectAuth] LOGIN error:', err);
+      throw err;
     }
-    return loginResult || { success: false, message: 'Login failed', code: 'LOGIN_FAILED' };
   }, []);
 
   // ===== Logout =====
@@ -146,93 +151,73 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
     });
   }, []);
 
-  // ===== Select company =====
+  // ===== Select Company (for regular users) =====
   const selectCompany = useCallback(async (companyId: string) => {
-    const { data } = await apolloClient.mutate({
-      mutation: SELECT_COMPANY,
-      variables: { companyId },
-    });
-
-    const result = (data as Record<string, unknown>)?.setActiveCompany as MeResponse | undefined;
-    if (result?.success && result.user) {
-      localStorage.setItem('fc_active_company', companyId);
-      tokenStorage.setUser(result.user);
-
-      setAuthState((prev) => ({
-        ...prev,
-        user: result.user!,
-        companies: result.companies || prev.companies,
-        activeCompanyId: companyId,
-      }));
-
-      // Refetch all queries with the new company context
-      await apolloClient.resetStore().catch(() => {});
-    }
-  }, []);
-
-  // ===== switchCompanyContext: boss-only, updates backend and refreshes session =====
-  const switchCompanyContext = useCallback(async (companyId: string, companyName?: string) => {
     try {
-      // 1. Call UPDATE_USER mutation to persist the new activeCompanyId in the backend
       const { data } = await apolloClient.mutate({
-        mutation: UPDATE_USER,
-        variables: {
-          user: {
-            id: authState.user?.id,
-            email: authState.user?.email,
-            nickname: authState.user?.nickname,
-            activeCompanyId: companyId,
-          },
-        },
+        mutation: SELECT_COMPANY,
+        variables: { companyId },
       });
 
-      const result = (data as Record<string, unknown>)?.updateUser as { user?: User } | undefined;
-      const updatedUser = result?.user;
-
-      // 2. Update localStorage with the new user data (simulates session refresh)
-      if (updatedUser) {
-        tokenStorage.setUser(updatedUser);
+      const result = (data as Record<string, unknown>)?.selectCompany as { success: boolean } | undefined;
+      if (result?.success) {
+        localStorage.setItem('fc_active_company', companyId);
+        setAuthState((prev) => ({ ...prev, activeCompanyId: companyId }));
+        apolloClient.resetStore();
       }
-
-      // 3. Persist the new active company in localStorage for the Apollo auth link
-      localStorage.setItem('fc_active_company', companyId);
-
-      // 4. Update React state with the new user and activeCompanyId
-      setAuthState((prev) => ({
-        ...prev,
-        user: updatedUser || prev.user,
-        activeCompanyId: companyId,
-      }));
-
-      // 5. Reset the Apollo cache to refetch all queries with the new x-company-id header
-      try {
-        await apolloClient.resetStore();
-      } catch {
-        // resetStore can throw if a query fails; safe to ignore here
-      }
-    } catch (error) {
-      console.error('Error switching company:', error);
-      throw error;
+    } catch (err) {
+      console.error('[FitConnectAuth] selectCompany error:', err);
+      throw err;
     }
-  }, [authState.user?.id, authState.user?.email, authState.user?.nickname]);
-
-  // ===== Forgot password =====
-  const forgotPassword = useCallback(async (email: string) => {
-    const { data } = await apolloClient.mutate({
-      mutation: FORGOT_PASSWORD,
-      variables: { email },
-    });
-
-    const result = (data as Record<string, unknown>)?.forgotPassword as { message?: string } | undefined;
-    return result?.message || 'Password reset email sent';
   }, []);
 
-  // ===== Refresh user =====
+  // ===== Switch Company Context (for boss role) =====
+  const switchCompanyContext = useCallback(async (companyId: string) => {
+    try {
+      console.log('[FitConnectAuth] Switching company context to:', companyId);
+      const { data } = await apolloClient.mutate({
+        mutation: UPDATE_USER,
+        variables: { input: { activeCompanyId: companyId } },
+      });
+
+      const updateResult = (data as Record<string, unknown>)?.updateUser as { success: boolean; user?: User } | undefined;
+      if (updateResult?.success && updateResult.user) {
+        tokenStorage.setUser(updateResult.user);
+        localStorage.setItem('fc_active_company', companyId);
+        setAuthState((prev) => ({
+          ...prev,
+          user: updateResult.user || prev.user,
+          activeCompanyId: companyId,
+        }));
+        apolloClient.resetStore();
+      }
+    } catch (err) {
+      console.error('[FitConnectAuth] switchCompanyContext error:', err);
+      throw err;
+    }
+  }, []);
+
+  // ===== Forgot Password =====
+  const forgotPassword = useCallback(async (email: string) => {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: FORGOT_PASSWORD,
+        variables: { email },
+      });
+
+      const result = (data as Record<string, unknown>)?.forgotPassword as { success: boolean; message?: string } | undefined;
+      return result?.message || 'Email enviado';
+    } catch (err) {
+      console.error('[FitConnectAuth] forgotPassword error:', err);
+      throw err;
+    }
+  }, []);
+
+  // ===== Refresh User =====
   const refreshUser = useCallback(async () => {
     await fetchCurrentUser();
   }, [fetchCurrentUser]);
 
-  // ===== Context value =====
   const value: AuthContextType = {
     ...authState,
     login,
@@ -249,8 +234,8 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
 // ===== Hook =====
 export function useFitConnectAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useFitConnectAuth must be used within FitConnectAuthProvider');
-  }
+  if (!context) throw new Error('useFitConnectAuth must be used inside FitConnectAuthProvider');
   return context;
 }
+
+import { useContext } from 'react';
