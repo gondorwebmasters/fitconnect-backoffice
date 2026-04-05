@@ -241,3 +241,8 @@
 
 ## Round 18 Fixes
 - [x] Fix infinite loop in useRefreshOnCompanyChange: removed refetchFn from dependency array, use useRef to stabilize function reference
+
+## Round 19 Fixes
+- [x] Check for UPDATE_USER_ACTIVE_COMPANY mutation: UPDATE_USER supports activeCompanyId field
+- [x] Update switchCompanyContext to call UPDATE_USER mutation, update localStorage user data, and refetch all queries
+- [x] Verify company switch persists on page reload without closing session (localStorage + auth link)
