@@ -105,8 +105,9 @@ function DashboardLayoutContent({
     ].includes(user.contextRole as string)
   ) || (companies && companies.length > 1);
 
-  // For boss: load ALL companies from the system (not just user's companies)
-  // Refetch whenever activeCompanyId changes to ensure selector is in sync
+  // Load ALL companies once when isBoss becomes true (e.g. after login)
+  // Do NOT include activeCompanyId in deps — that would cause a reload loop
+  // because resetStore triggers a re-render which changes activeCompanyId.
   useEffect(() => {
     if (!isBoss) return;
     setLoadingCompanies(true);
@@ -124,21 +125,23 @@ function DashboardLayoutContent({
           setAllCompanies(result.companies);
         } else if (result?.company) {
           setAllCompanies([result.company]);
+        } else {
+          setAllCompanies(companies);
         }
       })
       .catch(() => {
-        // Fallback to user's own companies if the query fails
         setAllCompanies(companies);
       })
       .finally(() => setLoadingCompanies(false));
-  }, [isBoss, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isBoss]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The list to render in the switcher: all companies for boss, user's companies otherwise
-  // Always check both lists to ensure activeCompany is found
+  // The list to render in the switcher
   const switcherCompanies = isBoss && allCompanies.length > 0 ? allCompanies : companies;
-  const activeCompany = switcherCompanies.find((c) => c.id === activeCompanyId)
-    ?? allCompanies.find((c) => c.id === activeCompanyId)
-    ?? companies.find((c) => c.id === activeCompanyId);
+  // Find the active company by comparing activeCompanyId (from React state/context)
+  const activeCompany =
+    allCompanies.find((c) => c.id === activeCompanyId) ??
+    companies.find((c) => c.id === activeCompanyId) ??
+    switcherCompanies[0];
 
   useEffect(() => {
     if (isCollapsed) {
@@ -173,19 +176,12 @@ function DashboardLayoutContent({
   const handleSwitchCompany = async (companyId: string, companyName?: string) => {
     if (companyId === activeCompanyId) return;
     setSwitchingCompany(companyId);
+    setCompanySwitcherOpen(false);
     try {
-      if (isBoss) {
-        // Boss: only change the x-company-id header context — NO backend mutation.
-        // switchCompanyContext updates localStorage and calls apolloClient.resetStore()
-        // so every active query re-runs with the new company header.
-        await switchCompanyContext(companyId, companyName);
-      } else {
-        // Regular admin/user: call SELECT_COMPANY mutation to set the active company
-        // on the backend for this user's profile.
-        await selectCompany(companyId);
-      }
+      // Always use switchCompanyContext — it handles both boss and regular roles.
+      // It updates localStorage, React state, calls UPDATE_USER mutation, and resets Apollo store.
+      await switchCompanyContext(companyId, companyName);
       toast.success(`Empresa cambiada${companyName ? ` a ${companyName}` : ''} correctamente`);
-      setCompanySwitcherOpen(false);
     } catch {
       toast.error('Error al cambiar de empresa');
     } finally {

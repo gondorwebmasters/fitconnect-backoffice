@@ -259,3 +259,11 @@
 - [x] Verify x-company-id header sent on all requests after company change (authLink reads fc_active_company from localStorage)
 - [x] Verify all page data refetches with new company context (apolloClient.resetStore() called after UPDATE_USER mutation succeeds)
 - [x] Fix LOGIN operation: changed from query to mutation (was causing "Running a mutation requires a graphql mutation" error)
+
+## Round 23 Fixes
+- [x] Fix critical bug: UPDATE_USER was called with wrong variable name { input: ... } instead of { user: ... } (mutation uses $user not $input)
+- [x] Fix company selector: localStorage updated FIRST (before mutation) so authLink sends correct x-company-id header immediately
+- [x] Fix company selector: React state updated optimistically so UI shows new company before mutation completes
+- [x] Fix infinite loop: removed activeCompanyId from GET_COMPANIES useEffect deps (was causing loop: switch → resetStore → re-render → refetch → loop)
+- [x] Simplify handleSwitchCompany: always uses switchCompanyContext for all roles (no more isBoss branch)
+- [x] Add vitest tests for company switching logic (variable name, localStorage order, header derivation, no-loop deps)
