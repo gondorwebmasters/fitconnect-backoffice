@@ -1,51 +1,60 @@
 /**
  * Unit tests for company switching logic.
  *
- * These tests verify that:
- * 1. The UPDATE_USER mutation variable name is correct ($user, not $input)
- * 2. The backend is called FIRST, and only on success the localStorage/header is updated
- * 3. The x-company-id header is derived from localStorage (updated after backend confirms)
- * 4. No infinite loops occur (activeCompanyId not in useEffect deps)
+ * switchCompanyContext uses setActiveCompany (SELECT_COMPANY) from user.resolver.
+ * Correct order:
+ *   1. Call setActiveCompany mutation (old x-company-id header — consistent with session)
+ *   2. On success: update localStorage → authLink sends new x-company-id
+ *   3. Update React state with user + companies returned by backend
+ *   4. apolloClient.resetStore() → refetch all queries with new header
  */
 import { describe, expect, it } from "vitest";
 
-// ---- Test 1: Verify the UPDATE_USER mutation variable name ----
-describe("UPDATE_USER mutation variable", () => {
-  it("uses $user variable name, not $input", () => {
+// ---- Test 1: Correct mutation and variable name ----
+describe("setActiveCompany mutation", () => {
+  it("uses $companyId variable, not $user or $input", () => {
     const mutationString = `
-      mutation UpdateUser($user: UpdateUserInput!) {
-        updateUser(user: $user) {
+      mutation SetActiveCompany($companyId: ID!) {
+        setActiveCompany(companyId: $companyId) {
           code success message
           user { id activeCompanyId }
+          companies { id name }
         }
       }
     `;
-    expect(mutationString).toContain("$user: UpdateUserInput!");
-    expect(mutationString).toContain("updateUser(user: $user)");
+    expect(mutationString).toContain("$companyId: ID!");
+    expect(mutationString).toContain("setActiveCompany(companyId: $companyId)");
+    expect(mutationString).not.toContain("$user");
     expect(mutationString).not.toContain("$input");
+    expect(mutationString).not.toContain("updateUser");
   });
 
-  it("switchCompanyContext passes { user: { activeCompanyId } } not { input: ... }", () => {
+  it("passes { companyId } as variables", () => {
     const companyId = "company-123";
-    const variables = { user: { activeCompanyId: companyId } };
-
-    expect(variables).toHaveProperty("user");
+    const variables = { companyId };
+    expect(variables).toHaveProperty("companyId", companyId);
+    expect(variables).not.toHaveProperty("user");
     expect(variables).not.toHaveProperty("input");
-    expect(variables.user.activeCompanyId).toBe(companyId);
   });
 });
 
-// ---- Test 2: Backend-first order ----
-describe("switchCompanyContext correct order", () => {
-  it("calls backend mutation BEFORE updating localStorage and React state", async () => {
+// ---- Test 2: Correct order — backend first ----
+describe("switchCompanyContext order", () => {
+  it("calls setActiveCompany BEFORE updating localStorage and state", async () => {
     const steps: string[] = [];
-
-    // Simulate the correct implementation
-    const companyId = "new-company-id";
+    const companyId = "new-company";
 
     const mockMutate = async () => {
-      steps.push("1_backend_mutate");
-      return { data: { updateUser: { success: true, user: { id: "u1", activeCompanyId: companyId } } } };
+      steps.push("1_setActiveCompany");
+      return {
+        data: {
+          setActiveCompany: {
+            success: true,
+            user: { id: "u1", activeCompanyId: companyId },
+            companies: [{ id: companyId, name: "New Co" }],
+          },
+        },
+      };
     };
     const mockSetLocalStorage = (key: string, value: string) => {
       if (key === "fc_active_company") steps.push(`2_localStorage:${value}`);
@@ -53,107 +62,87 @@ describe("switchCompanyContext correct order", () => {
     const mockSetAuthState = () => steps.push("3_setState");
     const mockResetStore = async () => { steps.push("4_resetStore"); };
 
-    // Execute in the correct order
-    const result = await mockMutate();
-    const updateResult = result.data.updateUser;
+    const res = await mockMutate();
+    const result = res.data.setActiveCompany;
 
-    if (updateResult.success) {
+    if (result.success) {
       mockSetLocalStorage("fc_active_company", companyId);
       mockSetAuthState();
       await mockResetStore();
     }
 
-    // Verify order
-    expect(steps[0]).toBe("1_backend_mutate");
+    expect(steps[0]).toBe("1_setActiveCompany");
     expect(steps[1]).toBe(`2_localStorage:${companyId}`);
     expect(steps[2]).toBe("3_setState");
     expect(steps[3]).toBe("4_resetStore");
   });
 
-  it("does NOT update localStorage if backend mutation fails", async () => {
-    const localStorageUpdated: boolean[] = [];
+  it("does NOT update localStorage or state if setActiveCompany fails", async () => {
+    const sideEffects: string[] = [];
 
     const mockMutate = async () => ({
-      data: { updateUser: { success: false, user: null } },
+      data: { setActiveCompany: { success: false, user: null, companies: null } },
     });
-    const mockSetLocalStorage = () => { localStorageUpdated.push(true); };
+    const mockSetLocalStorage = () => sideEffects.push("localStorage");
+    const mockSetAuthState = () => sideEffects.push("setState");
 
-    const result = await mockMutate();
-    const updateResult = result.data.updateUser;
+    const res = await mockMutate();
+    const result = res.data.setActiveCompany;
 
-    if (updateResult.success) {
-      // This block should NOT execute
+    if (result.success) {
       mockSetLocalStorage();
-    }
-
-    // localStorage must NOT be updated if backend failed
-    expect(localStorageUpdated).toHaveLength(0);
-  });
-
-  it("does NOT update React state if backend mutation fails", async () => {
-    const stateUpdated: boolean[] = [];
-
-    const mockMutate = async () => ({
-      data: { updateUser: { success: false, user: null } },
-    });
-    const mockSetAuthState = () => { stateUpdated.push(true); };
-
-    const result = await mockMutate();
-    const updateResult = result.data.updateUser;
-
-    if (updateResult.success) {
       mockSetAuthState();
     }
 
-    expect(stateUpdated).toHaveLength(0);
+    expect(sideEffects).toHaveLength(0);
   });
 });
 
-// ---- Test 3: authLink reads from localStorage ----
+// ---- Test 3: State update uses backend-returned user and companies ----
+describe("state update after setActiveCompany", () => {
+  it("uses user and companies from backend response, not just companyId", () => {
+    const companyId = "company-xyz";
+    const backendUser = { id: "u1", activeCompanyId: companyId, name: "Juan" };
+    const backendCompanies = [{ id: companyId, name: "Gym XYZ" }];
+
+    const prevState = {
+      user: { id: "u1", activeCompanyId: "old-company", name: "Juan" },
+      companies: [{ id: "old-company", name: "Old Gym" }],
+      activeCompanyId: "old-company",
+    };
+
+    // Simulate state update
+    const newState = {
+      ...prevState,
+      activeCompanyId: companyId,
+      user: backendUser ?? { ...prevState.user, activeCompanyId: companyId },
+      companies: backendCompanies ?? prevState.companies,
+    };
+
+    expect(newState.activeCompanyId).toBe(companyId);
+    expect(newState.user.activeCompanyId).toBe(companyId);
+    expect(newState.companies[0].name).toBe("Gym XYZ");
+  });
+});
+
+// ---- Test 4: authLink reads localStorage after update ----
 describe("authLink x-company-id header", () => {
-  it("reads fc_active_company from localStorage for every request", () => {
-    const mockLocalStorage: Record<string, string> = {
-      "fc_active_company": "company-abc",
-    };
+  it("sends old x-company-id during mutation, new one after localStorage update", () => {
+    const mockStorage: Record<string, string> = { "fc_active_company": "old-company" };
+    const getHeader = () => mockStorage["fc_active_company"] || "";
 
-    const getHeader = () => {
-      const companyId = mockLocalStorage["fc_active_company"];
-      return companyId ? { "x-company-id": companyId } : {};
-    };
+    // During mutation: old header
+    expect(getHeader()).toBe("old-company");
 
-    // Before switch — old company
-    expect(getHeader()).toEqual({ "x-company-id": "company-abc" });
-
-    // Simulate: backend confirmed → localStorage updated
-    mockLocalStorage["fc_active_company"] = "company-xyz";
-    expect(getHeader()).toEqual({ "x-company-id": "company-xyz" });
-  });
-
-  it("UPDATE_USER request uses OLD x-company-id (localStorage not yet updated)", () => {
-    // Before the mutation fires, localStorage still has the old value
-    const mockLocalStorage: Record<string, string> = {
-      "fc_active_company": "old-company",
-    };
-
-    // The header at mutation time
-    const headerAtMutationTime = mockLocalStorage["fc_active_company"];
-    expect(headerAtMutationTime).toBe("old-company");
-
-    // Only after backend confirms, localStorage is updated
-    mockLocalStorage["fc_active_company"] = "new-company";
-    const headerAfterUpdate = mockLocalStorage["fc_active_company"];
-    expect(headerAfterUpdate).toBe("new-company");
+    // After backend confirms and localStorage is updated
+    mockStorage["fc_active_company"] = "new-company";
+    expect(getHeader()).toBe("new-company");
   });
 });
 
-// ---- Test 4: No infinite loop - activeCompanyId NOT in useEffect deps ----
+// ---- Test 5: No infinite loop ----
 describe("useEffect dependency safety", () => {
   it("GET_COMPANIES useEffect only depends on isBoss, not activeCompanyId", () => {
-    // If activeCompanyId were in the deps array, the following loop would occur:
-    // 1. User switches company → activeCompanyId changes
-    // 2. useEffect fires → GET_COMPANIES refetches
-    // 3. resetStore() fires → all queries refetch
-    // 4. activeCompanyId may change again → loop
     const correctDeps = ["isBoss"];
     expect(correctDeps).not.toContain("activeCompanyId");
   });

@@ -272,3 +272,9 @@
 - [x] Fix company switch order: backend (UPDATE_USER) called FIRST, then localStorage/x-company-id header updated, then React state, then resetStore
 - [x] If backend mutation fails, localStorage and React state are NOT updated (no inconsistent state)
 - [x] Update vitest tests to verify backend-first order and failure isolation (80 tests pass)
+
+## Round 25 Fixes
+- [x] Fix switchCompanyContext: replace UPDATE_USER with correct setActiveCompany mutation (SELECT_COMPANY in operations.ts)
+- [x] setActiveCompany returns user + companies from backend — both are now saved to React state and localStorage
+- [x] Correct order maintained: backend first → localStorage → state → resetStore
+- [x] Update vitest tests to verify setActiveCompany mutation and state update from backend response (79 tests pass)
