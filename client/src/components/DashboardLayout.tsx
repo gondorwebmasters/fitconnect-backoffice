@@ -106,6 +106,7 @@ function DashboardLayoutContent({
   ) || (companies && companies.length > 1);
 
   // For boss: load ALL companies from the system (not just user's companies)
+  // Refetch whenever activeCompanyId changes to ensure selector is in sync
   useEffect(() => {
     if (!isBoss) return;
     setLoadingCompanies(true);
@@ -130,11 +131,13 @@ function DashboardLayoutContent({
         setAllCompanies(companies);
       })
       .finally(() => setLoadingCompanies(false));
-  }, [isBoss]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isBoss, activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The list to render in the switcher: all companies for boss, user's companies otherwise
+  // Always check both lists to ensure activeCompany is found
   const switcherCompanies = isBoss && allCompanies.length > 0 ? allCompanies : companies;
   const activeCompany = switcherCompanies.find((c) => c.id === activeCompanyId)
+    ?? allCompanies.find((c) => c.id === activeCompanyId)
     ?? companies.find((c) => c.id === activeCompanyId);
 
   useEffect(() => {

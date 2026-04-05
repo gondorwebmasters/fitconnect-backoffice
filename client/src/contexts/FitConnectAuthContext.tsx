@@ -1,4 +1,4 @@
-import { createContext, useCallback, useState, useRef, useEffect, ReactNode } from 'react';
+import { createContext, useCallback, useState, useRef, useEffect, ReactNode, useContext } from 'react';
 import { apolloClient, tokenStorage } from '../graphql/apollo-client';
 import { LOGIN, ME, SELECT_COMPANY, FORGOT_PASSWORD, UPDATE_USER } from '../graphql/operations';
 import type { User, Company, LoginResponse, MeResponse } from '../graphql/types';
@@ -237,5 +237,3 @@ export function useFitConnectAuth() {
   if (!context) throw new Error('useFitConnectAuth must be used inside FitConnectAuthProvider');
   return context;
 }
-
-import { useContext } from 'react';

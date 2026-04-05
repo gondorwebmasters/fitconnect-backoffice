@@ -252,3 +252,10 @@
 
 ## Round 21 Fixes
 - [x] Fix GraphQL login mutation not being called to backend: added try-catch, console logging, and fixed function structure
+
+## Round 22 Fixes
+- [x] Fix UPDATE_USER mutation call: verify using mutate not query (switchCompanyContext in FitConnectAuthContext correctly calls apolloClient.mutate with UPDATE_USER)
+- [x] Ensure company selector UI updates to show selected company (added activeCompanyId to useEffect deps so GET_COMPANIES refetches when company changes)
+- [x] Verify x-company-id header sent on all requests after company change (authLink reads fc_active_company from localStorage)
+- [x] Verify all page data refetches with new company context (apolloClient.resetStore() called after UPDATE_USER mutation succeeds)
+- [x] Fix LOGIN operation: changed from query to mutation (was causing "Running a mutation requires a graphql mutation" error)

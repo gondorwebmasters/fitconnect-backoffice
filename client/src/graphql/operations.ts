@@ -181,7 +181,7 @@ export const POLL_FIELDS = gql`
 // ============================================================
 
 export const LOGIN = gql`
-  query Login($emailOrNickname: String!, $password: String!) {
+  mutation Login($emailOrNickname: String!, $password: String!) {
     login(emailOrNickname: $emailOrNickname, password: $password) {
       code
       success
