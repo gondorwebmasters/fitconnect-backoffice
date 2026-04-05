@@ -246,3 +246,6 @@
 - [x] Check for UPDATE_USER_ACTIVE_COMPANY mutation: UPDATE_USER supports activeCompanyId field
 - [x] Update switchCompanyContext to call UPDATE_USER mutation, update localStorage user data, and refetch all queries
 - [x] Verify company switch persists on page reload without closing session (localStorage + auth link)
+
+## Round 20 Fixes
+- [x] Fix login issue: changed login function to return LoginResponse instead of throwing error on failure

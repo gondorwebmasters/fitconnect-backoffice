@@ -118,14 +118,10 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
     const loginResult = (data as Record<string, unknown>)?.login as LoginResponse | undefined;
 
     if (loginResult?.success && loginResult.user && loginResult.tokens) {
-      // Persist tokens and user
       tokenStorage.setTokens(loginResult.tokens.token || '', loginResult.tokens.refreshToken || '');
       tokenStorage.setUser(loginResult.user);
-
-      // Set initial activeCompanyId from user or first company
       const initialCompanyId = loginResult.user.activeCompanyId || loginResult.companies?.[0]?.id || null;
       localStorage.setItem('fc_active_company', initialCompanyId || '');
-
       setAuthState({
         user: loginResult.user,
         companies: loginResult.companies || [],
@@ -133,11 +129,8 @@ export function FitConnectAuthProvider({ children }: { children: React.ReactNode
         loading: false,
         activeCompanyId: initialCompanyId,
       });
-
-      return loginResult;
     }
-
-    throw new Error(loginResult?.message || 'Login failed');
+    return loginResult || { success: false, message: 'Login failed', code: 'LOGIN_FAILED' };
   }, []);
 
   // ===== Logout =====
