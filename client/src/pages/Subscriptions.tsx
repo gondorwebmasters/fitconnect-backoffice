@@ -23,7 +23,8 @@ import { toast } from 'sonner';
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Start as false — skeleton only shows when a userId is selected and loading
+  const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState('');
 
   // Create dialog
@@ -38,6 +39,8 @@ export default function SubscriptionsPage() {
   const [changePlanDialog, setChangePlanDialog] = useState<{ open: boolean; subId: string | null; newPlanId: string; saving: boolean }>({ open: false, subId: null, newPlanId: '', saving: false });
 
   const { activeCompanyId } = useFitConnectAuth();
+
+  // Fetch plans when company changes
   useEffect(() => {
     apolloClient.query({ query: LIST_PLANS, fetchPolicy: 'network-only' })
       .then(({ data }) => {
@@ -46,26 +49,30 @@ export default function SubscriptionsPage() {
       }).catch(() => {});
   }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchSubscriptions = async () => {
-  useRefreshOnCompanyChange(activeCompanyId, fetchSubscriptions);
-    if (!userId) { setSubscriptions([]); setLoading(false); return; }
+  const fetchSubscriptions = async (uid: string) => {
+    if (!uid) { setSubscriptions([]); setLoading(false); return; }
     setLoading(true);
     try {
       const { data } = await apolloClient.query({
         query: LIST_USER_SUBSCRIPTIONS,
-        variables: { userId },
+        variables: { userId: uid },
         fetchPolicy: 'network-only',
       });
       const result = (data as Record<string, unknown>)?.listUserSubscriptions as SubscriptionResponse;
       if (result?.success) setSubscriptions(result.subscriptions || []);
-    } catch { toast.error('Error al cargar las suscripciones'); }
+      else setSubscriptions([]);
+    } catch { toast.error('Error al cargar las suscripciones'); setSubscriptions([]); }
     finally { setLoading(false); }
   };
 
+  // Refetch when userId changes (debounced)
   useEffect(() => {
-    const t = setTimeout(() => fetchSubscriptions(), 400);
+    const t = setTimeout(() => fetchSubscriptions(userId), 400);
     return () => clearTimeout(t);
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refetch when company changes (if a user is already selected)
+  useRefreshOnCompanyChange(activeCompanyId, () => fetchSubscriptions(userId));
 
   const handleCreate = async () => {
     if (!newSub.planId || !newSub.userId) { toast.error('El plan y el usuario son obligatorios'); return; }
@@ -76,7 +83,7 @@ export default function SubscriptionsPage() {
         variables: { subscription: { planId: newSub.planId, userId: newSub.userId } },
       });
       const result = (data as Record<string, unknown>)?.createSubscription as SubscriptionResponse;
-      if (result?.success) { toast.success('Suscripción creada'); setCreateOpen(false); setUserId(newSub.userId); fetchSubscriptions(); }
+      if (result?.success) { toast.success('Suscripción creada'); setCreateOpen(false); setUserId(newSub.userId); fetchSubscriptions(newSub.userId); }
       else { toast.error(result?.message || 'Error al crear'); }
     } catch { toast.error('Error'); }
     finally { setCreating(false); }
@@ -88,19 +95,19 @@ export default function SubscriptionsPage() {
     try {
       const { data } = await apolloClient.mutate({ mutation: CANCEL_SUBSCRIPTION, variables: { input: { subscriptionId: cancelDialog.id } } });
       const result = (data as Record<string, unknown>)?.cancelSubscription as SubscriptionResponse;
-      if (result?.success) { toast.success('Suscripción cancelada'); setCancelDialog({ open: false, id: null, cancelling: false }); fetchSubscriptions(); }
+      if (result?.success) { toast.success('Suscripción cancelada'); setCancelDialog({ open: false, id: null, cancelling: false }); fetchSubscriptions(userId); }
       else { toast.error(result?.message || 'Error'); }
     } catch { toast.error('Error'); }
     finally { setCancelDialog((p) => ({ ...p, cancelling: false })); }
   };
 
   const handlePause = async (id: string) => {
-    try { await apolloClient.mutate({ mutation: PAUSE_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción pausada'); fetchSubscriptions(); }
+    try { await apolloClient.mutate({ mutation: PAUSE_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción pausada'); fetchSubscriptions(userId); }
     catch { toast.error('Error al pausar'); }
   };
 
   const handleResume = async (id: string) => {
-    try { await apolloClient.mutate({ mutation: RESUME_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción reanudada'); fetchSubscriptions(); }
+    try { await apolloClient.mutate({ mutation: RESUME_SUBSCRIPTION, variables: { subscriptionId: id } }); toast.success('Suscripción reanudada'); fetchSubscriptions(userId); }
     catch { toast.error('Error al reanudar'); }
   };
 
@@ -111,7 +118,7 @@ export default function SubscriptionsPage() {
       await apolloClient.mutate({ mutation: CHANGE_SUBSCRIPTION_PLAN, variables: { subscriptionId: changePlanDialog.subId, newPlanId: changePlanDialog.newPlanId } });
       toast.success('Plan cambiado');
       setChangePlanDialog({ open: false, subId: null, newPlanId: '', saving: false });
-      fetchSubscriptions();
+      fetchSubscriptions(userId);
     } catch { toast.error('Error al cambiar el plan'); }
     finally { setChangePlanDialog((p) => ({ ...p, saving: false })); }
   };

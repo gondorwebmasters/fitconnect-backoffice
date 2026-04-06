@@ -278,3 +278,10 @@
 - [x] setActiveCompany returns user + companies from backend — both are now saved to React state and localStorage
 - [x] Correct order maintained: backend first → localStorage → state → resetStore
 - [x] Update vitest tests to verify setActiveCompany mutation and state update from backend response (79 tests pass)
+
+## Round 26 Fixes
+- [x] Fix Subscriptions page: useRefreshOnCompanyChange was incorrectly placed INSIDE fetchSubscriptions function (invalid hook call) — moved to component body
+- [x] Fix Subscriptions page: loading started as true causing infinite skeleton — changed to false (skeleton only shows when userId is selected)
+- [x] Fix Subscriptions page: fetchSubscriptions now receives userId as argument so it always uses the current value, not stale closure
+- [x] Fix Subscriptions page: all mutation handlers (cancel, pause, resume, changePlan, create) now pass userId to fetchSubscriptions
+- [x] Fix Subscriptions page: useRefreshOnCompanyChange now correctly refetches subscriptions when company changes (only if userId is selected)
