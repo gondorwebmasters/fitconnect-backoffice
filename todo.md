@@ -303,3 +303,6 @@
 - [x] Remove registerOAuthRoutes (Manus OAuth callback) from server/index.ts
 - [x] Simplify server/context.ts to not use Manus SDK (project uses FitConnect auth)
 - [x] 79 tests pass, 0 TypeScript errors, server starts correctly
+
+## Round 29 Fixes
+- [x] Fix Schedules calendar view: GET_SCHEDULES_RANGE now has fallback to GET_SCHEDULES_FROM_TODAY filtered by month; schedulesByDay uses parseDate helper; 0 TS errors

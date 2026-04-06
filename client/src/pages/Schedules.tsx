@@ -123,19 +123,49 @@ export default function SchedulesPage() {
     setLoading(true);
     try {
       if (viewMode === 'calendar') {
-        const start = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1);
-        const end = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0);
-        const { data } = await apolloClient.query({
-          query: GET_SCHEDULES_RANGE,
-          variables: { startDate: start.toISOString(), endDate: end.toISOString() },
-          fetchPolicy: 'network-only',
-        });
-        const result = (data as Record<string, unknown>)?.getSchedulesRange as ScheduleResponse;
-        if (result?.success) setSchedules(result.schedules || []);
+        // Try GET_SCHEDULES_RANGE first; fall back to GET_SCHEDULES_FROM_TODAY if it fails or returns no data
+        let calendarSchedules: Schedule[] = [];
+        try {
+          const year = calendarDate.getFullYear();
+          const month = calendarDate.getMonth();
+          // Use local midnight to avoid UTC offset shifting the day
+          const start = new Date(year, month, 1, 0, 0, 0);
+          const end = new Date(year, month + 1, 0, 23, 59, 59);
+          const { data } = await apolloClient.query({
+            query: GET_SCHEDULES_RANGE,
+            variables: { startDate: start.toISOString(), endDate: end.toISOString() },
+            fetchPolicy: 'network-only',
+          });
+          const result = (data as Record<string, unknown>)?.getSchedulesRange as ScheduleResponse;
+          if (result?.success && result.schedules?.length) {
+            calendarSchedules = result.schedules;
+          }
+        } catch {
+          // GET_SCHEDULES_RANGE failed — fall through to fallback
+        }
+
+        // Fallback: use GET_SCHEDULES_FROM_TODAY and filter by the displayed month
+        if (calendarSchedules.length === 0) {
+          const { data: fallbackData } = await apolloClient.query({
+            query: GET_SCHEDULES_FROM_TODAY,
+            fetchPolicy: 'network-only',
+          });
+          const fallbackResult = (fallbackData as Record<string, unknown>)?.getSchedulesFromToday as ScheduleResponse;
+          if (fallbackResult?.success) {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            calendarSchedules = (fallbackResult.schedules || []).filter((s) => {
+              const d = parseDate(s.startDate);
+              return d && d.getFullYear() === year && d.getMonth() === month;
+            });
+          }
+        }
+
+        setSchedules(calendarSchedules);
       } else {
         const { data } = await apolloClient.query({ query: GET_SCHEDULES_FROM_TODAY, fetchPolicy: 'network-only' });
         const result = (data as Record<string, unknown>)?.getSchedulesFromToday as ScheduleResponse;
-        if (result?.success) setSchedules(result.schedules || []);
+        setSchedules(result?.success ? (result.schedules || []) : []);
       }
     } catch { toast.error('Error al cargar horarios'); }
     finally { setLoading(false); }
@@ -276,9 +306,11 @@ export default function SchedulesPage() {
   const schedulesByDay = useMemo(() => {
     const map: Record<number, Schedule[]> = {};
     schedules.forEach((s) => {
-      const d = new Date(s.startDate).getDate();
-      if (!map[d]) map[d] = [];
-      map[d].push(s);
+      const parsed = parseDate(s.startDate);
+      if (!parsed) return;
+      const day = parsed.getDate(); // local day of month
+      if (!map[day]) map[day] = [];
+      map[day].push(s);
     });
     return map;
   }, [schedules]);
