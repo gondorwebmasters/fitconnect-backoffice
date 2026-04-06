@@ -285,3 +285,11 @@
 - [x] Fix Subscriptions page: fetchSubscriptions now receives userId as argument so it always uses the current value, not stale closure
 - [x] Fix Subscriptions page: all mutation handlers (cancel, pause, resume, changePlan, create) now pass userId to fetchSubscriptions
 - [x] Fix Subscriptions page: useRefreshOnCompanyChange now correctly refetches subscriptions when company changes (only if userId is selected)
+
+## Round 27 Fixes
+- [x] Add showGlobal variable to LIST_PLANS GraphQL operation
+- [x] Add onUserSelect optional prop to UserAutocomplete to expose full User object on selection
+- [x] Subscriptions page: track selectedUser state from autocomplete
+- [x] Subscriptions page: fetchPlans uses showGlobal:true when selectedUser.contextRole === 'admin'
+- [x] Subscriptions page: plans refetch when selectedUser changes (every autocomplete selection)
+- [x] Subscriptions page: plans refetch when company changes (using current selectedUser to decide showGlobal)

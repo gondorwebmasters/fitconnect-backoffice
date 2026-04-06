@@ -13,6 +13,8 @@ interface UserAutocompleteProps {
   value: string;
   /** Called with the selected user's ID, or "" when cleared */
   onChange: (userId: string) => void;
+  /** Optional: called with the full User object when a user is selected, or null when cleared */
+  onUserSelect?: (user: User | null) => void;
   label?: string;
   placeholder?: string;
   className?: string;
@@ -44,12 +46,15 @@ function toOption(u: User): UserOption {
 export function UserAutocomplete({
   value,
   onChange,
+  onUserSelect,
   label = "Usuario",
   placeholder = "Buscar usuario por nombre...",
   className,
   required = false,
   disabled = false,
 }: UserAutocompleteProps) {
+  // Keep a reference to the raw users so we can pass the full object to onUserSelect
+  const rawUsersRef = useRef<User[]>([]);
   const [inputText, setInputText] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState("");
@@ -66,7 +71,8 @@ export function UserAutocomplete({
     const raw = (data as Record<string, unknown>)?.getUsers as
       | { users?: User[] }
       | undefined;
-    return (raw?.users ?? []).map(toOption);
+    rawUsersRef.current = raw?.users ?? [];
+    return rawUsersRef.current.map(toOption);
   })();
 
   // Local filter: show users matching the typed text
@@ -128,6 +134,10 @@ export function UserAutocomplete({
     setSelectedLabel(opt.displayName);
     setInputText(opt.displayName);
     setOpen(false);
+    if (onUserSelect) {
+      const fullUser = rawUsersRef.current.find((u) => u.id === opt.id) ?? null;
+      onUserSelect(fullUser);
+    }
   }
 
   function handleClear(e: React.MouseEvent) {
@@ -136,6 +146,7 @@ export function UserAutocomplete({
     setSelectedLabel("");
     setInputText("");
     setOpen(false);
+    if (onUserSelect) onUserSelect(null);
   }
 
   function handleFocus() {

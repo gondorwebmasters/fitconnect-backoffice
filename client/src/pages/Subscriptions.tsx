@@ -5,7 +5,7 @@ import {
   LIST_USER_SUBSCRIPTIONS, CREATE_SUBSCRIPTION, CANCEL_SUBSCRIPTION,
   PAUSE_SUBSCRIPTION, RESUME_SUBSCRIPTION, CHANGE_SUBSCRIPTION_PLAN, LIST_PLANS,
 } from '@/graphql/operations';
-import type { Subscription, SubscriptionResponse, Plan, PlanResponse, BasicResponse } from '@/graphql/types';
+import type { Subscription, SubscriptionResponse, Plan, PlanResponse, BasicResponse, User } from '@/graphql/types';
 import { useFitConnectAuth } from '@/contexts/FitConnectAuthContext';
 import { PageHeader } from '@/components/common/PageHeader';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -26,6 +26,8 @@ export default function SubscriptionsPage() {
   // Start as false — skeleton only shows when a userId is selected and loading
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState('');
+  // Full user object from the autocomplete (needed to check contextRole)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -40,14 +42,29 @@ export default function SubscriptionsPage() {
 
   const { activeCompanyId } = useFitConnectAuth();
 
-  // Fetch plans when company changes
-  useEffect(() => {
-    apolloClient.query({ query: LIST_PLANS, fetchPolicy: 'network-only' })
+  // Fetch plans — uses showGlobal when the selected user is an admin
+  const fetchPlans = (user: User | null) => {
+    const isAdmin = user?.contextRole === 'admin';
+    apolloClient.query({
+      query: LIST_PLANS,
+      variables: { showGlobal: isAdmin || undefined },
+      fetchPolicy: 'network-only',
+    })
       .then(({ data }) => {
         const result = (data as Record<string, unknown>)?.listPlans as PlanResponse;
         if (result?.success) setPlans(result.plans || []);
       }).catch(() => {});
+  };
+
+  // Refetch plans when company changes (with current selected user)
+  useEffect(() => {
+    fetchPlans(selectedUser);
   }, [activeCompanyId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Refetch plans when selected user changes (to apply/remove showGlobal)
+  useEffect(() => {
+    fetchPlans(selectedUser);
+  }, [selectedUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSubscriptions = async (uid: string) => {
     if (!uid) { setSubscriptions([]); setLoading(false); return; }
@@ -131,6 +148,9 @@ export default function SubscriptionsPage() {
         <UserAutocomplete
           value={userId}
           onChange={setUserId}
+          onUserSelect={(user) => {
+            setSelectedUser(user);
+          }}
           label="Usuario"
           placeholder="Buscar usuario para ver suscripciones..."
         />

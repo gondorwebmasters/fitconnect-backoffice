@@ -601,8 +601,8 @@ export const UPDATE_SCHEDULE_OPTIONS = gql`
 // ============================================================
 
 export const LIST_PLANS = gql`
-  query ListPlans($onlyActive: Boolean) {
-    listPlans(onlyActive: $onlyActive) {
+  query ListPlans($onlyActive: Boolean, $showGlobal: Boolean) {
+    listPlans(onlyActive: $onlyActive, showGlobal: $showGlobal) {
       code success message
       plans { ...PlanFields }
     }
