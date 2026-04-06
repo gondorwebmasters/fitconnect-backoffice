@@ -81,7 +81,7 @@ const STATUS_LABELS: Record<string, string> = {
   full:      'Lleno',
   succeeded: 'Completado',
   unpaid:    'Sin pagar',
-  boss:      'Boss',
+  admin:     'Admin',
   coach:     'Coach',
   premium:   'Premium',
   standard:  'Estándar',

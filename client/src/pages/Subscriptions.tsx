@@ -142,7 +142,7 @@ export default function SubscriptionsPage() {
 
   return (
     <div>
-      <PageHeader title="Suscripciones" description="Gestiona las suscripciones de los usuarios" actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nueva suscripción</Button>} />
+      <PageHeader title="Subscripciones" description="Gestiona las suscripciones de los usuarios" actions={<Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nueva suscripción</Button>} />
 
       <div className="mb-6 max-w-sm">
         <UserAutocomplete

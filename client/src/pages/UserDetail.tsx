@@ -189,9 +189,8 @@ export default function UserDetailPage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="standard">Estándar</SelectItem>
-                    <SelectItem value="boss">Boss</SelectItem>
+                    <SelectItem value="boss">Admin</SelectItem>
                     <SelectItem value="coach">Coach</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

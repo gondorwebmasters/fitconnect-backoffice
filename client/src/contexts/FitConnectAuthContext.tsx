@@ -123,8 +123,8 @@ export function FitConnectAuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (emailOrNickname: string, password: string) => {
     try {
       console.log('[FitConnectAuth] Calling LOGIN mutation');
-      const { data } = await apolloClient.mutate({
-        mutation: LOGIN,
+      const { data } = await apolloClient.query({
+        query: LOGIN,
         variables: { emailOrNickname, password },
       });
       console.log('[FitConnectAuth] LOGIN response:', data);

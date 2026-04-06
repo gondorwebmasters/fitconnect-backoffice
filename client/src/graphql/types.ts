@@ -7,12 +7,10 @@
 
 export enum UserRoleEnum {
   STANDARD = 'standard',
-  BOSS = 'boss',
-  PREMIUM = 'premium',
+  ADMIN = 'admin',
   COACH = 'coach',
   SUPER_ADMIN = 'super_admin',
   SUPERADMIN = 'superadmin',
-  ADMIN = 'admin',
 }
 
 export enum ScheduleType {

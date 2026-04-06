@@ -23,23 +23,23 @@ export const USER_RESUME_FIELDS = gql`
 `;
 
 export const USER_FIELDS = gql`
-  fragment UserFields on User {
-    id
-    name
-    surname
-    email
-    nickname
-    isActive
-    isBlocked
-    isVerified
-    phoneNumber
-    contextRole
-    activeCompanyId
-    isPending
-    permissions
-    pictureUrl { ...PictureUrlFields }
-  }
-  ${PICTURE_URL_FIELDS}
+    fragment UserFields on User {
+        id
+        name
+        surname
+        email
+        nickname
+        isActive
+        isBlocked
+        isVerified
+        phoneNumber
+        contextRole
+        activeCompanyId
+        isPending
+        permissions
+        pictureUrl { ...PictureUrlFields }
+    }
+    ${PICTURE_URL_FIELDS}
 `;
 
 export const COMPANY_FIELDS = gql`
@@ -124,8 +124,6 @@ export const SUBSCRIPTION_FIELDS = gql`
     updated_at
     user { id }
     status
-    startDate
-    endDate
   }
 `;
 
@@ -181,7 +179,7 @@ export const POLL_FIELDS = gql`
 // ============================================================
 
 export const LOGIN = gql`
-  mutation Login($emailOrNickname: String!, $password: String!) {
+  query Login($emailOrNickname: String!, $password: String!) {
     login(emailOrNickname: $emailOrNickname, password: $password) {
       code
       success
