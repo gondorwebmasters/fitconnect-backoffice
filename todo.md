@@ -293,3 +293,13 @@
 - [x] Subscriptions page: fetchPlans uses showGlobal:true when selectedUser.contextRole === 'admin'
 - [x] Subscriptions page: plans refetch when selectedUser changes (every autocomplete selection)
 - [x] Subscriptions page: plans refetch when company changes (using current selectedUser to decide showGlobal)
+
+## Round 28 Fixes
+- [x] Remove vite-plugin-manus-runtime and @builder.io/vite-plugin-jsx-loc packages
+- [x] Remove Manus debug collector plugin and all log infrastructure from vite.config.ts
+- [x] Remove Manus analytics script (%VITE_ANALYTICS_ENDPOINT%/umami) from index.html
+- [x] Remove Manus OAuth redirect (getLoginUrl, VITE_OAUTH_PORTAL_URL, VITE_APP_ID) from const.ts and main.tsx
+- [x] Remove manus-runtime-user-info localStorage write from useAuth.ts; re-export useFitConnectAuth instead
+- [x] Remove registerOAuthRoutes (Manus OAuth callback) from server/index.ts
+- [x] Simplify server/context.ts to not use Manus SDK (project uses FitConnect auth)
+- [x] 79 tests pass, 0 TypeScript errors, server starts correctly
