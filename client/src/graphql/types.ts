@@ -530,6 +530,7 @@ export interface CreateScheduleInput {
   repeat?: boolean | null;
   maxUsers: number;
   admin: string;
+  date?: string | null;
 }
 
 export interface CreatePlanInput {

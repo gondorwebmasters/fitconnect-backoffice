@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { GET_USERS } from "@/graphql/operations";
-import { User } from "@/graphql/types";
+import { User, UserRoleEnum } from "@/graphql/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,8 @@ interface UserAutocompleteProps {
   onChange: (userId: string) => void;
   /** Optional: called with the full User object when a user is selected, or null when cleared */
   onUserSelect?: (user: User | null) => void;
+  /** Optional: filter by user roles */
+  roleFilter?: UserRoleEnum[] | string[];
   label?: string;
   placeholder?: string;
   className?: string;
@@ -47,6 +49,7 @@ export function UserAutocomplete({
   value,
   onChange,
   onUserSelect,
+  roleFilter,
   label = "Usuario",
   placeholder = "Buscar usuario por nombre...",
   className,
@@ -62,7 +65,7 @@ export function UserAutocomplete({
 
   // Load ALL users once — filter locally. No debounce, no repeated calls.
   const { data, loading } = useQuery(GET_USERS, {
-    variables: { page: 0, filterMe: false },
+    variables: { page: 0, filterMe: false, roleFilter },
     fetchPolicy: "cache-first",
     notifyOnNetworkStatusChange: false,
   });
