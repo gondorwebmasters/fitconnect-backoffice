@@ -1062,8 +1062,9 @@ export default function SchedulesPage() {
               <UserAutocomplete
                 label="Entrenador"
                 placeholder="Buscar entrenador..."
+                roleFilter={['admin', 'coach']}
                 value={newSchedule.admin}
-                onChange={id => setNewSchedule({ ...newSchedule, admin: id })}
+                onChange={(id) => setNewSchedule({ ...newSchedule, admin: id })}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
