@@ -118,6 +118,7 @@ export interface User {
   permissions?: string[] | null;
   schedules?: Schedule[] | null;
   userWeights?: UserWeight[] | null;
+  isSuperAdmin?: boolean | null;
 }
 
 export interface UserResumeResponse {
