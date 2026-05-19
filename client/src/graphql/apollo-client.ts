@@ -10,7 +10,7 @@ import { onError } from '@apollo/client/link/error';
 import { REFRESH_ACCESS_TOKEN } from './operations';
 
 const GRAPHQL_ENDPOINT =
-  import.meta.env.VITE_FITCONNECT_API_URL || 'http://localhost:4000/graphql';
+  import.meta.env.VITE_FITCONNECT_API_URL || 'https://site--fitconnect--7kt7vdkfmpm7.code.run/graphql';
 
 // ===== Token helpers =====
 export const tokenStorage = {
