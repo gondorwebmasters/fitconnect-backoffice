@@ -93,16 +93,7 @@ function DashboardLayoutContent({
 
   // Show company switcher for boss, super_admin, or admin roles, or if user has multiple companies
   const isBoss = (
-    !!user?.contextRole && [
-      UserRoleEnum.BOSS,
-      UserRoleEnum.SUPER_ADMIN,
-      UserRoleEnum.SUPERADMIN,
-      UserRoleEnum.ADMIN,
-      'boss',
-      'super_admin',
-      'superadmin',
-      'admin',
-    ].includes(user.contextRole as string)
+    !!user?.contextRole && user.isSuperAdmin
   ) || (companies && companies.length > 1);
 
   // Load ALL companies once when isBoss becomes true (e.g. after login)

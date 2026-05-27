@@ -34,6 +34,7 @@ export const USER_FIELDS = gql`
         isVerified
         phoneNumber
         contextRole
+        isSuperAdmin
         activeCompanyId
         isPending
         permissions
