@@ -19,8 +19,8 @@ export const PLAN_FIELDS = gql`
 
 export const LIST_PLANS = gql`
   ${PLAN_FIELDS}
-  query ListPlans($onlyActive: Boolean) {
-    listPlans(onlyActive: $onlyActive) {
+  query ListPlans($onlyActive: Boolean, $showGlobal: Boolean) {
+    listPlans(onlyActive: $onlyActive, showGlobal: $showGlobal) {
       success
       message
       plans {

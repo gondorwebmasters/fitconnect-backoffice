@@ -1,7 +1,10 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { Archive, Plus } from "lucide-react";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -59,27 +62,36 @@ export default function PlansPage() {
       key: "name",
       header: t("columns.plan"),
       render: (plan) => (
-        <div>
-          <p className="font-medium text-zinc-900">{plan.name}</p>
-          {plan.description ? <p className="mt-0.5 max-w-md truncate text-xs text-zinc-400">{plan.description}</p> : null}
-        </div>
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {plan.name}
+          </Typography>
+          {plan.description ? (
+            <Typography variant="caption" sx={{ color: "text.disabled", display: "block", maxWidth: 320 }} noWrap>
+              {plan.description}
+            </Typography>
+          ) : null}
+        </Box>
       ),
     },
     {
       key: "price",
       header: t("columns.price"),
       render: (plan) => (
-        <span className="tabular-nums text-zinc-700">
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
           {formatCents(planPriceCents(plan), plan.currency)}
-          <span className="text-zinc-400"> / {INTERVAL_LABELS[plan.interval] ?? plan.interval}</span>
-        </span>
+          <Typography component="span" variant="body2" sx={{ color: "text.disabled" }}>
+            {" "}
+            / {INTERVAL_LABELS[plan.interval] ?? plan.interval}
+          </Typography>
+        </Typography>
       ),
     },
     {
       key: "trial",
       header: t("columns.trial"),
       render: (plan) => (
-        <span className="text-zinc-600">{plan.trialPeriodDays ? t("trialDays", { count: plan.trialPeriodDays }) : "—"}</span>
+        <Typography variant="body2">{plan.trialPeriodDays ? t("trialDays", { count: plan.trialPeriodDays }) : "—"}</Typography>
       ),
     },
     {
@@ -98,16 +110,17 @@ export default function PlansPage() {
       className: "w-12 text-right",
       render: (plan) =>
         plan.status !== "archived" ? (
-          <button
+          <IconButton
+            size="small"
             onClick={(event) => {
               event.stopPropagation();
               setArchiving(plan);
             }}
-            className="rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
             title={t("archivePlan")}
+            sx={{ color: "text.disabled" }}
           >
-            <Archive size={15} strokeWidth={1.5} />
-          </button>
+            <Iconify icon="solar:archive-bold" width={15} />
+          </IconButton>
         ) : null,
     },
   ];
@@ -127,7 +140,7 @@ export default function PlansPage() {
                   setFormOpen(true);
                 }}
               >
-                <Plus size={15} strokeWidth={1.5} />
+                <Iconify icon="mingcute:add-line" width={15} />
                 {t("newPlan")}
               </Button>
             }

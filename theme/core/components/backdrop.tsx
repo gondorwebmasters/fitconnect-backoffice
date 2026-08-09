@@ -1,0 +1,22 @@
+import type { Components } from '@mui/material/styles';
+import type { Theme } from '../../types';
+
+import { varAlpha } from '../../styles';
+
+// ----------------------------------------------------------------------
+
+const MuiBackdrop: Components<Theme>['MuiBackdrop'] = {
+  /** **************************************
+   * STYLE
+   *************************************** */
+  styleOverrides: {
+    root: ({ theme }) => ({
+      backgroundColor: varAlpha(theme.vars.palette.grey['800Channel'], 0.48),
+    }),
+    invisible: { background: 'transparent' },
+  },
+};
+
+// ----------------------------------------------------------------------
+
+export const backdrop = { MuiBackdrop };

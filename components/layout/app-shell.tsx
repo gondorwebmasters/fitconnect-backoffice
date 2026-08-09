@@ -1,5 +1,6 @@
 "use client";
 
+import Box from "@mui/material/Box";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import {
@@ -10,8 +11,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
-import { cn } from "@/lib/cn";
 
 import { CommandPalette } from "./command-palette";
 import { CompanyBackdrop } from "./company-backdrop";
@@ -84,9 +83,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SessionSplash />
       <CompanyBackdrop />
       <Sidebar />
-      <div className={cn("relative transition-[padding] duration-200", collapsed ? "pl-24" : "pl-72")}>
+      <Box
+        sx={{
+          position: "relative",
+          transition: (theme) => theme.transitions.create("padding-left", { duration: 200 }),
+          pl: collapsed ? "88px" : "280px",
+        }}
+      >
         <Topbar />
-        <main className="mx-auto max-w-7xl px-10 py-8">
+        <Box component="main" sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2.5, lg: 5 }, py: 4 }}>
           {/*
             Solo opacity, nunca x/y/scale: cualquier motion value de
             transform (incluido "y") hace que framer-motion fije un
@@ -108,8 +113,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             {children}
           </motion.div>
-        </main>
-      </div>
+        </Box>
+      </Box>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </ShellContext.Provider>
   );

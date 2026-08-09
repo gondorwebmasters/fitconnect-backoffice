@@ -1,7 +1,13 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { AlertTriangle, Info, Megaphone, MessageSquare, Send, XCircle } from "lucide-react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -26,11 +32,11 @@ const PAGE_SIZE = 10;
 
 type NotificationType = "info" | "message" | "warning" | "error";
 
-const TYPE_META: Record<NotificationType, { tone: "positive" | "neutral" | "warning" | "negative"; icon: typeof Info }> = {
-  info: { tone: "neutral", icon: Info },
-  message: { tone: "positive", icon: MessageSquare },
-  warning: { tone: "warning", icon: AlertTriangle },
-  error: { tone: "negative", icon: XCircle },
+const TYPE_META: Record<NotificationType, { tone: "positive" | "neutral" | "warning" | "negative"; icon: string }> = {
+  info: { tone: "neutral", icon: "solar:info-circle-bold" },
+  message: { tone: "positive", icon: "solar:chat-round-bold" },
+  warning: { tone: "warning", icon: "solar:danger-triangle-bold" },
+  error: { tone: "negative", icon: "solar:close-circle-bold" },
 };
 
 // Debe coincidir con las categorías registradas en el cliente Expo vía
@@ -189,13 +195,17 @@ export default function BroadcastPage() {
       key: "member",
       header: t("columns.member"),
       render: (user) => (
-        <div className="flex items-center gap-3">
+        <Stack direction="row" alignItems="center" spacing={1.5}>
           <Avatar size="sm" name={fullName(user)} url={user.pictureUrl?.url} />
-          <div>
-            <p className="font-medium text-zinc-900">{fullName(user)}</p>
-            <p className="text-xs text-zinc-400">{user.email}</p>
-          </div>
-        </div>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {fullName(user)}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled" }}>
+              {user.email}
+            </Typography>
+          </Box>
+        </Stack>
       ),
     },
     {
@@ -208,7 +218,7 @@ export default function BroadcastPage() {
     },
   ];
 
-  const TypeIcon = TYPE_META[type].icon;
+  const typeIcon = TYPE_META[type].icon;
 
   return (
     <PageShell
@@ -219,15 +229,15 @@ export default function BroadcastPage() {
         />
       }
     >
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card">
-            <div className="mb-5 flex items-center gap-2">
-              <Megaphone size={16} strokeWidth={1.5} className="text-primary" />
-              <h2 className="text-sm font-medium text-zinc-900">{t("composeMessage")}</h2>
-            </div>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card variant="outlined" sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+              <Iconify icon="solar:bell-bing-bold-duotone" width={16} />
+              <Typography variant="subtitle2">{t("composeMessage")}</Typography>
+            </Stack>
 
-            <div className="space-y-5">
+            <Stack spacing={2.5}>
               <Field label={t("titleField")}>
                 <Input
                   value={title}
@@ -268,40 +278,41 @@ export default function BroadcastPage() {
                 />
               </Field>
 
-              <div className="rounded-xl border border-zinc-100 bg-zinc-50/60 px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-zinc-600">
-                    <TypeIcon size={14} strokeWidth={1.5} />
+              <Box sx={{ borderRadius: 2, bgcolor: "background.neutral", px: 2, py: 1.5 }}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ color: "text.secondary", typography: "body2" }}>
+                    <Iconify icon={typeIcon} width={14} />
                     {t("selectedRecipients")}
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums text-zinc-900">{selectedIds.size}</span>
-                </div>
+                  </Stack>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    {selectedIds.size}
+                  </Typography>
+                </Stack>
                 {selectedIds.size > 0 ? (
-                  <button
-                    onClick={clearSelection}
-                    className="mt-1 text-xs text-zinc-400 underline-offset-2 hover:text-zinc-600 hover:underline"
-                  >
+                  <Link component="button" type="button" onClick={clearSelection} variant="caption" sx={{ mt: 0.5, color: "text.disabled" }}>
                     {t("clearSelection")}
-                  </button>
+                  </Link>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-400">{t("selectHint")}</p>
+                  <Typography variant="caption" sx={{ mt: 0.5, color: "text.disabled", display: "block" }}>
+                    {t("selectHint")}
+                  </Typography>
                 )}
-              </div>
+              </Box>
 
               <Button
                 variant="primary"
-                className="w-full"
+                fullWidth
                 disabled={!canSend || sending}
                 onClick={() => setConfirmOpen(true)}
               >
-                <Send size={15} strokeWidth={1.5} />
+                <Iconify icon="solar:plain-2-bold" width={15} />
                 {t("send")}
               </Button>
-            </div>
-          </div>
-        </div>
+            </Stack>
+          </Card>
+        </Grid>
 
-        <div className="lg:col-span-3">
+        <Grid size={{ xs: 12, lg: 7 }}>
           <MemberFilters
             search={search}
             onSearch={setSearch}
@@ -328,19 +339,19 @@ export default function BroadcastPage() {
             selection={{ selectedIds, onToggle: toggleSelected, onToggleAll: toggleSelectAll }}
           />
 
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <span className="text-xs tabular-nums text-zinc-400">
+          <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
+            <Typography variant="caption" sx={{ color: "text.disabled", fontVariantNumeric: "tabular-nums" }}>
               {t("pageLabel", { page: serverPage * (SERVER_PAGE_SIZE / PAGE_SIZE) + subPage + 1 })}
-            </span>
+            </Typography>
             <Button size="sm" variant="ghost" disabled={!canGoPrev} onClick={goPrev}>
               {t("previous")}
             </Button>
             <Button size="sm" variant="ghost" disabled={!canGoNext} onClick={goNext}>
               {t("next")}
             </Button>
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Grid>
+      </Grid>
 
       <ConfirmDialog
         open={confirmOpen}

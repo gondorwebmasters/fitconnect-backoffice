@@ -1,7 +1,15 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { Copy } from "lucide-react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -87,34 +95,30 @@ export default function OnboardingSettingsPage() {
   };
 
   if (loading && !company) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-zinc-100" />;
+    return <Skeleton variant="rounded" height={256} sx={{ maxWidth: 672 }} />;
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-card">
-        <header className="border-b border-zinc-100 px-7 py-5">
-          <h2 className="text-sm font-semibold text-zinc-900">{t("accessCode")}</h2>
-          <p className="text-xs text-zinc-400">{t("accessCodeSubtitle")}</p>
-        </header>
-
-        <div className="space-y-5 p-7">
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
+    <Stack spacing={3} sx={{ maxWidth: 672 }}>
+      <Card variant="outlined">
+        <CardHeader title={t("accessCode")} subheader={t("accessCodeSubtitle")} titleTypographyProps={{ variant: "subtitle1" }} />
+        <Stack spacing={2.5} sx={{ p: 3 }}>
+          <Stack direction="row" alignItems="flex-end" spacing={1.5}>
+            <Box sx={{ flex: 1 }}>
               <Field label={t("currentCode")}>
                 <Input
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
-                  className="font-mono tracking-widest"
+                  sx={{ fontFamily: "monospace", letterSpacing: "0.1em" }}
                 />
               </Field>
-            </div>
+            </Box>
             <Button variant="secondary" onClick={handleCopy} disabled={!code} aria-label={t("copyCode")}>
-              <Copy size={14} strokeWidth={1.75} />
+              <Iconify icon="solar:copy-bold" width={14} />
               {t("copy")}
             </Button>
-          </div>
-          <div className="flex justify-end">
+          </Stack>
+          <Stack direction="row" justifyContent="flex-end">
             <Button
               variant="primary"
               onClick={handleSave}
@@ -122,41 +126,45 @@ export default function OnboardingSettingsPage() {
             >
               {saving ? t("saving") : t("saveCode")}
             </Button>
-          </div>
-        </div>
-      </section>
+          </Stack>
+        </Stack>
+      </Card>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-card">
-        <header className="border-b border-zinc-100 px-7 py-5">
-          <h2 className="text-sm font-semibold text-zinc-900">{t("admissionRequests")}</h2>
-          <p className="text-xs text-zinc-400">
-            {pending.length === 0 ? t("noPendingRequests") : t("waitingCount", { count: pending.length })}
-          </p>
-        </header>
-
-        <div className="p-7">
+      <Card variant="outlined">
+        <CardHeader
+          title={t("admissionRequests")}
+          subheader={pending.length === 0 ? t("noPendingRequests") : t("waitingCount", { count: pending.length })}
+          titleTypographyProps={{ variant: "subtitle1" }}
+        />
+        <Box sx={{ p: 3 }}>
           {pending.length === 0 ? (
-            <p className="py-4 text-center text-sm text-zinc-400">{t("noneWaiting")}</p>
+            <Typography variant="body2" sx={{ color: "text.disabled", textAlign: "center", py: 2 }}>
+              {t("noneWaiting")}
+            </Typography>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <List disablePadding>
               {pending.slice(0, 5).map((pendingUser) => (
-                <li key={pendingUser.id} className="flex items-center gap-3 py-3">
+                <ListItem key={pendingUser.id} divider sx={{ px: 0, gap: 1.5 }}>
                   <Avatar size="sm" name={fullName(pendingUser)} url={pendingUser.pictureUrl?.url} />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900">{fullName(pendingUser)}</p>
-                    <p className="truncate text-xs text-zinc-400">{pendingUser.email}</p>
-                  </div>
-                </li>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                      {fullName(pendingUser)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.disabled" }} noWrap>
+                      {pendingUser.email}
+                    </Typography>
+                  </Box>
+                </ListItem>
               ))}
-            </ul>
+            </List>
           )}
-          <div className="mt-4 flex justify-end">
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
             <Link href="/members">
               <Button variant="secondary">{t("manageInMembers")}</Button>
             </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+          </Stack>
+        </Box>
+      </Card>
+    </Stack>
   );
 }

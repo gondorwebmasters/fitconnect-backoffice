@@ -1,7 +1,10 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation } from "@apollo/client";
-import { ImagePlus, Loader2 } from "lucide-react";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 
@@ -44,26 +47,29 @@ export function CompanyLogoUpload({ company }: { company: Company }) {
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <Stack direction="row" alignItems="center" spacing={2}>
       <Avatar size="xl" name={company.name} url={company.logo?.url} />
-      <div className="space-y-1.5">
+      <Stack spacing={0.75}>
         <Button variant="secondary" onClick={() => inputRef.current?.click()} disabled={busy}>
           {busy ? (
-            <Loader2 size={14} strokeWidth={2} className="animate-spin" />
+            <Iconify icon="svg-spinners:180-ring" width={14} />
           ) : (
-            <ImagePlus size={14} strokeWidth={1.75} />
+            <Iconify icon="solar:gallery-add-bold" width={14} />
           )}
           {busy ? t("uploading") : t("changeLogo")}
         </Button>
-        <p className="text-xs text-zinc-400">{t("hint")}</p>
-      </div>
-      <input
+        <Typography variant="caption" sx={{ color: "text.disabled" }}>
+          {t("hint")}
+        </Typography>
+      </Stack>
+      <Box
+        component="input"
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png"
-        className="hidden"
         onChange={handleFile}
+        sx={{ display: "none" }}
       />
-    </div>
+    </Stack>
   );
 }

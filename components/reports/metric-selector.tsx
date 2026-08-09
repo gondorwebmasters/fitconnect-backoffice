@@ -1,5 +1,7 @@
 "use client";
 
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -26,8 +28,8 @@ export function MetricSelector({ selected, onChange }: MetricSelectorProps) {
   const selectOnly = (ids: MetricId[]) => onChange(new Set(ids));
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
+    <Stack spacing={3}>
+      <Stack direction="row" flexWrap="wrap" gap={1}>
         <Button size="sm" variant="secondary" onClick={selectAll}>
           {t("selectAll")}
         </Button>
@@ -40,24 +42,39 @@ export function MetricSelector({ selected, onChange }: MetricSelectorProps) {
         <Button size="sm" variant="ghost" onClick={() => selectOnly(metricsInGroup("users"))}>
           {t("onlyUsers")}
         </Button>
-      </div>
+      </Stack>
 
       {METRIC_GROUPS.map((group) => (
-        <div key={group.id}>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">{t(`groups.${group.id}`)}</h3>
-          <div className="space-y-2">
+        <Stack key={group.id} spacing={1}>
+          <Typography variant="caption" sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
+            {t(`groups.${group.id}`)}
+          </Typography>
+          <Stack spacing={0.5}>
             {METRICS.filter((metric) => metric.group === group.id).map((metric) => (
-              <label
+              <Stack
                 key={metric.id}
-                className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50"
+                component="label"
+                direction="row"
+                alignItems="center"
+                spacing={1.25}
+                sx={{
+                  cursor: "pointer",
+                  borderRadius: 2,
+                  px: 1,
+                  py: 0.75,
+                  fontSize: 14,
+                  color: "text.secondary",
+                  transition: (theme) => theme.transitions.create("background-color"),
+                  "&:hover": { bgcolor: "action.hover" },
+                }}
               >
                 <Checkbox checked={selected.has(metric.id)} onChange={() => toggle(metric.id)} />
                 {t(`ids.${metric.id}`)}
-              </label>
+              </Stack>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       ))}
-    </div>
+    </Stack>
   );
 }

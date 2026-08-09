@@ -1,6 +1,11 @@
 "use client";
 
 import { useLazyQuery, useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
@@ -84,32 +89,42 @@ export default function SubscriptionsPage() {
     {
       key: "user",
       header: t("columns.member"),
-      render: (subscription) => (
-        <span className="text-zinc-700">{subscription.user ? fullName(subscription.user) : "—"}</span>
-      ),
+      render: (subscription) => <Typography variant="body2">{subscription.user ? fullName(subscription.user) : "—"}</Typography>,
     },
     {
       key: "since",
       header: t("columns.since"),
-      render: (subscription) => <span className="text-zinc-600">{formatDate(subscription.created_at)}</span>,
+      render: (subscription) => (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {formatDate(subscription.created_at)}
+        </Typography>
+      ),
     },
     {
       key: "periodEnd",
       header: t("columns.periodEnd"),
-      render: (subscription) => <span className="text-zinc-600">{formatDate(subscription.currentPeriodEnd)}</span>,
+      render: (subscription) => (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {formatDate(subscription.currentPeriodEnd)}
+        </Typography>
+      ),
     },
     {
       key: "nextBilling",
       header: t("columns.nextBilling"),
-      render: (subscription) => <span className="text-zinc-600">{formatDate(subscription.nextBillingDate)}</span>,
+      render: (subscription) => (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          {formatDate(subscription.nextBillingDate)}
+        </Typography>
+      ),
     },
     {
       key: "failed",
       header: t("columns.failedPayments"),
       render: (subscription) => (
-        <span className={subscription.failedPaymentAttempts > 0 ? "text-red-600" : "text-zinc-400"}>
+        <Typography variant="body2" sx={{ color: subscription.failedPaymentAttempts > 0 ? "error.main" : "text.disabled" }}>
           {subscription.failedPaymentAttempts}
-        </span>
+        </Typography>
       ),
     },
     {
@@ -134,24 +149,36 @@ export default function SubscriptionsPage() {
           <>
             <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
-            <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Grid container spacing={2} sx={{ mb: 3 }}>
               {totalByPlan.map((stat) => (
-                <button
-                  key={stat.planId}
-                  onClick={() => selectPlan(stat.planId)}
-                  className={`rounded-2xl border bg-white p-5 text-left shadow-card transition-all hover:shadow-card-hover ${
-                    planId === stat.planId ? "border-primary ring-1 ring-primary/30" : "border-zinc-200 hover:border-zinc-400"
-                  }`}
-                >
-                  <p className="truncate text-xs font-medium uppercase tracking-wider text-zinc-400">{stat.planName}</p>
-                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-zinc-900">{stat.count}</p>
-                  <p className="text-xs text-zinc-400">{t("activeSubscriptions")}</p>
-                </button>
+                <Grid key={stat.planId} size={{ xs: 6, lg: 3 }}>
+                  <Card
+                    variant="outlined"
+                    onClick={() => selectPlan(stat.planId)}
+                    sx={{
+                      p: 2.5,
+                      cursor: "pointer",
+                      borderColor: planId === stat.planId ? "primary.main" : "divider",
+                      transition: (theme) => theme.transitions.create(["border-color", "box-shadow"]),
+                      "&:hover": { borderColor: "primary.main" },
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }} noWrap>
+                      {stat.planName}
+                    </Typography>
+                    <Typography variant="h5" sx={{ mt: 0.5 }}>
+                      {stat.count}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                      {t("activeSubscriptions")}
+                    </Typography>
+                  </Card>
+                </Grid>
               ))}
-            </div>
+            </Grid>
 
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <div className="w-72">
+            <Stack direction="row" flexWrap="wrap" spacing={1.5} sx={{ mb: 2 }}>
+              <Box sx={{ width: 288 }}>
                 <Dropdown
                   options={(plans.data?.listPlans?.plans ?? []).map((plan) => ({
                     value: plan.id,
@@ -161,10 +188,11 @@ export default function SubscriptionsPage() {
                   value={planId}
                   onChange={selectPlan}
                   searchable
+                  size="small"
                 />
-              </div>
+              </Box>
               {planId ? (
-                <div className="w-48">
+                <Box sx={{ width: 192 }}>
                   <Dropdown
                     options={STATUS_FILTERS}
                     value={statusFilter}
@@ -172,10 +200,11 @@ export default function SubscriptionsPage() {
                       setStatusFilter(value);
                       setPage(0);
                     }}
+                    size="small"
                   />
-                </div>
+                </Box>
               ) : null}
-            </div>
+            </Stack>
           </>
         }
       >
@@ -197,9 +226,11 @@ export default function SubscriptionsPage() {
             />
           </>
         ) : (
-          <p className="rounded-xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-400">
-            {t("selectPlanHint")}
-          </p>
+          <Box sx={{ borderRadius: 2, border: 1, borderStyle: "dashed", borderColor: "divider", py: 8, textAlign: "center" }}>
+            <Typography variant="body2" sx={{ color: "text.disabled" }}>
+              {t("selectPlanHint")}
+            </Typography>
+          </Box>
         )}
       </PageShell>
 

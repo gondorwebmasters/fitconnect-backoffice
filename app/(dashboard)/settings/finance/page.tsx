@@ -1,7 +1,14 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { AlertTriangle, CheckCircle2, Unplug } from "lucide-react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -78,89 +85,86 @@ export default function FinanceSettingsPage() {
   };
 
   if (loading && !data) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-zinc-100" />;
+    return <Skeleton variant="rounded" height={256} sx={{ maxWidth: 672 }} />;
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-card">
-        <header className="border-b border-zinc-100 px-7 py-5">
-          <h2 className="text-sm font-semibold text-zinc-900">{t("title")}</h2>
-          <p className="text-xs text-zinc-400">{t("subtitle")}</p>
-        </header>
+    <Box sx={{ maxWidth: 672 }}>
+      <Card variant="outlined">
+        <CardHeader title={t("title")} subheader={t("subtitle")} titleTypographyProps={{ variant: "subtitle1" }} />
 
-        <div className="space-y-5 p-7">
+        <Stack spacing={2.5} sx={{ p: 3 }}>
           {connected ? (
             <>
-              <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-                <CheckCircle2 size={16} strokeWidth={2} className="shrink-0 text-emerald-500" />
-                <p className="text-sm font-medium text-emerald-500">{t("accountConnected")}</p>
-              </div>
+              <Alert severity="success">{t("accountConnected")}</Alert>
 
-              <dl className="space-y-3 text-sm">
+              <Stack spacing={1.5}>
                 {status?.accountId ? (
-                  <div>
-                    <dt className="text-xs uppercase tracking-wider text-zinc-400">{t("account")}</dt>
-                    <dd className="mt-0.5 font-mono text-xs text-zinc-700">{status.accountId}</dd>
-                  </div>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                      {t("account")}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontFamily: "monospace", display: "block" }}>
+                      {status.accountId}
+                    </Typography>
+                  </Box>
                 ) : null}
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-zinc-400">{t("capabilities")}</dt>
-                  <dd className="mt-1.5 flex flex-wrap gap-2">
+                <Box>
+                  <Typography variant="caption" sx={{ color: "text.disabled", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                    {t("capabilities")}
+                  </Typography>
+                  <Stack direction="row" flexWrap="wrap" spacing={1} sx={{ mt: 0.75 }}>
                     <Chip tone={status?.chargesEnabled ? "success" : "warning"}>
                       {status?.chargesEnabled ? t("chargesActive") : t("chargesPending")}
                     </Chip>
                     <Chip tone={status?.payoutsEnabled ? "success" : "warning"}>
                       {status?.payoutsEnabled ? t("payoutsActive") : t("payoutsPending")}
                     </Chip>
-                  </dd>
-                </div>
-              </dl>
+                  </Stack>
+                </Box>
+              </Stack>
 
               {status?.missingRequirements?.length ? (
-                <div className="flex gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                  <AlertTriangle size={15} strokeWidth={1.75} className="mt-0.5 shrink-0 text-amber-600" />
-                  <div className="text-sm text-amber-700">
-                    <p className="font-medium">{t("missingRequirements")}</p>
-                    <ul className="mt-1 list-inside list-disc text-xs">
-                      {status.missingRequirements.filter(Boolean).map((requirement) => (
-                        <li key={requirement}>{requirement}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                <Alert severity="warning" icon={<Iconify icon="solar:danger-triangle-bold" width={16} />}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {t("missingRequirements")}
+                  </Typography>
+                  <Box component="ul" sx={{ mt: 0.5, pl: 2.5, typography: "caption" }}>
+                    {status.missingRequirements.filter(Boolean).map((requirement) => (
+                      <li key={requirement}>{requirement}</li>
+                    ))}
+                  </Box>
+                </Alert>
               ) : null}
 
-              {status?.disabledReason ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-                  {status.disabledReason}
-                </p>
-              ) : null}
+              {status?.disabledReason ? <Alert severity="error">{status.disabledReason}</Alert> : null}
 
-              <div className="flex flex-wrap justify-end gap-3 pt-1">
+              <Stack direction="row" flexWrap="wrap" justifyContent="flex-end" spacing={1.5}>
                 {!status?.chargesEnabled ? (
                   <Button variant="primary" onClick={handleConnect} disabled={connecting}>
                     {connecting ? t("redirecting") : t("completeSetup")}
                   </Button>
                 ) : null}
                 <Button variant="danger" onClick={() => setConfirmingDisconnect(true)}>
-                  <Unplug size={14} strokeWidth={1.75} />
+                  <Iconify icon="mdi:power-plug-off" width={14} />
                   {t("disconnect")}
                 </Button>
-              </div>
+              </Stack>
             </>
           ) : (
             <>
-              <p className="text-sm leading-relaxed text-zinc-500">{t("connectDescription")}</p>
-              <div className="flex justify-end">
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                {t("connectDescription")}
+              </Typography>
+              <Stack direction="row" justifyContent="flex-end">
                 <Button variant="primary" onClick={handleConnect} disabled={connecting || !companyId}>
                   {connecting ? t("redirecting") : t("connect")}
                 </Button>
-              </div>
+              </Stack>
             </>
           )}
-        </div>
-      </section>
+        </Stack>
+      </Card>
 
       <ConfirmDialog
         open={confirmingDisconnect}
@@ -172,6 +176,6 @@ export default function FinanceSettingsPage() {
         onConfirm={handleDisconnect}
         onCancel={() => setConfirmingDisconnect(false)}
       />
-    </div>
+    </Box>
   );
 }

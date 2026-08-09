@@ -1,22 +1,34 @@
 "use client";
 
+import { Iconify } from "@/components/iconify";
+
 import { useMutation } from "@apollo/client";
-import { Eye, EyeOff } from "lucide-react";
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { UPDATE_PASSWORD } from "@/lib/graphql/auth";
 
 const EMPTY = { currentPassword: "", newPassword: "", confirmPassword: "" };
 
 function PasswordInput({
+  label,
+  hint,
   value,
   onChange,
   autoComplete,
 }: {
+  label: string;
+  hint?: string;
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   autoComplete: string;
@@ -24,25 +36,32 @@ function PasswordInput({
   const t = useTranslations("profile.passwordForm");
   const [visible, setVisible] = useState(false);
   return (
-    <div className="relative">
-      <Input
-        type={visible ? "text" : "password"}
-        value={value}
-        onChange={onChange}
-        autoComplete={autoComplete}
-        minLength={6}
-        required
-        className="pr-10"
-      />
-      <button
-        type="button"
-        onClick={() => setVisible((current) => !current)}
-        aria-label={visible ? t("hidePassword") : t("showPassword")}
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-zinc-400 transition-colors hover:text-zinc-600"
-      >
-        {visible ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
-      </button>
-    </div>
+    <Input
+      label={label}
+      helperText={hint}
+      type={visible ? "text" : "password"}
+      value={value}
+      onChange={onChange}
+      autoComplete={autoComplete}
+      minLength={6}
+      required
+      slotProps={{
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                size="small"
+                onClick={() => setVisible((current) => !current)}
+                aria-label={visible ? t("hidePassword") : t("showPassword")}
+                edge="end"
+              >
+                {visible ? <Iconify icon="solar:eye-closed-bold" width={15} /> : <Iconify icon="solar:eye-bold" width={15} />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        },
+      }}
+    />
   );
 }
 
@@ -74,44 +93,47 @@ export function PasswordForm() {
   };
 
   return (
-    <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-shadow hover:shadow-card-hover">
-      <header className="border-b border-zinc-100 px-7 py-5">
-        <h2 className="text-sm font-semibold text-zinc-900">{t("title")}</h2>
-        <p className="text-xs text-zinc-400">{t("subtitle")}</p>
-      </header>
+    <Card variant="outlined">
+      <CardHeader title={t("title")} subheader={t("subtitle")} titleTypographyProps={{ variant: "subtitle1" }} />
 
-      <form onSubmit={handleSubmit} className="space-y-5 p-7">
-        <Field label={t("currentPassword")}>
-          <PasswordInput
-            value={form.currentPassword}
-            onChange={set("currentPassword")}
-            autoComplete="current-password"
-          />
-        </Field>
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label={t("newPassword")} hint={t("newPasswordHint")}>
-            <PasswordInput value={form.newPassword} onChange={set("newPassword")} autoComplete="new-password" />
-          </Field>
-          <Field label={t("confirmPassword")}>
+      <Stack component="form" onSubmit={handleSubmit} spacing={2.5} sx={{ p: 3 }}>
+        <PasswordInput
+          label={t("currentPassword")}
+          value={form.currentPassword}
+          onChange={set("currentPassword")}
+          autoComplete="current-password"
+        />
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <PasswordInput
+              label={t("newPassword")}
+              hint={t("newPasswordHint")}
+              value={form.newPassword}
+              onChange={set("newPassword")}
+              autoComplete="new-password"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <PasswordInput
+              label={t("confirmPassword")}
               value={form.confirmPassword}
               onChange={set("confirmPassword")}
               autoComplete="new-password"
             />
-          </Field>
-        </div>
+          </Grid>
+        </Grid>
         {mismatch ? (
-          <p role="alert" className="text-xs text-red-500">
+          <Typography role="alert" variant="caption" sx={{ color: "error.main" }}>
             {t("mismatch")}
-          </p>
+          </Typography>
         ) : null}
 
-        <div className="flex justify-end pt-1">
+        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 0.5 }}>
           <Button type="submit" variant="primary" disabled={loading || mismatch}>
             {loading ? t("updating") : t("changePassword")}
           </Button>
-        </div>
-      </form>
-    </section>
+        </Stack>
+      </Stack>
+    </Card>
   );
 }

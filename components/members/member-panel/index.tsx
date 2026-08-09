@@ -1,10 +1,16 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { SlideOver } from "@/components/ui/slide-over";
-import { Tabs } from "@/components/ui/tabs";
 import { fullName } from "@/lib/format";
 import type { User } from "@/lib/graphql/types";
 
@@ -30,32 +36,54 @@ export function MemberPanel({ member, onClose, onChanged }: MemberPanelProps) {
   ];
 
   return (
-    <SlideOver
+    <Drawer
+      anchor="right"
       open={Boolean(member)}
       onClose={onClose}
-      title={member ? fullName(member) : ""}
-      subtitle={member?.email}
-      wide
+      slotProps={{ paper: { sx: { width: { xs: 1, sm: 640 } } } }}
     >
       {member ? (
-        <div className="space-y-6">
-          <Tabs items={TABS} value={tab} onChange={setTab} />
-          {tab === "profile" ? (
-            <ProfileTab
-              key={member.id}
-              member={member}
-              onChanged={onChanged}
-              onDeleted={() => {
-                onChanged();
-                onClose();
-              }}
-            />
-          ) : null}
-          {tab === "subscription" ? <SubscriptionTab userId={member.id} /> : null}
-          {tab === "payments" ? <PaymentsTab userId={member.id} /> : null}
-          {tab === "schedules" ? <SchedulesTab userId={member.id} /> : null}
-        </div>
+        <>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ px: 4, pt: 3 }}>
+            <Box>
+              <Typography variant="h6">{fullName(member)}</Typography>
+              <Typography variant="body2" sx={{ color: "text.disabled" }}>
+                {member.email}
+              </Typography>
+            </Box>
+            <IconButton onClick={onClose} size="small">
+              <Iconify icon="mingcute:close-line" width={18} />
+            </IconButton>
+          </Stack>
+
+          <Tabs
+            value={tab}
+            onChange={(_event, value: string) => setTab(value)}
+            sx={{ px: 4, mt: 1, borderBottom: 1, borderColor: "divider" }}
+          >
+            {TABS.map((item) => (
+              <Tab key={item.value} value={item.value} label={item.label} />
+            ))}
+          </Tabs>
+
+          <Box sx={{ flex: 1, overflowY: "auto", px: 4, py: 3 }}>
+            {tab === "profile" ? (
+              <ProfileTab
+                key={member.id}
+                member={member}
+                onChanged={onChanged}
+                onDeleted={() => {
+                  onChanged();
+                  onClose();
+                }}
+              />
+            ) : null}
+            {tab === "subscription" ? <SubscriptionTab userId={member.id} role={member.contextRole} /> : null}
+            {tab === "payments" ? <PaymentsTab userId={member.id} /> : null}
+            {tab === "schedules" ? <SchedulesTab userId={member.id} /> : null}
+          </Box>
+        </>
       ) : null}
-    </SlideOver>
+    </Drawer>
   );
 }

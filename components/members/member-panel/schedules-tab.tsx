@@ -1,11 +1,18 @@
 "use client";
 
 import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { BadgeDot } from "@/components/ui/badge-dot";
-import { Tabs } from "@/components/ui/tabs";
+import { StatusChip } from "@/components/mui/status-chip";
 import { formatDateTime } from "@/lib/format";
 import { GET_USER_SCHEDULES } from "@/lib/graphql/schedules";
 import type { Schedule } from "@/lib/graphql/types";
@@ -22,35 +29,35 @@ export function SchedulesTab({ userId }: { userId: string }) {
   const schedules = data?.getUserSchedules?.schedules ?? [];
 
   return (
-    <div className="space-y-4">
-      <Tabs
-        items={[
-          { value: "upcoming", label: t("upcoming") },
-          { value: "past", label: t("past") },
-        ]}
-        value={view}
-        onChange={setView}
-      />
+    <Stack spacing={2}>
+      <Tabs value={view} onChange={(_event, value: string) => setView(value)} sx={{ minHeight: 36 }}>
+        <Tab value="upcoming" label={t("upcoming")} sx={{ minHeight: 36 }} />
+        <Tab value="past" label={t("past")} sx={{ minHeight: 36 }} />
+      </Tabs>
       {loading && !data ? (
-        <div className="h-24 animate-pulse rounded-lg bg-zinc-50" />
+        <Skeleton variant="rounded" height={96} />
       ) : schedules.length === 0 ? (
-        <p className="py-6 text-center text-sm text-zinc-400">{t("empty")}</p>
+        <Typography variant="body2" sx={{ color: "text.disabled", textAlign: "center", py: 3 }}>
+          {t("empty")}
+        </Typography>
       ) : (
-        <ul className="divide-y divide-zinc-100">
+        <List disablePadding>
           {schedules.map((schedule) => (
-            <li key={schedule.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm text-zinc-700">{schedule.title}</p>
-                <p className="text-xs text-zinc-400">{formatDateTime(schedule.startDate)}</p>
-              </div>
-              <BadgeDot
+            <ListItem key={schedule.id} divider sx={{ px: 0 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="body2">{schedule.title}</Typography>
+                <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                  {formatDateTime(schedule.startDate)}
+                </Typography>
+              </Box>
+              <StatusChip
                 tone={schedule.state === "cancelled" ? "negative" : "positive"}
                 label={schedule.state === "cancelled" ? t("cancelled") : t("available")}
               />
-            </li>
+            </ListItem>
           ))}
-        </ul>
+        </List>
       )}
-    </div>
+    </Stack>
   );
 }

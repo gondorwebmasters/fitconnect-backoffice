@@ -1,5 +1,6 @@
 "use client";
 
+import Box from "@mui/material/Box";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -15,11 +16,12 @@ const trail = [
 
 export function HeroAnimation() {
   return (
-    <div aria-hidden className="relative flex h-24 w-24 items-center justify-center">
+    <Box aria-hidden sx={{ position: "relative", display: "flex", height: 96, width: 96, alignItems: "center", justifyContent: "center" }}>
       {trail.map((square, index) => (
-        <motion.span
+        <Box
+          component={motion.span}
           key={index}
-          className="absolute left-1/2 top-1/2 rounded-md bg-primary"
+          sx={{ position: "absolute", left: "50%", top: "50%", borderRadius: 1.5, bgcolor: "primary.main" }}
           style={{
             width: 40,
             height: 40,
@@ -41,13 +43,14 @@ export function HeroAnimation() {
           }}
         />
       ))}
-      <motion.span
-        className="relative flex h-80 w-80 items-center justify-center rounded-2xl  "
+      <Box
+        component={motion.span}
+        sx={{ position: "relative", display: "flex", height: 320, width: 320, alignItems: "center", justifyContent: "center", borderRadius: 4 }}
         animate={{ y: [0, -6, 0], rotate: [-2, 2, -2] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
-        <Image src={appIcon} alt="" width={120} height={120} className="rounded-[7px]" priority />
-      </motion.span>
-    </div>
+        <Image src={appIcon} alt="" width={120} height={120} style={{ borderRadius: 7 }} priority />
+      </Box>
+    </Box>
   );
 }

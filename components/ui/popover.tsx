@@ -1,65 +1,46 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-
-import { cn } from "@/lib/cn";
+import MuiPopover from "@mui/material/Popover";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { cloneElement, isValidElement, useRef, useState, type ReactElement, type ReactNode } from "react";
 
 interface PopoverProps {
   open: boolean;
   onClose: () => void;
-  /** Elemento ancla (botón que abre el popover). */
+  /** Elemento ancla (botón que abre el popover). Debe aceptar `onClick`. */
   trigger: ReactNode;
   children: ReactNode;
   align?: "start" | "end";
   className?: string;
-  panelClassName?: string;
+  panelSx?: SxProps<Theme>;
 }
 
-/**
- * Popover anclado headless: cierra con click fuera y Escape.
- * El panel se eleva con shadow-pop (elevación 4 del design system).
- */
-export function Popover({
-  open,
-  onClose,
-  trigger,
-  children,
-  align = "end",
-  className,
-  panelClassName,
-}: PopoverProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+export function Popover({ open, onClose, trigger, children, align = "end", className, panelSx }: PopoverProps) {
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) onClose();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("mousedown", onClickOutside);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClickOutside);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
+  const anchor = isValidElement(trigger)
+    ? cloneElement(trigger as ReactElement<Record<string, unknown>>, {
+        ref: (node: HTMLElement | null) => {
+          anchorRef.current = node;
+          setAnchorEl(node);
+        },
+      })
+    : trigger;
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
-      {trigger}
-      {open ? (
-        <div
-          className={cn(
-            "absolute top-full z-50 mt-2 min-w-48 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-pop",
-            align === "end" ? "right-0" : "left-0",
-            panelClassName,
-          )}
-        >
-          {children}
-        </div>
-      ) : null}
-    </div>
+    <span className={className}>
+      {anchor}
+      <MuiPopover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={onClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: align === "end" ? "right" : "left" }}
+        transformOrigin={{ vertical: "top", horizontal: align === "end" ? "right" : "left" }}
+        slotProps={{ paper: { sx: [{ minWidth: 192, mt: 1 }, ...(Array.isArray(panelSx) ? panelSx : [panelSx])] } }}
+      >
+        {children}
+      </MuiPopover>
+    </span>
   );
 }

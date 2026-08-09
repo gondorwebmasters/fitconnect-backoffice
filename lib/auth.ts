@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { COMPANY_COOKIE, REFRESH_COOKIE, SUPERADMIN_COOKIE, TOKEN_COOKIE } from "./constants";
+import {CONFIG} from "@/config-global";
 
 const COOKIE_BASE = {
   httpOnly: true,
@@ -10,7 +11,7 @@ const COOKIE_BASE = {
 };
 
 export function graphqlUrl(): string {
-  return process.env.GRAPHQL_URL ?? "http://localhost:4000/graphql";
+  return CONFIG.site.serverUrl ?? "http://localhost:4000/graphql";
 }
 
 export async function setAuthCookies(token: string, refreshToken: string, isSuperAdmin?: boolean) {

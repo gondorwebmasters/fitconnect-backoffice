@@ -1,14 +1,17 @@
 "use client";
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import { Search } from "lucide-react";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { BadgeDot } from "@/components/ui/badge-dot";
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { PageShell } from "@/components/ui/sticky-header";
@@ -56,21 +59,41 @@ function OverdueInvoices() {
       key: "number",
       header: t("columns.invoice"),
       render: (invoice) => (
-        <span className="font-medium text-zinc-900">{invoice.invoiceNumber ?? invoice.id.slice(0, 8)}</span>
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          {invoice.invoiceNumber ?? invoice.id.slice(0, 8)}
+        </Typography>
       ),
     },
-    { key: "member", header: t("columns.member"), render: (invoice) => <span className="text-zinc-600">{fullName(invoice.user)}</span> },
-    { key: "due", header: t("columns.dueDate"), render: (invoice) => <span className="text-red-600">{formatDate(invoice.dueDate)}</span> },
+    {
+      key: "member",
+      header: t("columns.member"),
+      render: (invoice) => <Typography variant="body2">{fullName(invoice.user)}</Typography>,
+    },
+    {
+      key: "due",
+      header: t("columns.dueDate"),
+      render: (invoice) => (
+        <Typography variant="body2" sx={{ color: "error.main" }}>
+          {formatDate(invoice.dueDate)}
+        </Typography>
+      ),
+    },
     {
       key: "total",
       header: t("columns.amount"),
-      render: (invoice) => <span className="tabular-nums text-zinc-700">{invoice.formattedTotal}</span>,
+      render: (invoice) => (
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {invoice.formattedTotal}
+        </Typography>
+      ),
     },
     {
       key: "remaining",
       header: t("columns.remaining"),
       render: (invoice) => (
-        <span className="tabular-nums text-zinc-700">{formatCents(invoice.amountRemaining, invoice.currency)}</span>
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {formatCents(invoice.amountRemaining, invoice.currency)}
+        </Typography>
       ),
     },
     {
@@ -78,7 +101,7 @@ function OverdueInvoices() {
       header: "",
       className: "text-right",
       render: (invoice) => (
-        <div className="flex justify-end gap-2">
+        <Stack direction="row" justifyContent="flex-end" spacing={1}>
           <Button
             size="sm"
             variant="ghost"
@@ -101,7 +124,7 @@ function OverdueInvoices() {
           >
             {t("uncollectible")}
           </Button>
-        </div>
+        </Stack>
       ),
     },
   ];
@@ -158,22 +181,32 @@ function UserTransactions() {
   const rows = allRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   const columns: Column<Transaction>[] = [
-    { key: "date", header: t("columns.date"), render: (transaction) => <span className="text-zinc-600">{formatDateTime(transaction.created_at)}</span> },
+    {
+      key: "date",
+      header: t("columns.date"),
+      render: (transaction) => <Typography variant="body2">{formatDateTime(transaction.created_at)}</Typography>,
+    },
     {
       key: "concept",
       header: t("columns.concept"),
       render: (transaction) => (
-        <div>
-          <p className="text-zinc-700">{transaction.description ?? transaction.type}</p>
-          {transaction.failureReason ? <p className="text-xs text-red-500">{transaction.failureReason}</p> : null}
-        </div>
+        <Box>
+          <Typography variant="body2">{transaction.description ?? transaction.type}</Typography>
+          {transaction.failureReason ? (
+            <Typography variant="caption" sx={{ color: "error.main" }}>
+              {transaction.failureReason}
+            </Typography>
+          ) : null}
+        </Box>
       ),
     },
     {
       key: "amount",
       header: t("columns.amount"),
       render: (transaction) => (
-        <span className="tabular-nums text-zinc-700">{formatCents(transaction.amount, transaction.currency)}</span>
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {formatCents(transaction.amount, transaction.currency)}
+        </Typography>
       ),
     },
     {
@@ -188,7 +221,7 @@ function UserTransactions() {
       header: "",
       className: "text-right",
       render: (transaction) => (
-        <div className="flex justify-end gap-2">
+        <Stack direction="row" justifyContent="flex-end" spacing={1}>
           {transaction.status === "succeeded" && transaction.amountRefunded === 0 ? (
             <Button
               size="sm"
@@ -215,43 +248,45 @@ function UserTransactions() {
               {t("retry")}
             </Button>
           ) : null}
-        </div>
+        </Stack>
       ),
     },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="relative w-96">
-        <Search size={15} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-        <Input
-          placeholder={t("searchMemberPlaceholder")}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="pl-9"
-        />
-        {query.length >= 2 && (users.data?.getUsers?.users ?? []).length > 0 ? (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-pop">
-            {(users.data?.getUsers?.users ?? []).slice(0, 6).map((user) => (
-              <li key={user.id}>
-                <button
-                  onClick={() => selectUser(user)}
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-zinc-50"
-                >
-                  <span className="text-zinc-700">{fullName(user)}</span>
-                  <span className="text-xs text-zinc-400">{user.email}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+    <Stack spacing={2}>
+      <Autocomplete
+        size="small"
+        sx={{ width: 384 }}
+        options={users.data?.getUsers?.users ?? []}
+        filterOptions={(options) => options}
+        inputValue={search}
+        onInputChange={(_event, value) => setSearch(value)}
+        onChange={(_event, user) => user && selectUser(user)}
+        getOptionLabel={(user) => fullName(user)}
+        isOptionEqualToValue={(option, value) => option.id === value.id}
+        noOptionsText={t("searchMemberHint")}
+        renderOption={(props, user) => (
+          <li {...props} key={user.id}>
+            <Stack direction="row" justifyContent="space-between" sx={{ width: 1 }}>
+              <span>{fullName(user)}</span>
+              <Typography variant="caption" sx={{ color: "text.disabled" }}>
+                {user.email}
+              </Typography>
+            </Stack>
+          </li>
+        )}
+        renderInput={(params) => <TextField {...params} placeholder={t("searchMemberPlaceholder")} />}
+      />
 
       {selectedUser ? (
         <>
-          <p className="text-sm text-zinc-500">
-            {t("transactionsOf")} <span className="font-medium text-zinc-900">{fullName(selectedUser)}</span>
-          </p>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {t("transactionsOf")}{" "}
+            <Typography component="span" variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>
+              {fullName(selectedUser)}
+            </Typography>
+          </Typography>
           <DataTable
             columns={columns}
             rows={rows}
@@ -262,11 +297,13 @@ function UserTransactions() {
           <Pagination page={page} pageCount={pageCount} onChange={setPage} totalLabel={t("transactionTotalLabel", { count: allRows.length })} />
         </>
       ) : (
-        <p className="rounded-xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-400">
-          {t("searchMemberHint")}
-        </p>
+        <Box sx={{ borderRadius: 2, border: 1, borderStyle: "dashed", borderColor: "divider", py: 8, textAlign: "center" }}>
+          <Typography variant="body2" sx={{ color: "text.disabled" }}>
+            {t("searchMemberHint")}
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 }
 
@@ -275,26 +312,24 @@ export default function BillingPage() {
   const [tab, setTab] = useState("invoices");
 
   return (
-    <>
-      <PageShell
-        header={
-          <>
-            <PageHeader title={t("title")} subtitle={t("subtitle")} />
-            <div className="mb-6">
-              <Tabs
-                items={[
-                  { value: "invoices", label: t("overdueInvoicesTab") },
-                  { value: "transactions", label: t("transactionsTab") },
-                ]}
-                value={tab}
-                onChange={setTab}
-              />
-            </div>
-          </>
-        }
-      >
-        {tab === "invoices" ? <OverdueInvoices /> : <UserTransactions />}
-      </PageShell>
-    </>
+    <PageShell
+      header={
+        <>
+          <PageHeader title={t("title")} subtitle={t("subtitle")} />
+          <Box sx={{ mb: 3 }}>
+            <Tabs
+              items={[
+                { value: "invoices", label: t("overdueInvoicesTab") },
+                { value: "transactions", label: t("transactionsTab") },
+              ]}
+              value={tab}
+              onChange={setTab}
+            />
+          </Box>
+        </>
+      }
+    >
+      {tab === "invoices" ? <OverdueInvoices /> : <UserTransactions />}
+    </PageShell>
   );
 }

@@ -1,44 +1,27 @@
-import {
-  BadgePercent,
-  BarChart3,
-  Building2,
-  CalendarDays,
-  CreditCard,
-  FileText,
-  LayoutGrid,
-  ListChecks,
-  Megaphone,
-  Package,
-  Receipt,
-  Settings,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
-
 export interface NavItem {
   href: string;
   labelKey: string;
-  icon: LucideIcon;
+  icon: string;
 }
 
 export const MAIN_NAV: NavItem[] = [
-  { href: "/", labelKey: "dashboard", icon: LayoutGrid },
-  { href: "/members", labelKey: "members", icon: Users },
-  { href: "/calendar", labelKey: "calendar", icon: CalendarDays },
-  { href: "/plans", labelKey: "plans", icon: ListChecks },
-  { href: "/subscriptions", labelKey: "subscriptions", icon: CreditCard },
-  { href: "/billing", labelKey: "billing", icon: Receipt },
-  { href: "/products", labelKey: "products", icon: Package },
-  { href: "/promotions", labelKey: "promotions", icon: BadgePercent },
-  { href: "/polls", labelKey: "polls", icon: BarChart3 },
-  { href: "/broadcast", labelKey: "broadcast", icon: Megaphone },
-  { href: "/reports", labelKey: "reports", icon: FileText },
-  { href: "/settings", labelKey: "settings", icon: Settings },
+  { href: "/", labelKey: "dashboard", icon: "solar:widget-5-bold" },
+  { href: "/members", labelKey: "members", icon: "solar:users-group-rounded-bold" },
+  { href: "/calendar", labelKey: "calendar", icon: "solar:calendar-bold" },
+  { href: "/plans", labelKey: "plans", icon: "solar:checklist-minimalistic-bold" },
+  { href: "/subscriptions", labelKey: "subscriptions", icon: "solar:card-bold" },
+  { href: "/billing", labelKey: "billing", icon: "solar:bill-list-bold" },
+  { href: "/products", labelKey: "products", icon: "solar:box-bold" },
+  { href: "/promotions", labelKey: "promotions", icon: "solar:tag-price-bold" },
+  { href: "/polls", labelKey: "polls", icon: "solar:chart-2-bold" },
+  { href: "/broadcast", labelKey: "broadcast", icon: "solar:bell-bing-bold-duotone" },
+  { href: "/reports", labelKey: "reports", icon: "solar:document-text-bold" },
+  { href: "/settings", labelKey: "settings", icon: "solar:settings-bold-duotone" },
 ];
 
 export const SYSTEM_NAV: NavItem[] = [
-  { href: "/system", labelKey: "overview", icon: BarChart3 },
-  { href: "/system/companies", labelKey: "companies", icon: Building2 },
+  { href: "/system", labelKey: "overview", icon: "solar:chart-2-bold" },
+  { href: "/system/companies", labelKey: "companies", icon: "solar:buildings-2-bold" },
 ];
 
 /** Claves de traducción (namespace "nav.segments") por segmento de ruta para las migas de pan. */

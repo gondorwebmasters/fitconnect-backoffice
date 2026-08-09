@@ -1,10 +1,16 @@
 "use client";
 
 import { useMutation, useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 
-import { BadgeDot } from "@/components/ui/badge-dot";
-import { Button } from "@/components/ui/button";
+import { StatusChip } from "@/components/mui/status-chip";
 import { useToast } from "@/components/ui/toast";
 import { formatCents, formatDate, formatDateTime } from "@/lib/format";
 import {
@@ -55,89 +61,96 @@ export function PaymentsTab({ userId }: { userId: string }) {
     else toast(data?.refundTransaction?.message ?? t("refundFailed"), "error");
   };
 
+  const invoiceList = invoices.data?.listUserInvoices?.invoices ?? [];
+  const transactionList = transactions.data?.listUserTransactions?.transactions ?? [];
+
   return (
-    <div className="space-y-8">
-      <section>
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">{t("invoices")}</h3>
+    <Stack spacing={4}>
+      <Box>
+        <Typography variant="overline" sx={{ color: "text.disabled", mb: 1, display: "block" }}>
+          {t("invoices")}
+        </Typography>
         {invoices.loading && !invoices.data ? (
-          <div className="h-20 animate-pulse rounded-lg bg-zinc-50" />
+          <Skeleton variant="rounded" height={80} />
         ) : (
-          <ul className="divide-y divide-zinc-100">
-            {(invoices.data?.listUserInvoices?.invoices ?? []).map((invoice) => (
-              <li key={invoice.id} className="flex items-center gap-3 py-3">
-                <div className="flex-1">
-                  <p className="text-sm text-zinc-700">{invoice.invoiceNumber ?? invoice.id.slice(0, 8)}</p>
-                  <p className="text-xs text-zinc-400">
+          <List disablePadding>
+            {invoiceList.map((invoice) => (
+              <ListItem key={invoice.id} divider sx={{ px: 0, gap: 1.5 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2">{invoice.invoiceNumber ?? invoice.id.slice(0, 8)}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.disabled" }}>
                     {formatDate(invoice.created_at)}
                     {invoice.isOverdue ? t("overdue") : ""}
-                  </p>
-                </div>
-                <span className="text-sm tabular-nums text-zinc-700">{invoice.formattedTotal}</span>
-                <BadgeDot
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+                  {invoice.formattedTotal}
+                </Typography>
+                <StatusChip
                   tone={invoice.isOverdue ? "negative" : (INVOICE_TONES[invoice.status] ?? "neutral")}
                   label={invoice.status}
                 />
                 {invoice.status === "open" ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => voidInvoice({ variables: { invoiceId: invoice.id } })}
-                  >
+                  <Button size="small" variant="text" onClick={() => voidInvoice({ variables: { invoiceId: invoice.id } })}>
                     {t("void")}
                   </Button>
                 ) : null}
-              </li>
+              </ListItem>
             ))}
-            {(invoices.data?.listUserInvoices?.invoices ?? []).length === 0 ? (
-              <li className="py-4 text-center text-sm text-zinc-400">{t("noInvoices")}</li>
+            {invoiceList.length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.disabled", textAlign: "center", py: 2 }}>
+                {t("noInvoices")}
+              </Typography>
             ) : null}
-          </ul>
+          </List>
         )}
-      </section>
+      </Box>
 
-      <section>
-        <h3 className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">{t("transactions")}</h3>
+      <Box>
+        <Typography variant="overline" sx={{ color: "text.disabled", mb: 1, display: "block" }}>
+          {t("transactions")}
+        </Typography>
         {transactions.loading && !transactions.data ? (
-          <div className="h-20 animate-pulse rounded-lg bg-zinc-50" />
+          <Skeleton variant="rounded" height={80} />
         ) : (
-          <ul className="divide-y divide-zinc-100">
-            {(transactions.data?.listUserTransactions?.transactions ?? []).map((transaction) => (
-              <li key={transaction.id} className="flex items-center gap-3 py-3">
-                <div className="flex-1">
-                  <p className="text-sm text-zinc-700">
-                    {transaction.description ?? transaction.type}
-                  </p>
-                  <p className="text-xs text-zinc-400">
+          <List disablePadding>
+            {transactionList.map((transaction) => (
+              <ListItem key={transaction.id} divider sx={{ px: 0, gap: 1.5 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="body2">{transaction.description ?? transaction.type}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.disabled" }}>
                     {formatDateTime(transaction.created_at)}
                     {transaction.failureReason ? ` · ${transaction.failureReason}` : ""}
-                  </p>
-                </div>
-                <span className="text-sm tabular-nums text-zinc-700">
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
                   {formatCents(transaction.amount, transaction.currency)}
-                </span>
-                <BadgeDot tone={TRANSACTION_TONES[transaction.status] ?? "neutral"} label={transaction.status} />
+                </Typography>
+                <StatusChip tone={TRANSACTION_TONES[transaction.status] ?? "neutral"} label={transaction.status} />
                 {transaction.status === "succeeded" && transaction.amountRefunded === 0 ? (
-                  <Button size="sm" variant="ghost" onClick={() => handleRefund(transaction)}>
+                  <Button size="small" variant="text" onClick={() => handleRefund(transaction)}>
                     {t("refund")}
                   </Button>
                 ) : null}
                 {transaction.status === "failed" ? (
                   <Button
-                    size="sm"
-                    variant="ghost"
+                    size="small"
+                    variant="text"
                     onClick={() => retry({ variables: { transactionId: transaction.id } })}
                   >
                     {t("retry")}
                   </Button>
                 ) : null}
-              </li>
+              </ListItem>
             ))}
-            {(transactions.data?.listUserTransactions?.transactions ?? []).length === 0 ? (
-              <li className="py-4 text-center text-sm text-zinc-400">{t("noTransactions")}</li>
+            {transactionList.length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.disabled", textAlign: "center", py: 2 }}>
+                {t("noTransactions")}
+              </Typography>
             ) : null}
-          </ul>
+          </List>
         )}
-      </section>
-    </div>
+      </Box>
+    </Stack>
   );
 }

@@ -1,13 +1,20 @@
 "use client";
 
 import { useMutation, useQuery } from "@apollo/client";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { BadgeDot } from "@/components/ui/badge-dot";
-import { Button } from "@/components/ui/button";
-import { Dropdown } from "@/components/ui/dropdown";
-import { Field, Input } from "@/components/ui/input";
+import { StatusChip, type StatusTone } from "@/components/mui/status-chip";
 import { useToast } from "@/components/ui/toast";
 import { formatCents, formatDate, planPriceCents } from "@/lib/format";
 import { LIST_PLANS } from "@/lib/graphql/plans";
@@ -20,9 +27,9 @@ import {
   PAUSE_SUBSCRIPTION,
   RESUME_SUBSCRIPTION,
 } from "@/lib/graphql/subscriptions";
-import type { Plan, Subscription, SubscriptionStatus } from "@/lib/graphql/types";
+import type { Plan, Subscription, SubscriptionStatus, UserRole } from "@/lib/graphql/types";
 
-const STATUS_TONES: Record<SubscriptionStatus, "positive" | "neutral" | "warning" | "negative" | "muted"> = {
+const STATUS_TONES: Record<SubscriptionStatus, StatusTone> = {
   active: "positive",
   trialing: "neutral",
   past_due: "warning",
@@ -79,89 +86,152 @@ function SubscriptionCard({ subscription, onChanged }: { subscription: Subscript
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-card">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-zinc-900">{subscription.plan.name}</p>
-          <p className="mt-0.5 text-xs text-zinc-400">
+    <Card variant="outlined" sx={{ p: 2.5 }}>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+        <Box>
+          <Typography variant="subtitle2">{subscription.plan.name}</Typography>
+          <Typography variant="caption" sx={{ color: "text.disabled" }}>
             {formatCents(planPriceCents(subscription.plan), subscription.plan.currency)} / {subscription.plan.interval}
-          </p>
-        </div>
-        <BadgeDot tone={status.tone} label={status.label} />
-      </div>
+          </Typography>
+        </Box>
+        <StatusChip tone={status.tone} label={status.label} />
+      </Stack>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-        <div>
-          <dt className="text-zinc-400">{t("periodEnd")}</dt>
-          <dd className="text-zinc-700">{formatDate(subscription.currentPeriodEnd)}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-400">{t("nextBilling")}</dt>
-          <dd className="text-zinc-700">{formatDate(subscription.nextBillingDate)}</dd>
-        </div>
+      <Grid container spacing={1} sx={{ mt: 1.5 }}>
+        <Grid size={6}>
+          <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>
+            {t("periodEnd")}
+          </Typography>
+          <Typography variant="body2">{formatDate(subscription.currentPeriodEnd)}</Typography>
+        </Grid>
+        <Grid size={6}>
+          <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>
+            {t("nextBilling")}
+          </Typography>
+          <Typography variant="body2">{formatDate(subscription.nextBillingDate)}</Typography>
+        </Grid>
         {subscription.failedPaymentAttempts > 0 ? (
-          <div className="col-span-2">
-            <dt className="text-zinc-400">{t("failedAttempts")}</dt>
-            <dd className="text-red-600">{subscription.failedPaymentAttempts}</dd>
-          </div>
+          <Grid size={12}>
+            <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>
+              {t("failedAttempts")}
+            </Typography>
+            <Typography variant="body2" sx={{ color: "error.main" }}>
+              {subscription.failedPaymentAttempts}
+            </Typography>
+          </Grid>
         ) : null}
         {subscription.cancelAtPeriodEnd ? (
-          <p className="col-span-2 text-amber-600">{t("willCancelAtPeriodEnd")}</p>
+          <Grid size={12}>
+            <Typography variant="body2" sx={{ color: "warning.dark" }}>
+              {t("willCancelAtPeriodEnd")}
+            </Typography>
+          </Grid>
         ) : null}
-      </dl>
+      </Grid>
 
       {!finished ? (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-zinc-100 pt-4">
-          {subscription.status === "paused" ? (
-            <Button size="sm" disabled={busy} onClick={() => resume({ variables: { subscriptionId: subscription.id } })}>
-              {t("resume")}
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Stack direction="row" flexWrap="wrap" gap={1}>
+            {subscription.status === "paused" ? (
+              <Button
+                size="small"
+                variant="soft"
+                color="inherit"
+                disabled={busy}
+                onClick={() => resume({ variables: { subscriptionId: subscription.id } })}
+              >
+                {t("resume")}
+              </Button>
+            ) : (
+              <Button
+                size="small"
+                variant="soft"
+                color="inherit"
+                disabled={busy}
+                onClick={() => pause({ variables: { subscriptionId: subscription.id } })}
+              >
+                {t("pause")}
+              </Button>
+            )}
+            <Button
+              size="small"
+              variant="soft"
+              color="inherit"
+              disabled={busy}
+              onClick={() => forceRenewal({ variables: { subscriptionId: subscription.id } })}
+            >
+              {t("renewNow")}
             </Button>
-          ) : (
-            <Button size="sm" disabled={busy} onClick={() => pause({ variables: { subscriptionId: subscription.id } })}>
-              {t("pause")}
+            <Button
+              size="small"
+              variant="soft"
+              color="inherit"
+              disabled={busy}
+              onClick={() => setShowExtend((value) => !value)}
+            >
+              {t("extend")}
             </Button>
-          )}
-          <Button size="sm" disabled={busy} onClick={() => forceRenewal({ variables: { subscriptionId: subscription.id } })}>
-            {t("renewNow")}
-          </Button>
-          <Button size="sm" disabled={busy} onClick={() => setShowExtend((value) => !value)}>
-            {t("extend")}
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            disabled={busy}
-            onClick={() =>
-              cancel({
-                variables: { input: { subscriptionId: subscription.id, cancelAtPeriodEnd: true } },
-              })
-            }
-          >
-            {t("cancel")}
-          </Button>
-        </div>
+            <Button
+              size="small"
+              variant="contained"
+              color="error"
+              disabled={busy}
+              onClick={() =>
+                cancel({
+                  variables: { input: { subscriptionId: subscription.id, cancelAtPeriodEnd: true } },
+                })
+              }
+            >
+              {t("cancel")}
+            </Button>
+          </Stack>
+        </>
       ) : null}
 
       {showExtend ? (
-        <div className="mt-4 space-y-3 rounded-lg bg-zinc-50 p-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t("days")}>
-              <Input type="number" min={1} value={extendDays} onChange={(event) => setExtendDays(event.target.value)} />
-            </Field>
-            <Field label={t("reason")} hint={t("reasonHint")}>
-              <Input value={extendReason} onChange={(event) => setExtendReason(event.target.value)} />
-            </Field>
-          </div>
-          <Button size="sm" variant="primary" onClick={handleExtend} disabled={extendState.loading || !extendDays || !extendReason}>
-            {t("confirmExtend")}
-          </Button>
-        </div>
+        <Stack spacing={1.5} sx={{ mt: 2, borderRadius: 1, bgcolor: "background.neutral", p: 2 }}>
+          <Grid container spacing={1.5}>
+            <Grid size={6}>
+              <TextField
+                type="number"
+                size="small"
+                label={t("days")}
+                slotProps={{ htmlInput: { min: 1 } }}
+                value={extendDays}
+                onChange={(event) => setExtendDays(event.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={6}>
+              <TextField
+                size="small"
+                label={t("reason")}
+                helperText={t("reasonHint")}
+                value={extendReason}
+                onChange={(event) => setExtendReason(event.target.value)}
+                fullWidth
+              />
+            </Grid>
+          </Grid>
+          <Box>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleExtend}
+              loading={extendState.loading}
+              disabled={!extendDays || !extendReason}
+            >
+              {t("confirmExtend")}
+            </Button>
+          </Box>
+        </Stack>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
-export function SubscriptionTab({ userId }: { userId: string }) {
+export function SubscriptionTab({ userId, role }: { userId: string; role?: UserRole | null }) {
   const t = useTranslations("members.subscriptionTab");
   const toast = useToast();
   const [planId, setPlanId] = useState("");
@@ -171,7 +241,7 @@ export function SubscriptionTab({ userId }: { userId: string }) {
   }>(LIST_USER_SUBSCRIPTIONS, { variables: { userId } });
 
   const plans = useQuery<{ listPlans: { plans: Plan[] | null } }>(LIST_PLANS, {
-    variables: { onlyActive: true },
+    variables: { onlyActive: true, showGlobal: role === "admin" },
   });
 
   const [createSubscription, createState] = useMutation(CREATE_SUBSCRIPTION);
@@ -180,6 +250,11 @@ export function SubscriptionTab({ userId }: { userId: string }) {
   const hasOngoing = subscriptions.some((subscription) =>
     ["active", "trialing", "past_due", "paused"].includes(subscription.status),
   );
+
+  const planOptions = (plans.data?.listPlans?.plans ?? []).map((plan) => ({
+    value: plan.id,
+    label: `${plan.name} · ${formatCents(planPriceCents(plan), plan.currency)}`,
+  }));
 
   const handleCreate = async () => {
     const { data: result } = await createSubscription({ variables: { subscription: { planId, userId } } });
@@ -193,13 +268,15 @@ export function SubscriptionTab({ userId }: { userId: string }) {
   };
 
   if (loading && !data) {
-    return <div className="h-32 animate-pulse rounded-lg bg-zinc-50" />;
+    return <Skeleton variant="rounded" height={128} />;
   }
 
   return (
-    <div className="space-y-4">
+    <Stack spacing={2}>
       {subscriptions.length === 0 ? (
-        <p className="py-4 text-center text-sm text-zinc-400">{t("noSubscriptions")}</p>
+        <Typography variant="body2" sx={{ color: "text.disabled", textAlign: "center", py: 2 }}>
+          {t("noSubscriptions")}
+        </Typography>
       ) : (
         subscriptions.map((subscription) => (
           <SubscriptionCard key={subscription.id} subscription={subscription} onChanged={() => refetch()} />
@@ -207,26 +284,25 @@ export function SubscriptionTab({ userId }: { userId: string }) {
       )}
 
       {!hasOngoing ? (
-        <div className="flex items-end gap-3 border-t border-zinc-100 pt-5">
-          <div className="flex-1">
-            <Field label={t("assignPlan")}>
-              <Dropdown
-                options={(plans.data?.listPlans?.plans ?? []).map((plan) => ({
-                  value: plan.id,
-                  label: `${plan.name} · ${formatCents(planPriceCents(plan), plan.currency)}`,
-                }))}
-                placeholder={t("selectPlan")}
-                searchable
-                value={planId}
-                onChange={setPlanId}
-              />
-            </Field>
-          </div>
-          <Button variant="primary" onClick={handleCreate} disabled={!planId || createState.loading}>
-            {createState.loading ? "…" : t("subscribe")}
-          </Button>
-        </div>
+        <>
+          <Divider />
+          <Stack direction="row" alignItems="flex-end" spacing={1.5}>
+            <Autocomplete
+              size="small"
+              fullWidth
+              options={planOptions}
+              value={planOptions.find((option) => option.value === planId) ?? null}
+              onChange={(_event, value) => setPlanId(value?.value ?? "")}
+              getOptionLabel={(option) => option.label}
+              isOptionEqualToValue={(option, value) => option.value === value.value}
+              renderInput={(params) => <TextField {...params} label={t("assignPlan")} placeholder={t("selectPlan")} />}
+            />
+            <Button variant="contained" onClick={handleCreate} loading={createState.loading} disabled={!planId}>
+              {t("subscribe")}
+            </Button>
+          </Stack>
+        </>
       ) : null}
-    </div>
+    </Stack>
   );
 }

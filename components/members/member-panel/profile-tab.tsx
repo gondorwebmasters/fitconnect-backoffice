@@ -1,15 +1,30 @@
 "use client";
 
+import { Iconify } from "@/components/iconify";
+
 import { useMutation } from "@apollo/client";
-import { Eye, EyeOff } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z as zod } from "zod";
 
 import { useSession } from "@/components/layout/session-provider";
-import { Button } from "@/components/ui/button";
+import { Form, Field } from "@/components/hook-form";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Dropdown } from "@/components/ui/dropdown";
-import { Field, Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { ADMIN_UPDATE_PASSWORD } from "@/lib/graphql/auth";
 import type { User } from "@/lib/graphql/types";
@@ -19,11 +34,41 @@ import { useRoleOptions } from "../member-filters";
 
 const EMPTY_PASSWORD_FORM = { newPassword: "", confirmPassword: "" };
 
-function PasswordInput({
+const ProfileSchema = zod.object({
+  name: zod.string(),
+  surname: zod.string(),
+  email: zod.string().min(1).email(),
+  nickname: zod.string().min(1),
+  phoneNumber: zod.string(),
+  role: zod.enum(["standard", "coach", "admin"]),
+  isActive: zod.boolean(),
+  isBlocked: zod.boolean(),
+});
+
+type ProfileValues = zod.infer<typeof ProfileSchema>;
+
+function toForm(member: User): ProfileValues {
+  return {
+    name: member.name ?? "",
+    surname: member.surname ?? "",
+    email: member.email,
+    nickname: member.nickname,
+    phoneNumber: member.phoneNumber ?? "",
+    role: (member.contextRole ?? "standard") as ProfileValues["role"],
+    isActive: member.isActive !== false,
+    isBlocked: Boolean(member.isBlocked),
+  };
+}
+
+function PasswordField({
+  label,
+  helperText,
   value,
   onChange,
   autoComplete,
 }: {
+  label: string;
+  helperText?: string;
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   autoComplete: string;
@@ -31,24 +76,32 @@ function PasswordInput({
   const t = useTranslations("members.profileTab");
   const [visible, setVisible] = useState(false);
   return (
-    <div className="relative">
-      <Input
-        type={visible ? "text" : "password"}
-        value={value}
-        onChange={onChange}
-        autoComplete={autoComplete}
-        minLength={6}
-        className="pr-10"
-      />
-      <button
-        type="button"
-        onClick={() => setVisible((current) => !current)}
-        aria-label={visible ? t("hidePassword") : t("showPassword")}
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-zinc-400 transition-colors hover:text-zinc-600"
-      >
-        {visible ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
-      </button>
-    </div>
+    <TextField
+      type={visible ? "text" : "password"}
+      label={label}
+      helperText={helperText}
+      value={value}
+      onChange={onChange}
+      autoComplete={autoComplete}
+      fullWidth
+      slotProps={{
+        htmlInput: { minLength: 6 },
+        input: {
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setVisible((current) => !current)}
+                aria-label={visible ? t("hidePassword") : t("showPassword")}
+                edge="end"
+                size="small"
+              >
+                {visible ? <Iconify icon="solar:eye-closed-bold" width={15} /> : <Iconify icon="solar:eye-bold" width={15} />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        },
+      }}
+    />
   );
 }
 
@@ -65,16 +118,16 @@ export function ProfileTab({ member, onChanged, onDeleted }: ProfileTabProps) {
   const { user: sessionUser } = useSession();
   const roleOptions = useRoleOptions();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [form, setForm] = useState({
-    name: member.name ?? "",
-    surname: member.surname ?? "",
-    email: member.email,
-    nickname: member.nickname,
-    phoneNumber: member.phoneNumber ?? "",
-    role: member.contextRole ?? "standard",
-    isActive: member.isActive !== false,
-    isBlocked: Boolean(member.isBlocked),
+
+  const methods = useForm<ProfileValues>({
+    resolver: zodResolver(ProfileSchema),
+    defaultValues: toForm(member),
   });
+  const { handleSubmit, reset, watch } = methods;
+
+  useEffect(() => {
+    reset(toForm(member));
+  }, [member, reset]);
 
   const [passwordForm, setPasswordForm] = useState(EMPTY_PASSWORD_FORM);
 
@@ -83,22 +136,19 @@ export function ProfileTab({ member, onChanged, onDeleted }: ProfileTabProps) {
   const [admitUser, { loading: admitting }] = useMutation(ADMIT_USER_TO_COMPANY);
   const [adminUpdatePassword, { loading: changingPassword }] = useMutation(ADMIN_UPDATE_PASSWORD);
 
-  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
-    setForm((current) => ({ ...current, [key]: value }));
-
-  const handleSave = async () => {
+  const onSubmit = handleSubmit(async (values) => {
     const { data } = await updateUser({
       variables: {
         user: {
           id: member.id,
-          name: form.name || undefined,
-          surname: form.surname || undefined,
-          email: form.email,
-          nickname: form.nickname,
-          phoneNumber: form.phoneNumber || undefined,
-          role: form.role,
-          isActive: form.isActive,
-          isBlocked: form.isBlocked,
+          name: values.name || undefined,
+          surname: values.surname || undefined,
+          email: values.email,
+          nickname: values.nickname,
+          phoneNumber: values.phoneNumber || undefined,
+          role: values.role,
+          isActive: values.isActive,
+          isBlocked: values.isBlocked,
         },
       },
     });
@@ -109,12 +159,12 @@ export function ProfileTab({ member, onChanged, onDeleted }: ProfileTabProps) {
     } else {
       toast(result?.message ?? t("saveFailed"), "error");
     }
-  };
+  });
 
   const handleAdmit = async () => {
     if (!sessionUser?.activeCompanyId) return;
     const { data } = await admitUser({
-      variables: { companyId: sessionUser.activeCompanyId, userId: member.id, role: form.role },
+      variables: { companyId: sessionUser.activeCompanyId, userId: member.id, role: watch("role") },
     });
     const result = data?.admitUserToCompany;
     if (result?.success) {
@@ -159,123 +209,126 @@ export function ProfileTab({ member, onChanged, onDeleted }: ProfileTabProps) {
   };
 
   return (
-    <div className="space-y-5">
+    <Stack spacing={2.5}>
       {member.isPending ? (
-        <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-700">{t("pendingAdmission")}</p>
-          <Button size="sm" variant="primary" onClick={handleAdmit} disabled={admitting}>
-            {admitting ? "…" : t("admit")}
-          </Button>
-        </div>
+        <Alert
+          severity="warning"
+          action={
+            <Button size="small" variant="contained" onClick={handleAdmit} loading={admitting}>
+              {t("admit")}
+            </Button>
+          }
+        >
+          {t("pendingAdmission")}
+        </Alert>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t("name")}>
-          <Input value={form.name} onChange={(event) => set("name", event.target.value)} />
-        </Field>
-        <Field label={t("surname")}>
-          <Input value={form.surname} onChange={(event) => set("surname", event.target.value)} />
-        </Field>
-      </div>
-      <Field label={t("email")}>
-        <Input type="email" value={form.email} onChange={(event) => set("email", event.target.value)} />
-      </Field>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t("username")}>
-          <Input value={form.nickname} onChange={(event) => set("nickname", event.target.value)} />
-        </Field>
-        <Field label={t("phone")}>
-          <Input value={form.phoneNumber} onChange={(event) => set("phoneNumber", event.target.value)} />
-        </Field>
-      </div>
-      <Field label={t("role")}>
-        <Dropdown
-          options={roleOptions}
-          value={form.role}
-          onChange={(value) => set("role", value as typeof form.role)}
-        />
-      </Field>
-      <div className="space-y-2.5">
-        <label className="flex items-center gap-2.5 text-sm text-zinc-600">
-          <input
-            type="checkbox"
-            checked={form.isActive}
-            onChange={(event) => set("isActive", event.target.checked)}
-            className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
-          />
-          {t("activeMember")}
-        </label>
-        <label className="flex items-center gap-2.5 text-sm text-zinc-600">
-          <input
-            type="checkbox"
-            checked={form.isBlocked}
-            onChange={(event) => set("isBlocked", event.target.checked)}
-            className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
-          />
-          {t("blockAccess")}
-        </label>
-      </div>
+      <Form methods={methods} onSubmit={onSubmit}>
+        <Stack spacing={2.5}>
+          <Grid container spacing={2}>
+            <Grid size={6}>
+              <Field.Text name="name" label={t("name")} />
+            </Grid>
+            <Grid size={6}>
+              <Field.Text name="surname" label={t("surname")} />
+            </Grid>
+          </Grid>
 
-      <div className="flex items-center justify-between border-t border-zinc-100 pt-5">
-        <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-          {t("deleteMember")}
-        </Button>
-        <Button variant="primary" onClick={handleSave} disabled={saving}>
-          {saving ? t("saving") : t("saveChanges")}
-        </Button>
-      </div>
+          <Field.Text name="email" type="email" label={t("email")} />
+
+          <Grid container spacing={2}>
+            <Grid size={6}>
+              <Field.Text name="nickname" label={t("username")} />
+            </Grid>
+            <Grid size={6}>
+              <Field.Phone name="phoneNumber" label={t("phone")} />
+            </Grid>
+          </Grid>
+
+          <Field.Text name="role" label={t("role")} select>
+            {roleOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Field.Text>
+
+          <Stack spacing={0.5}>
+            <Field.Checkbox name="isActive" label={t("activeMember")} />
+            <Field.Checkbox name="isBlocked" label={t("blockAccess")} />
+          </Stack>
+
+          <Divider />
+
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Button color="error" size="small" onClick={() => setConfirmDelete(true)}>
+              {t("deleteMember")}
+            </Button>
+            <Button type="submit" variant="contained" loading={saving}>
+              {t("saveChanges")}
+            </Button>
+          </Stack>
+        </Stack>
+      </Form>
 
       {sessionUser?.isSuperAdmin ? (
-        <div className="space-y-4 border-t border-zinc-100 pt-5">
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-900">{t("passwordSectionTitle")}</h3>
-            <p className="text-xs text-zinc-400">{t("passwordSectionHint")}</p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={t("newPassword")} hint={t("newPasswordHint")}>
-              <PasswordInput
+        <>
+          <Divider />
+          <Box>
+            <Typography variant="subtitle2">{t("passwordSectionTitle")}</Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled" }}>
+              {t("passwordSectionHint")}
+            </Typography>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <PasswordField
+                label={t("newPassword")}
+                helperText={t("newPasswordHint")}
                 value={passwordForm.newPassword}
                 onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
                 autoComplete="new-password"
               />
-            </Field>
-            <Field label={t("confirmPassword")}>
-              <PasswordInput
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <PasswordField
+                label={t("confirmPassword")}
                 value={passwordForm.confirmPassword}
                 onChange={(event) =>
                   setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))
                 }
                 autoComplete="new-password"
               />
-            </Field>
-          </div>
+            </Grid>
+          </Grid>
           {passwordMismatch ? (
-            <p role="alert" className="text-xs text-red-500">
+            <Typography role="alert" variant="caption" sx={{ color: "error.main" }}>
               {t("passwordMismatch")}
-            </p>
+            </Typography>
           ) : null}
-          <div className="flex justify-end">
+          <Stack direction="row" justifyContent="flex-end">
             <Button
-              variant="secondary"
+              variant="soft"
               onClick={handleChangePassword}
-              disabled={changingPassword || passwordMismatch || passwordForm.newPassword.length < 6}
+              loading={changingPassword}
+              disabled={passwordMismatch || passwordForm.newPassword.length < 6}
             >
-              {changingPassword ? t("updatingPassword") : t("changePassword")}
+              {t("changePassword")}
             </Button>
-          </div>
-        </div>
+          </Stack>
+        </>
       ) : null}
 
       <ConfirmDialog
         open={confirmDelete}
         title={t("deleteConfirmTitle")}
-        description={t("deleteConfirmDescription", { name: form.nickname })}
+        description={t("deleteConfirmDescription", { name: member.nickname })}
         confirmLabel={tCommon("delete")}
         danger
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </Stack>
   );
 }

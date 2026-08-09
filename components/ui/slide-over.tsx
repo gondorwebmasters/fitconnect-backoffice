@@ -1,9 +1,12 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
-import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
-
-import { cn } from "@/lib/cn";
+import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import type { ReactNode } from "react";
 
 interface SlideOverProps {
   open: boolean;
@@ -16,49 +19,34 @@ interface SlideOverProps {
 }
 
 export function SlideOver({ open, onClose, title, subtitle, children, footer, wide }: SlideOverProps) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   return (
-    <div className={cn("fixed inset-0 z-40", open ? "pointer-events-auto" : "pointer-events-none")}>
-      <div
-        className={cn(
-          "absolute inset-0 bg-zinc-950/20 transition-opacity duration-200",
-          open ? "opacity-100" : "opacity-0",
-        )}
-        onClick={onClose}
-      />
-      <aside
-        className={cn(
-          "absolute inset-y-0 right-0 flex w-full flex-col border-l border-zinc-200 bg-white shadow-pop transition-transform duration-200 ease-out",
-          wide ? "max-w-2xl" : "max-w-lg",
-          open ? "translate-x-0" : "translate-x-full",
-        )}
-      >
-        <header className="flex items-start justify-between border-b border-zinc-100 px-8 py-6">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-zinc-900">{title}</h2>
-            {subtitle ? <p className="mt-0.5 text-sm text-zinc-400">{subtitle}</p> : null}
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-            aria-label="Cerrar panel"
-          >
-            <X size={18} strokeWidth={1.5} />
-          </button>
-        </header>
-        <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
-        {footer ? (
-          <footer className="flex justify-end gap-3 border-t border-zinc-100 px-8 py-4">{footer}</footer>
-        ) : null}
-      </aside>
-    </div>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      slotProps={{ paper: { sx: { width: { xs: 1, sm: wide ? 640 : 480 } } } }}
+    >
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ px: 4, py: 3 }}>
+        <Box>
+          <Typography variant="h6">{title}</Typography>
+          {subtitle ? (
+            <Typography variant="body2" sx={{ color: "text.disabled", mt: 0.5 }}>
+              {subtitle}
+            </Typography>
+          ) : null}
+        </Box>
+        <IconButton onClick={onClose} aria-label="Cerrar panel" size="small">
+          <Iconify icon="mingcute:close-line" width={18} />
+        </IconButton>
+      </Stack>
+
+      <Box sx={{ flex: 1, overflowY: "auto", px: 4, py: 1 }}>{children}</Box>
+
+      {footer ? (
+        <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ borderTop: 1, borderColor: "divider", px: 4, py: 2 }}>
+          {footer}
+        </Stack>
+      ) : null}
+    </Drawer>
   );
 }

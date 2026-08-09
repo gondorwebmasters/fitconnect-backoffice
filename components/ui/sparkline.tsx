@@ -1,14 +1,13 @@
 "use client";
 
-import { Area, AreaChart } from "recharts";
+import { useTheme } from "@mui/material/styles";
 
-import { CHART_COLORS } from "@/components/dashboard/chart-theme";
+import { Chart } from "@/components/chart";
 
 interface SparklineProps {
   data: number[];
   width?: number;
   height?: number;
-  className?: string;
 }
 
 /**
@@ -16,29 +15,25 @@ interface SparklineProps {
  * El valor real siempre debe mostrarse como texto junto a él — el sparkline
  * solo aporta forma de la tendencia.
  */
-export function Sparkline({ data, width = 96, height = 28, className }: SparklineProps) {
+export function Sparkline({ data, width = 96, height = 28 }: SparklineProps) {
+  const theme = useTheme();
+
   if (data.length < 2) return null;
 
-  const points = data.map((value, index) => ({ index, value }));
-
   return (
-    <div className={className} style={{ width, height }}>
-      <AreaChart width={width} height={height} data={points} margin={{ top: 2, right: 2, bottom: 2, left: 2 }}>
-        <defs>
-          <linearGradient id="sparkline-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke={CHART_COLORS.primary}
-          strokeWidth={2}
-          fill="url(#sparkline-fill)"
-          isAnimationActive={false}
-        />
-      </AreaChart>
-    </div>
+    <Chart
+      type="area"
+      series={[{ data }]}
+      width={width}
+      height={height}
+      options={{
+        chart: { sparkline: { enabled: true } },
+        colors: [theme.palette.primary.main],
+        stroke: { width: 2, curve: "smooth" },
+        fill: { type: "gradient", gradient: { shadeIntensity: 0, opacityFrom: 0.35, opacityTo: 0, stops: [0, 100] } },
+        tooltip: { enabled: false },
+        markers: { size: 0 },
+      }}
+    />
   );
 }

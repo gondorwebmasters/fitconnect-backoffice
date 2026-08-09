@@ -1,6 +1,11 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
+import { Iconify } from "@/components/iconify";
+
+import Box from "@mui/material/Box";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -19,40 +24,58 @@ export function AttentionList({
   const t = useTranslations("dashboard.attentionList");
 
   if (loading) {
-    return <div className="h-24 animate-pulse rounded-lg bg-zinc-50" />;
+    return <Skeleton variant="rounded" height={96} />;
   }
 
   const empty = overdueInvoices.length === 0 && pendingUsers === 0;
 
   if (empty) {
-    return <p className="py-8 text-center text-sm text-zinc-400">{t("empty")}</p>;
+    return (
+      <Typography variant="body2" sx={{ py: 4, textAlign: "center", color: "text.disabled" }}>
+        {t("empty")}
+      </Typography>
+    );
   }
 
   return (
-    <ul className="divide-y divide-zinc-100">
+    <Box component="ul" sx={{ listStyle: "none", m: 0, p: 0, "& li + li": { borderTop: "1px solid", borderColor: "divider" } }}>
       {pendingUsers > 0 ? (
         <li>
-          <Link href="/members?state=pending" className="flex items-center gap-3 py-3 hover:bg-zinc-50">
-            <AlertCircle size={15} strokeWidth={1.5} className="shrink-0 text-amber-500" />
-            <span className="text-sm text-zinc-700">
+          <Stack
+            component={Link}
+            href="/members?state=pending"
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            sx={{ py: 1.5, textDecoration: "none", "&:hover": { bgcolor: "action.hover" } }}
+          >
+            <Iconify icon="solar:danger-circle-bold" width={15} sx={{ flexShrink: 0, color: "warning.main" }} />
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {t("pendingRequest", { count: pendingUsers })}
-            </span>
-          </Link>
+            </Typography>
+          </Stack>
         </li>
       ) : null}
       {overdueInvoices.slice(0, 5).map((invoice) => (
         <li key={invoice.id}>
-          <Link href="/billing" className="flex items-center gap-3 py-3 hover:bg-zinc-50">
-            <AlertCircle size={15} strokeWidth={1.5} className="shrink-0 text-red-500" />
-            <span className="flex-1 text-sm text-zinc-700">
+          <Stack
+            component={Link}
+            href="/billing"
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            sx={{ py: 1.5, textDecoration: "none", "&:hover": { bgcolor: "action.hover" } }}
+          >
+            <Iconify icon="solar:danger-circle-bold" width={15} sx={{ flexShrink: 0, color: "error.main" }} />
+            <Typography variant="body2" sx={{ flex: 1, color: "text.secondary" }}>
               {t("invoiceOverdue", { number: invoice.invoiceNumber ?? invoice.id.slice(0, 8), name: fullName(invoice.user) })}
-            </span>
-            <span className="text-sm tabular-nums text-zinc-400">
+            </Typography>
+            <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums", color: "text.disabled" }}>
               {t("invoiceDue", { total: invoice.formattedTotal, date: formatDate(invoice.dueDate) })}
-            </span>
-          </Link>
+            </Typography>
+          </Stack>
         </li>
       ))}
-    </ul>
+    </Box>
   );
 }

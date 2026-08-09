@@ -1,3 +1,6 @@
+import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
+
 import { buildPoints, buildSmoothLinePath, FULL_CHART_LAYOUT, type ChartLayout } from "./chart-geometry";
 
 interface HtmlAreaChartProps {
@@ -8,12 +11,9 @@ interface HtmlAreaChartProps {
 }
 
 /** Espejo DOM/SVG de `PdfAreaChart`, usado solo para la vista previa inline. */
-export function HtmlAreaChart({
-  data,
-  formatValue,
-  color = "rgb(var(--primary-chart))",
-  layout = FULL_CHART_LAYOUT,
-}: HtmlAreaChartProps) {
+export function HtmlAreaChart({ data, formatValue, color, layout = FULL_CHART_LAYOUT }: HtmlAreaChartProps) {
+  const theme = useTheme();
+  const resolvedColor = color ?? theme.vars.palette.primary.main;
   const format = formatValue ?? ((value: number) => String(value));
   const { points, baseline } = buildPoints(data, layout);
   const gradientId = "report-preview-area-fill";
@@ -25,7 +25,7 @@ export function HtmlAreaChart({
       : "";
 
   return (
-    <svg viewBox={`0 0 ${layout.width} ${layout.height}`} className="w-full" style={{ color }}>
+    <Box component="svg" viewBox={`0 0 ${layout.width} ${layout.height}`} sx={{ width: "100%", color: resolvedColor }}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="currentColor" stopOpacity={0.32} />
@@ -59,6 +59,6 @@ export function HtmlAreaChart({
           {point.label}
         </text>
       ))}
-    </svg>
+    </Box>
   );
 }

@@ -1,12 +1,15 @@
 "use client";
 
 import { useMutation, useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Stack from "@mui/material/Stack";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker, TimePicker } from "@/components/ui/date-picker";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { SlideOver } from "@/components/ui/slide-over";
@@ -15,6 +18,13 @@ import { fullName } from "@/lib/format";
 import { CREATE_SCHEDULE } from "@/lib/graphql/schedules";
 import type { User } from "@/lib/graphql/types";
 import { GET_USERS } from "@/lib/graphql/users";
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 // Convención del server: 0 = domingo … 6 = sábado (ver DAY_MAPPING en la app móvil)
 const DAY_VALUES = [1, 2, 3, 4, 5, 6, 0];
@@ -38,12 +48,20 @@ interface ScheduleFormProps {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
+  /** Preselecciona la fecha al abrir (p. ej. al hacer clic en un día del calendario). */
+  initialDate?: Date;
 }
 
-export function ScheduleForm({ open, onClose, onCreated }: ScheduleFormProps) {
+export function ScheduleForm({ open, onClose, onCreated, initialDate }: ScheduleFormProps) {
   const t = useTranslations("calendar.scheduleForm");
   const toast = useToast();
   const [form, setForm] = useState(EMPTY_FORM);
+
+  useEffect(() => {
+    if (open && initialDate) {
+      setForm((current) => ({ ...current, date: toDateInputValue(initialDate) }));
+    }
+  }, [open, initialDate]);
 
   const DAYS = DAY_VALUES.map((value) => ({ value, label: t(`dayInitials.${value}`) }));
   const TYPE_OPTIONS = TYPE_VALUES.map((value) => ({ value, label: t(`types.${value}`) }));
@@ -116,14 +134,14 @@ export function ScheduleForm({ open, onClose, onCreated }: ScheduleFormProps) {
         </>
       }
     >
-      <div className="space-y-5">
+      <Stack spacing={2.5}>
         <Field label={t("title")}>
           <Input value={form.title} onChange={(event) => set("title", event.target.value)} />
         </Field>
         <Field label={t("description")}>
           <Textarea value={form.description} onChange={(event) => set("description", event.target.value)} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           <Field label={t("type")}>
             <Dropdown options={TYPE_OPTIONS} value={form.type} onChange={(value) => set("type", value)} />
           </Field>
@@ -135,15 +153,11 @@ export function ScheduleForm({ open, onClose, onCreated }: ScheduleFormProps) {
               onChange={(event) => set("maxUsers", event.target.value)}
             />
           </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("startTime")}>
-            <Input type="time" value={form.startHour} onChange={(event) => set("startHour", event.target.value)} />
-          </Field>
-          <Field label={t("endTime")}>
-            <Input type="time" value={form.endHour} onChange={(event) => set("endHour", event.target.value)} />
-          </Field>
-        </div>
+        </Box>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
+          <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
+        </Box>
         <Field label={t("trainer")}>
           <Dropdown
             options={(trainers.data?.getUsers?.users ?? []).map((user) => ({
@@ -157,42 +171,43 @@ export function ScheduleForm({ open, onClose, onCreated }: ScheduleFormProps) {
           />
         </Field>
 
-        <label className="flex items-center gap-2.5 text-sm text-zinc-600">
-          <input
-            type="checkbox"
-            checked={form.repeat}
-            onChange={(event) => set("repeat", event.target.checked)}
-            className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
-          />
-          {t("repeatWeekly")}
-        </label>
+        <FormControlLabel
+          control={<Checkbox checked={form.repeat} onChange={(event) => set("repeat", event.target.checked)} />}
+          label={t("repeatWeekly")}
+          slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
+        />
 
         {form.repeat ? (
           <Field label={t("daysOfWeek")}>
-            <div className="flex gap-2">
+            <Stack direction="row" spacing={1}>
               {DAYS.map((day) => (
-                <button
+                <Box
                   key={day.value}
+                  component="button"
                   type="button"
                   onClick={() => toggleDay(day.value)}
-                  className={cn(
-                    "h-9 w-9 rounded-lg border text-sm transition-colors",
-                    form.days.includes(day.value)
-                      ? "border-zinc-900 bg-zinc-900 text-white"
-                      : "border-zinc-200 text-zinc-500 hover:border-zinc-400",
-                  )}
+                  sx={{
+                    height: 36,
+                    width: 36,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    fontSize: 14,
+                    cursor: "pointer",
+                    transition: (theme) => theme.transitions.create(["background-color", "border-color", "color"]),
+                    ...(form.days.includes(day.value)
+                      ? { borderColor: "text.primary", bgcolor: "text.primary", color: "background.paper" }
+                      : { borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "text.disabled" } }),
+                  }}
                 >
                   {day.label}
-                </button>
+                </Box>
               ))}
-            </div>
+            </Stack>
           </Field>
         ) : (
-          <Field label={t("date")}>
-            <DatePicker value={form.date} onChange={(value) => set("date", value)} />
-          </Field>
+          <DatePicker value={form.date} onChange={(value) => set("date", value)} placeholder={t("date")} />
         )}
-      </div>
+      </Stack>
     </SlideOver>
   );
 }

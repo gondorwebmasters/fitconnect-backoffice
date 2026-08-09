@@ -1,11 +1,22 @@
 "use client";
 
-import { useQuery } from "@apollo/client";
-import { Bell } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { Iconify } from "@/components/iconify";
 
+import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+
+import { Label } from "@/components/label";
 import { Popover } from "@/components/ui/popover";
+import { varAlpha } from "@/theme/styles";
 import { GET_NOTIFICATIONS } from "@/lib/graphql/notifications";
 
 interface Notification {
@@ -20,6 +31,22 @@ type NotificationsData = {
   getNotifications: { success: boolean; notifications: Notification[] | null } | null;
 };
 
+const TYPE_ICON: Record<string, { icon: string; color: "info" | "success" | "warning" | "error" }> = {
+  info: { icon: "solar:info-circle-bold", color: "info" },
+  message: { icon: "solar:chat-round-bold", color: "success" },
+  warning: { icon: "solar:danger-triangle-bold", color: "warning" },
+  error: { icon: "solar:close-circle-bold", color: "error" },
+};
+
+function typeMeta(type: string) {
+  return TYPE_ICON[type] ?? TYPE_ICON.info;
+}
+
+function typeLabel(type: string, t: (key: string, values?: Record<string, number>) => string): string {
+  const key = type in TYPE_ICON ? type : "info";
+  return t(`types.${key}`);
+}
+
 function timeAgo(value: string, t: (key: string, values?: Record<string, number>) => string): string {
   const date = new Date(Number.isNaN(Number(value)) ? value : Number(value));
   const diff = Date.now() - date.getTime();
@@ -33,59 +60,186 @@ function timeAgo(value: string, t: (key: string, values?: Record<string, number>
   return t("daysAgo", { count: days });
 }
 
+// El backend no expone estado leído/no leído — se lleva localmente por
+// pestaña de forma que "marcar todo como leído" y el contador sean reales,
+// en vez de simular un estado que no existe.
+const READ_STORAGE_KEY = "fc-bo-notifications-read";
+
+function readStoredIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(READ_STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"all" | "unread">("all");
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const t = useTranslations("notificationsBell");
   const { data, loading } = useQuery<NotificationsData>(GET_NOTIFICATIONS, {
     fetchPolicy: "cache-and-network",
     pollInterval: 120_000,
   });
 
+  useEffect(() => {
+    setReadIds(readStoredIds());
+  }, []);
+
+  const persistRead = (next: Set<string>) => {
+    setReadIds(next);
+    try {
+      window.localStorage.setItem(READ_STORAGE_KEY, JSON.stringify([...next]));
+    } catch {
+      // sin localStorage el estado de leído no persiste entre recargas
+    }
+  };
+
   const notifications = data?.getNotifications?.notifications ?? [];
-  const count = notifications.length;
+  const unreadCount = notifications.filter((notification) => !readIds.has(notification.id)).length;
+  const visible = tab === "unread" ? notifications.filter((notification) => !readIds.has(notification.id)) : notifications;
+
+  const markAllRead = () => persistRead(new Set(notifications.map((notification) => notification.id)));
+  const markRead = (id: string) => {
+    if (readIds.has(id)) return;
+    persistRead(new Set(readIds).add(id));
+  };
 
   return (
     <Popover
       open={open}
       onClose={() => setOpen(false)}
-      panelClassName="w-80"
+      panelSx={{ width: 400 }}
       trigger={
-        <button
+        <IconButton
           onClick={() => setOpen((value) => !value)}
-          className="relative rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-          aria-label={count ? t("titleWithCount", { count }) : t("title")}
+          aria-label={unreadCount ? t("titleWithCount", { count: unreadCount }) : t("title")}
+          size="small"
+          sx={{ position: "relative", color: "text.disabled" }}
         >
-          <Bell size={16} strokeWidth={1.5} />
-          {count > 0 ? (
-            <span className="absolute right-1 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-semibold leading-none text-primary-foreground">
-              {count > 9 ? "9+" : count}
-            </span>
+          <Iconify icon="solar:bell-bold" width={22} />
+          {unreadCount > 0 ? (
+            <Box
+              component="span"
+              sx={{
+                position: "absolute",
+                right: 6,
+                top: 6,
+                display: "flex",
+                height: 15,
+                minWidth: 15,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 999,
+                bgcolor: "error.main",
+                px: 0.25,
+                fontSize: 9,
+                fontWeight: 700,
+                lineHeight: 1,
+                color: "error.contrastText",
+              }}
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </Box>
           ) : null}
-        </button>
+        </IconButton>
       }
     >
-      <div className="border-b border-zinc-100 px-4 py-3">
-        <p className="text-sm font-medium text-zinc-900">{t("title")}</p>
-      </div>
-      <ul className="max-h-80 overflow-y-auto py-1">
-        {notifications.slice(0, 12).map((notification) => (
-          <li
-            key={notification.id}
-            className="flex items-start gap-2.5 px-4 py-2.5 transition-colors hover:bg-zinc-50"
-          >
-            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-            <div className="min-w-0">
-              <p className="text-sm text-zinc-700">{notification.message}</p>
-              <p className="mt-0.5 text-[11px] text-zinc-400">{timeAgo(notification.created_at, t)}</p>
-            </div>
-          </li>
-        ))}
-        {notifications.length === 0 ? (
-          <li className="px-4 py-10 text-center text-xs text-zinc-400">
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pl: 2.5, pr: 1.5, py: 2 }}>
+        <Typography variant="h6">{t("title")}</Typography>
+        <Tooltip title={t("markAllRead")}>
+          <span>
+            <IconButton size="small" disabled={unreadCount === 0} onClick={markAllRead} sx={{ color: "success.main" }}>
+              <Iconify icon="eva:done-all-fill" width={20} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+
+      <Tabs value={tab} onChange={(_event, value: "all" | "unread") => setTab(value)} sx={{ px: 2.5, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Tab
+          value="all"
+          label={
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <span>{t("all")}</span>
+              <Label color="default">{notifications.length}</Label>
+            </Stack>
+          }
+        />
+        <Tab
+          value="unread"
+          label={
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <span>{t("unread")}</span>
+              <Label color="info">{unreadCount}</Label>
+            </Stack>
+          }
+        />
+      </Tabs>
+
+      <Box component="ul" sx={{ maxHeight: 440, overflowY: "auto", listStyle: "none", m: 0, p: 0 }}>
+        {visible.slice(0, 20).map((notification, index) => {
+          const meta = typeMeta(notification.type);
+          const unread = !readIds.has(notification.id);
+          return (
+            <Box component="li" key={notification.id}>
+              {index > 0 ? <Divider component="div" /> : null}
+              <Stack
+                component="button"
+                type="button"
+                onClick={() => markRead(notification.id)}
+                direction="row"
+                alignItems="flex-start"
+                spacing={1.5}
+                sx={{
+                  width: "100%",
+                  textAlign: "left",
+                  px: 2.5,
+                  py: 1.75,
+                  bgcolor: unread ? (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.08) : "transparent",
+                  transition: (theme) => theme.transitions.create("background-color"),
+                  "&:hover": { bgcolor: "action.hover" },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: 40,
+                    width: 40,
+                    flexShrink: 0,
+                    borderRadius: "50%",
+                    bgcolor: `${meta.color}.lighter`,
+                    color: `${meta.color}.dark`,
+                  }}
+                >
+                  <Iconify icon={meta.icon} width={20} />
+                </Box>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" sx={{ color: "text.primary" }}>
+                    {notification.message}
+                  </Typography>
+                  <Typography variant="caption" sx={{ mt: 0.5, display: "block", color: "text.disabled" }}>
+                    {timeAgo(notification.created_at, t)} · {typeLabel(notification.type, t)}
+                  </Typography>
+                </Box>
+                {unread ? (
+                  <Box sx={{ mt: 0.75, height: 8, width: 8, flexShrink: 0, borderRadius: "50%", bgcolor: "info.main" }} />
+                ) : null}
+              </Stack>
+            </Box>
+          );
+        })}
+        {visible.length === 0 ? (
+          <Typography component="li" variant="body2" sx={{ display: "block", px: 2.5, py: 6, textAlign: "center", color: "text.disabled" }}>
             {loading ? t("loading") : t("empty")}
-          </li>
+          </Typography>
         ) : null}
-      </ul>
+      </Box>
     </Popover>
   );
 }

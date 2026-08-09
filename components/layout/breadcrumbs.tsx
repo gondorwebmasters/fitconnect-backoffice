@@ -1,12 +1,23 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
 import { SEGMENT_LABEL_KEYS } from "./nav";
+
+function Separator() {
+  return (
+    <Box
+      component="span"
+      sx={{ display: "inline-block", height: 4, width: 4, borderRadius: "50%", bgcolor: "text.disabled", flexShrink: 0 }}
+    />
+  );
+}
 
 export function Breadcrumbs() {
   const pathname = usePathname();
@@ -16,17 +27,15 @@ export function Breadcrumbs() {
   const tSidebar = useTranslations("sidebar");
 
   return (
-    <nav aria-label={tSidebar("breadcrumbs")} className="flex min-w-0 items-center gap-1.5 text-sm">
-      <Link
+    <Stack component="nav" direction="row" alignItems="center" spacing={1} aria-label={tSidebar("breadcrumbs")} sx={{ minWidth: 0, fontSize: 14 }}>
+      <Typography
+        component={Link}
         href="/"
-        className={
-          segments.length === 0
-            ? "font-medium text-zinc-900"
-            : "text-zinc-400 transition-colors hover:text-zinc-900"
-        }
+        variant="body2"
+        sx={{ color: "text.secondary", transition: (theme) => theme.transitions.create("color"), "&:hover": { color: "text.primary" } }}
       >
         {tMain("dashboard")}
-      </Link>
+      </Typography>
       {segments.map((segment, index) => {
         const href = `/${segments.slice(0, index + 1).join("/")}`;
         const last = index === segments.length - 1;
@@ -36,17 +45,24 @@ export function Breadcrumbs() {
           : segment.charAt(0).toUpperCase() + segment.slice(1);
         return (
           <Fragment key={href}>
-            <ChevronRight size={13} strokeWidth={1.5} className="shrink-0 text-zinc-300" />
+            <Separator />
             {last ? (
-              <span className="truncate font-medium text-zinc-900">{label}</span>
-            ) : (
-              <Link href={href} className="text-zinc-400 transition-colors hover:text-zinc-900">
+              <Typography variant="body2" noWrap sx={{ color: "text.disabled" }}>
                 {label}
-              </Link>
+              </Typography>
+            ) : (
+              <Typography
+                component={Link}
+                href={href}
+                variant="body2"
+                sx={{ color: "text.secondary", transition: (theme) => theme.transitions.create("color"), "&:hover": { color: "text.primary" } }}
+              >
+                {label}
+              </Typography>
             )}
           </Fragment>
         );
       })}
-    </nav>
+    </Stack>
   );
 }
