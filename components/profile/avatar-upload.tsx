@@ -1,7 +1,9 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation } from "@apollo/client";
-import { Camera, Loader2 } from "lucide-react";
+import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 
@@ -47,27 +49,37 @@ export function AvatarUpload({ user }: { user: User }) {
   };
 
   return (
-    <div className="group relative rounded-full bg-white/20 p-1 backdrop-blur-sm">
+    <Box sx={{ position: "relative", borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)", backdropFilter: "blur(4px)", p: 0.5, "&:hover .avatar-overlay": { opacity: 1 } }}>
       <Avatar size="xl" name={fullName(user)} url={user.pictureUrl?.url} />
-      <button
+      <ButtonBase
         onClick={() => inputRef.current?.click()}
         disabled={busy}
         aria-label={t("changePicture")}
-        className="absolute inset-1 flex items-center justify-center rounded-full bg-zinc-950/50 opacity-0 transition-opacity duration-200 focus:opacity-100 disabled:opacity-100 group-hover:opacity-100"
+        className="avatar-overlay"
+        sx={{
+          position: "absolute",
+          inset: 4,
+          borderRadius: "50%",
+          bgcolor: "rgba(15, 23, 42, 0.5)",
+          opacity: busy ? 1 : 0,
+          transition: (theme) => theme.transitions.create("opacity"),
+          "&:focus-visible": { opacity: 1 },
+        }}
       >
         {busy ? (
-          <Loader2 size={20} strokeWidth={2} className="animate-spin text-[white]" />
+          <Iconify icon="svg-spinners:180-ring" width={20} sx={{ color: "common.white" }} />
         ) : (
-          <Camera size={20} strokeWidth={1.75} className="text-[white]" />
+          <Iconify icon="solar:camera-bold" width={20} color="white" />
         )}
-      </button>
-      <input
+      </ButtonBase>
+      <Box
+        component="input"
         ref={inputRef}
         type="file"
         accept="image/jpeg,image/png"
-        className="hidden"
         onChange={handleFile}
+        sx={{ display: "none" }}
       />
-    </div>
+    </Box>
   );
 }

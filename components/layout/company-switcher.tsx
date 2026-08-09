@@ -1,13 +1,20 @@
 "use client";
 
-import { useApolloClient, useMutation, useQuery } from "@apollo/client";
-import { Building2, Check, ChevronsUpDown, Search } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { Iconify } from "@/components/iconify";
 
+import { useApolloClient, useMutation, useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import InputBase from "@mui/material/InputBase";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+
+import { Popover } from "@/components/ui/popover";
 import { SET_ACTIVE_COMPANY } from "@/lib/graphql/auth";
 import { GET_ACTIVE_COMPANY_NAME, GET_COMPANY_OPTIONS } from "@/lib/graphql/companies";
-import { cn } from "@/lib/cn";
 
 import { useSession } from "./session-provider";
 
@@ -25,7 +32,6 @@ export function CompanySwitcher() {
 
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const isSuperAdmin = Boolean(user?.isSuperAdmin);
 
@@ -48,22 +54,6 @@ export function CompanySwitcher() {
     variables: { companyId: user?.activeCompanyId },
     skip: !user?.activeCompanyId || activeInSession,
   });
-
-  useEffect(() => {
-    if (!open) return;
-    const onClickOutside = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onClickOutside);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClickOutside);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   if (!user) return null;
   if (!isSuperAdmin && companies.length < 2) return null;
@@ -89,58 +79,77 @@ export function CompanySwitcher() {
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        onClick={() => setOpen((value) => !value)}
-        disabled={switching}
-        className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 text-xs text-zinc-600 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-900 disabled:opacity-60"
-      >
-        <Building2 size={13} strokeWidth={1.5} className="text-zinc-400" />
-        <span className="max-w-40 truncate">
-          {switching ? t("switching") : (activeCompany?.name ?? t("select"))}
-        </span>
-        <ChevronsUpDown size={12} strokeWidth={1.5} className="text-zinc-400" />
-      </button>
-
-      {open ? (
-        <div className="absolute right-0 top-10 z-50 w-64 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-pop">
-          <div className="flex items-center gap-2 border-b border-zinc-100 px-3">
-            <Search size={13} strokeWidth={1.5} className="text-zinc-400" />
-            <input
-              autoFocus
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("searchPlaceholder")}
-              className="h-9 w-full bg-transparent text-xs text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
-            />
-          </div>
-          <ul className="max-h-64 overflow-y-auto py-1">
-            {options.map((company) => (
-              <li key={company.id}>
-                <button
-                  onClick={() => handleSelect(company.id)}
-                  className={cn(
-                    "flex w-full items-center justify-between px-3 py-2 text-left text-xs transition-colors hover:bg-zinc-50",
-                    company.id === user.activeCompanyId
-                      ? "font-medium text-zinc-900"
-                      : "text-zinc-600",
-                  )}
-                >
-                  <span className="truncate">{company.name}</span>
-                  {company.id === user.activeCompanyId ? (
-                    <Check size={13} strokeWidth={2} className="shrink-0 text-primary" />
-                  ) : null}
-                </button>
-              </li>
-            ))}
-            {options.length === 0 ? (
-              <li className="px-3 py-6 text-center text-xs text-zinc-400">
-                {loadingOptions ? t("loading") : t("noResults")}
-              </li>
-            ) : null}
-          </ul>
-        </div>
-      ) : null}
-    </div>
+    <Popover
+      open={open}
+      onClose={() => setOpen(false)}
+      trigger={
+        <Stack
+          component="button"
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          onClick={() => setOpen((value) => !value)}
+          disabled={switching}
+          sx={{
+            height: 32,
+            borderRadius: 2,
+            border: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            px: 1.25,
+            fontSize: 12,
+            color: "text.secondary",
+            boxShadow: (theme) => theme.vars.customShadows.z1,
+            transition: (theme) => theme.transitions.create(["border-color", "color"]),
+            "&:hover": { borderColor: "text.disabled", color: "text.primary" },
+            "&:disabled": { opacity: 0.6 },
+          }}
+        >
+          <Iconify icon="solar:buildings-2-bold" width={13} sx={{ color: "text.disabled" }} />
+          <Box component="span" sx={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {switching ? t("switching") : (activeCompany?.name ?? t("select"))}
+          </Box>
+          <Iconify icon="solar:sort-vertical-linear" width={12} sx={{ color: "text.disabled" }} />
+        </Stack>
+      }
+    >
+      <Box sx={{ width: 256 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ borderBottom: "1px solid", borderColor: "divider", px: 1.5 }}>
+          <Iconify icon="eva:search-fill" width={13} sx={{ color: "text.disabled" }} />
+          <InputBase
+            autoFocus
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("searchPlaceholder")}
+            sx={{ height: 36, width: "100%", fontSize: 12 }}
+          />
+        </Stack>
+        <List dense sx={{ maxHeight: 256, overflowY: "auto", py: 0.5 }}>
+          {options.map((company) => (
+            <ListItemButton
+              key={company.id}
+              onClick={() => handleSelect(company.id)}
+              sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 1.5, py: 1 }}
+            >
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ fontWeight: company.id === user.activeCompanyId ? 600 : 400, color: company.id === user.activeCompanyId ? "text.primary" : "text.secondary" }}
+              >
+                {company.name}
+              </Typography>
+              {company.id === user.activeCompanyId ? (
+                <Iconify icon="eva:checkmark-fill" width={13} sx={{ flexShrink: 0, color: "primary.main" }} />
+              ) : null}
+            </ListItemButton>
+          ))}
+          {options.length === 0 ? (
+            <Typography variant="caption" sx={{ display: "block", px: 1.5, py: 3, textAlign: "center", color: "text.disabled" }}>
+              {loadingOptions ? t("loading") : t("noResults")}
+            </Typography>
+          ) : null}
+        </List>
+      </Box>
+    </Popover>
   );
 }

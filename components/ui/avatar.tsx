@@ -1,13 +1,18 @@
-import { cn } from "@/lib/cn";
+import MuiAvatar from "@mui/material/Avatar";
+import type { SxProps, Theme } from "@mui/material/styles";
+
+const SIZE_PX: Record<"sm" | "md" | "lg" | "xl", number> = { sm: 28, md: 36, lg: 64, xl: 80 };
 
 export function Avatar({
   name,
   url,
   size = "md",
+  sx,
 }: {
   name: string;
   url?: string | null;
-  size?: "sm" | "md" | "xl";
+  size?: "sm" | "md" | "lg" | "xl";
+  sx?: SxProps<Theme>;
 }) {
   const initials = name
     .split(" ")
@@ -17,22 +22,22 @@ export function Avatar({
     .join("")
     .toUpperCase();
 
-  const sizeClasses =
-    size === "sm" ? "h-7 w-7 text-[10px]" : size === "xl" ? "h-20 w-20 text-xl" : "h-9 w-9 text-xs";
-
-  if (url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={name} className={cn("rounded-full object-cover", sizeClasses)} />;
-  }
+  const px = SIZE_PX[size];
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center justify-center rounded-full bg-primary/10 font-semibold text-primary",
-        sizeClasses,
-      )}
+    <MuiAvatar
+      src={url ?? undefined}
+      alt={name}
+      sx={{
+        width: px,
+        height: px,
+        fontSize: size === "xl" ? 20 : size === "lg" ? 16 : size === "sm" ? 10 : 12,
+        bgcolor: "primary.lighter",
+        color: "primary.dark",
+        ...sx,
+      }}
     >
       {initials || "?"}
-    </span>
+    </MuiAvatar>
   );
 }

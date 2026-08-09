@@ -1,5 +1,7 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
 
 import type { ReportMetricsData } from "@/lib/graphql/reports";
@@ -26,6 +28,9 @@ interface ReportPreviewHtmlProps {
  * visible — este componente es DOM normal, así que React solo reconcilia,
  * sin flash. El PDF real (para el lightbox y la descarga) sigue siendo
  * `ReportDocument`.
+ *
+ * Espeja una página de papel impresa: colores fijos (blanco/gris oscuro),
+ * no los tokens del tema — un informe no cambia con el modo claro/oscuro.
  */
 export function ReportPreviewHtml({
   selectedMetrics,
@@ -64,7 +69,7 @@ export function ReportPreviewHtml({
         points.length > 0 ? (
           <HtmlBarChart data={points} />
         ) : (
-          <p className="text-[11px] text-zinc-400">{labels.noDataPeriod}</p>
+          <Typography sx={{ fontSize: 11, color: "#71717a" }}>{labels.noDataPeriod}</Typography>
         ),
     });
   }
@@ -79,7 +84,7 @@ export function ReportPreviewHtml({
         points.length > 0 ? (
           <HtmlBarChart data={points} />
         ) : (
-          <p className="text-[11px] text-zinc-400">{labels.noDataPeriod}</p>
+          <Typography sx={{ fontSize: 11, color: "#71717a" }}>{labels.noDataPeriod}</Typography>
         ),
     });
   }
@@ -94,7 +99,7 @@ export function ReportPreviewHtml({
         points.length > 0 ? (
           <HtmlBarChart data={points} />
         ) : (
-          <p className="text-[11px] text-zinc-400">{labels.noDataAvailable}</p>
+          <Typography sx={{ fontSize: 11, color: "#71717a" }}>{labels.noDataAvailable}</Typography>
         ),
     });
   }
@@ -112,7 +117,7 @@ export function ReportPreviewHtml({
         points.length > 0 ? (
           <HtmlBarChart data={points} formatValue={formatEuros} />
         ) : (
-          <p className="text-[11px] text-zinc-400">{labels.noDataAvailable}</p>
+          <Typography sx={{ fontSize: 11, color: "#71717a" }}>{labels.noDataAvailable}</Typography>
         ),
     });
   }
@@ -127,58 +132,80 @@ export function ReportPreviewHtml({
         points.length > 0 ? (
           <HtmlBarChart data={points} />
         ) : (
-          <p className="text-[11px] text-zinc-400">{labels.noDataPeriod}</p>
+          <Typography sx={{ fontSize: 11, color: "#71717a" }}>{labels.noDataPeriod}</Typography>
         ),
     });
   }
 
   return (
-    <div className="relative mx-auto aspect-[210/297] w-full max-w-[720px] overflow-y-auto bg-white p-8 text-zinc-900 shadow-xl">
+    <Box
+      sx={{
+        position: "relative",
+        mx: "auto",
+        aspectRatio: "210 / 297",
+        width: "100%",
+        maxWidth: 720,
+        overflowY: "auto",
+        bgcolor: "#fff",
+        p: 4,
+        color: "#18181b",
+        boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+      }}
+    >
       {logoUrl ? (
-        <img
+        <Box
+          component="img"
           src={logoUrl}
           alt=""
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 w-[46%] -translate-x-1/2 -translate-y-1/2 opacity-10"
+          sx={{
+            pointerEvents: "none",
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            width: "46%",
+            transform: "translate(-50%, -50%)",
+            opacity: 0.1,
+          }}
         />
       ) : null}
 
-      <div className="relative mb-5 border-b-[1.5px] border-primary pb-3">
-        <h1 className="text-lg font-bold text-zinc-900">{gymName}</h1>
-        <p className="mt-0.5 text-[11px] text-zinc-500">{labels.subtitle}</p>
-      </div>
+      <Box sx={{ position: "relative", mb: 2.5, borderBottom: "1.5px solid", borderColor: "primary.main", pb: 1.5 }}>
+        <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#18181b" }}>{gymName}</Typography>
+        <Typography sx={{ mt: 0.25, fontSize: 11, color: "#71717a" }}>{labels.subtitle}</Typography>
+      </Box>
 
-      <div className="relative space-y-5">
+      <Box sx={{ position: "relative", display: "flex", flexDirection: "column", gap: 2.5 }}>
         {selectedMetrics.length === 0 ? (
-          <p className="text-xs text-zinc-400">{labels.noMetricsSelected}</p>
+          <Typography sx={{ fontSize: 12, color: "#a1a1aa" }}>{labels.noMetricsSelected}</Typography>
         ) : null}
 
         {kpis.length > 0 ? (
-          <section>
-            <h2 className="mb-2 text-[13px] font-bold text-zinc-900">{labels.summary}</h2>
-            <div className="flex flex-wrap gap-2.5">
+          <Box component="section">
+            <Typography sx={{ mb: 1, fontSize: 13, fontWeight: 700, color: "#18181b" }}>{labels.summary}</Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
               {kpis.map((kpi) => (
-                <div key={kpi.id} className="w-[150px] rounded-md border border-zinc-200 bg-zinc-50 p-2.5">
-                  <p className="mb-1 text-[9px] text-zinc-500">{kpi.label}</p>
-                  <p className="text-lg font-bold text-zinc-900">{kpi.value}</p>
-                </div>
+                <Box key={kpi.id} sx={{ width: 150, borderRadius: 1.5, border: "1px solid #e4e4e7", bgcolor: "#fafafa", p: 1.25 }}>
+                  <Typography sx={{ mb: 0.5, fontSize: 9, color: "#71717a" }}>{kpi.label}</Typography>
+                  <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#18181b" }}>{kpi.value}</Typography>
+                </Box>
               ))}
-            </div>
-          </section>
+            </Box>
+          </Box>
         ) : null}
 
         {metricSections.map((section) => (
-          <section key={section.key}>
-            <h2 className="mb-2 text-[13px] font-bold text-zinc-900">{section.title}</h2>
-            {section.chart ? <div className="mb-2.5">{section.chart}</div> : null}
+          <Box component="section" key={section.key}>
+            <Typography sx={{ mb: 1, fontSize: 13, fontWeight: 700, color: "#18181b" }}>{section.title}</Typography>
+            {section.chart ? <Box sx={{ mb: 1.25 }}>{section.chart}</Box> : null}
             {section.list}
-          </section>
+          </Box>
         ))}
-      </div>
+      </Box>
 
-      <p className="relative mt-8 border-t border-zinc-100 pt-2 text-center text-[9px] text-zinc-400">
+      <Typography sx={{ position: "relative", mt: 4, borderTop: "1px solid #f4f4f5", pt: 1, textAlign: "center", fontSize: 9, color: "#a1a1aa" }}>
         {labels.footer}
-      </p>
-    </div>
+      </Typography>
+    </Box>
   );
 }

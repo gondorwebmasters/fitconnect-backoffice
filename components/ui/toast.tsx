@@ -1,9 +1,8 @@
 "use client";
 
-import { CheckCircle2, XCircle } from "lucide-react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-
-import { cn } from "@/lib/cn";
 
 interface Toast {
   id: number;
@@ -29,26 +28,29 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: (theme) => theme.zIndex.snackbar,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          pointerEvents: "none",
+        }}
+      >
         {toasts.map((toast) => (
-          <div
+          <Alert
             key={toast.id}
-            role="status"
-            aria-live="polite"
-            className={cn(
-              "flex items-center gap-2.5 rounded-xl border bg-white py-2.5 pl-3 pr-4 text-sm font-medium shadow-pop",
-              toast.tone === "error" ? "border-red-200 text-red-600" : "border-zinc-200 text-zinc-700",
-            )}
+            severity={toast.tone}
+            variant="filled"
+            sx={{ pointerEvents: "auto", boxShadow: 16 }}
           >
-            {toast.tone === "error" ? (
-              <XCircle size={16} strokeWidth={2} className="shrink-0 text-red-500" />
-            ) : (
-              <CheckCircle2 size={16} strokeWidth={2} className="shrink-0 text-emerald-500" />
-            )}
             {toast.message}
-          </div>
+          </Alert>
         ))}
-      </div>
+      </Box>
     </ToastContext.Provider>
   );
 }

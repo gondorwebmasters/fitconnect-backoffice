@@ -1,35 +1,30 @@
 "use client";
 
-import type { ButtonHTMLAttributes } from "react";
-
-import { cn } from "@/lib/cn";
+import MuiButton from "@mui/material/Button";
+import type { ButtonProps as MuiButtonProps } from "@mui/material/Button";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
-const VARIANTS: Record<Variant, string> = {
-  primary:
-    "bg-gradient-to-b from-primary to-primary/85 text-primary-foreground shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 hover:brightness-105 active:scale-[0.98] active:shadow-sm",
-  secondary:
-    "border border-zinc-200 bg-white text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 active:scale-[0.98]",
-  ghost: "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 active:scale-[0.98]",
-  danger:
-    "border border-red-200 bg-white text-red-600 shadow-sm hover:border-red-300 hover:bg-red-50 active:scale-[0.98]",
+const VARIANT_MAP: Record<Variant, { variant: MuiButtonProps["variant"]; color: MuiButtonProps["color"] }> = {
+  primary: { variant: "contained", color: "primary" },
+  secondary: { variant: "outlined", color: "inherit" },
+  ghost: { variant: "text", color: "inherit" },
+  danger: { variant: "outlined", color: "error" },
 };
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<MuiButtonProps, "variant" | "color" | "size"> {
   variant?: Variant;
   size?: "sm" | "md";
 }
 
-export function Button({ variant = "secondary", size = "md", className, ...props }: ButtonProps) {
+export function Button({ variant = "secondary", size = "md", sx, ...props }: ButtonProps) {
+  const mapped = VARIANT_MAP[variant];
   return (
-    <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-40",
-        size === "sm" ? "h-8 px-3 text-xs" : "h-9 px-4 text-sm",
-        VARIANTS[variant],
-        className,
-      )}
+    <MuiButton
+      variant={mapped.variant}
+      color={mapped.color}
+      size={size === "sm" ? "small" : "medium"}
+      sx={{ gap: 0.75, ...sx }}
       {...props}
     />
   );

@@ -1,54 +1,48 @@
 "use client";
 
+import Skeleton from "@mui/material/Skeleton";
+import Typography from "@mui/material/Typography";
+import { useTheme } from "@mui/material/styles";
 import { useTranslations } from "next-intl";
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+import { Chart, useChart } from "@/components/chart";
 import type { UserStats } from "@/lib/graphql/types";
-
-import { CHART_TOOLTIP_STYLE } from "./chart-theme";
-
-const TONES = {
-  new: "rgb(var(--primary-chart))",
-  pending: "rgb(var(--amber-500))",
-  blocked: "rgb(var(--red-500))",
-  inactive: "rgb(var(--z-400))",
-};
 
 export function UsersStatusChart({ users, loading }: { users?: UserStats; loading?: boolean }) {
   const t = useTranslations("dashboard.usersStatusChart");
+  const theme = useTheme();
+
+  const tones = [theme.palette.primary.main, theme.palette.warning.main, theme.palette.error.main, theme.palette.grey[400]];
+
+  const data = users
+    ? [
+        { key: t("new"), value: users.newUsers },
+        { key: t("pending"), value: users.pendingUsers },
+        { key: t("blocked"), value: users.blockedUsers },
+        { key: t("inactive"), value: users.notActiveUsers },
+      ]
+    : [];
+
+  const chartOptions = useChart({
+    colors: tones,
+    xaxis: { categories: data.map((item) => item.key) },
+    tooltip: { y: { formatter: (value: number) => t("members", { value }) } },
+    plotOptions: { bar: { distributed: true, borderRadius: 6, columnWidth: "56%" } },
+  });
 
   if (loading || !users) {
-    return <div className="h-40 animate-pulse rounded-lg bg-zinc-100" />;
+    return <Skeleton variant="rounded" height={168} />;
   }
 
-  const data = [
-    { key: t("new"), value: users.newUsers, color: TONES.new },
-    { key: t("pending"), value: users.pendingUsers, color: TONES.pending },
-    { key: t("blocked"), value: users.blockedUsers, color: TONES.blocked },
-    { key: t("inactive"), value: users.notActiveUsers, color: TONES.inactive },
-  ];
-
   if (data.every((item) => item.value === 0)) {
-    return <p className="py-14 text-center text-sm text-zinc-400">{t("empty")}</p>;
+    return (
+      <Typography variant="body2" sx={{ py: 7, textAlign: "center", color: "text.disabled" }}>
+        {t("empty")}
+      </Typography>
+    );
   }
 
   return (
-    <ResponsiveContainer width="100%" height={168}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }} barCategoryGap="28%">
-        <XAxis
-          dataKey="key"
-          tickLine={false}
-          axisLine={false}
-          tick={{ fill: "rgb(var(--z-500))", fontSize: 11 }}
-        />
-        <YAxis hide allowDecimals={false} />
-        <Tooltip {...CHART_TOOLTIP_STYLE} cursor={{ fill: "rgb(var(--z-100))" }} formatter={(value) => [t("members", { value: Number(value) })]} />
-        <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={44} animationDuration={600} animationEasing="ease-out">
-          {data.map((item) => (
-            <Cell key={item.key} fill={item.color} />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <Chart type="bar" series={[{ data: data.map((item) => item.value) }]} options={chartOptions} height={168} />
   );
 }

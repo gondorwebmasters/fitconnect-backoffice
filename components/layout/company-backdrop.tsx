@@ -1,8 +1,10 @@
 "use client";
 
 import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
 import type { CSSProperties } from "react";
 
+import { stylesMode, varAlpha } from "@/theme/styles";
 import { GET_ACTIVE_COMPANY_LOGO } from "@/lib/graphql/companies";
 
 import { useSession } from "./session-provider";
@@ -39,21 +41,89 @@ export function CompanyBackdrop() {
   if (!logoUrl) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-      <div className="absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-primary/25 blur-[120px]" />
-      <div className="absolute -right-16 top-1/3 h-[26rem] w-[26rem] rounded-full bg-emerald-500/15 blur-[110px]" />
-      <div className="absolute -right-28 bottom-0 h-[28rem] w-[28rem] rounded-full bg-amber-500/15 blur-[110px]" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+    <Box sx={{ pointerEvents: "none", position: "fixed", inset: 0, zIndex: 0, overflow: "hidden" }} aria-hidden>
+      <Box
+        sx={{
+          position: "absolute",
+          right: -160,
+          top: -160,
+          height: 544,
+          width: 544,
+          borderRadius: "50%",
+          bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.25),
+          filter: "blur(120px)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          right: -64,
+          top: "33%",
+          height: 416,
+          width: 416,
+          borderRadius: "50%",
+          bgcolor: (theme) => varAlpha(theme.vars.palette.success.mainChannel, 0.15),
+          filter: "blur(110px)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          right: -112,
+          bottom: 0,
+          height: 448,
+          width: 448,
+          borderRadius: "50%",
+          bgcolor: (theme) => varAlpha(theme.vars.palette.warning.mainChannel, 0.15),
+          filter: "blur(110px)",
+        }}
+      />
+      <Box
+        component="img"
         src={logoUrl}
         alt=""
         style={LOGO_MASK}
-        className="absolute right-[-6%] top-1/2 h-[85vh] w-auto -translate-y-1/2 object-contain opacity-[0.09] blur-[1px] dark:opacity-[0.07]"
+        sx={{
+          position: "absolute",
+          right: "-6%",
+          top: "50%",
+          height: "85vh",
+          width: "auto",
+          transform: "translateY(-50%)",
+          objectFit: "contain",
+          opacity: 0.09,
+          filter: "blur(1px)",
+          [stylesMode.dark]: { opacity: 0.07 },
+        }}
       />
       {/* Refuerza la fusión con el fondo por si el logo tiene su propio recuadro/color sólido */}
-      <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-transparent via-transparent to-background/80" />
-      <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-background/70 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/70 to-transparent" />
-    </div>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: "0 0 0 auto",
+          right: 0,
+          width: "50%",
+          background: (theme) => `linear-gradient(to left, transparent, transparent, ${varAlpha(theme.vars.palette.background.defaultChannel, 0.8)})`,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          insetInline: 0,
+          top: 0,
+          height: "33%",
+          background: (theme) => `linear-gradient(to bottom, ${varAlpha(theme.vars.palette.background.defaultChannel, 0.7)}, transparent)`,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          insetInline: 0,
+          bottom: 0,
+          height: "33%",
+          background: (theme) => `linear-gradient(to top, ${varAlpha(theme.vars.palette.background.defaultChannel, 0.7)}, transparent)`,
+        }}
+      />
+    </Box>
   );
 }

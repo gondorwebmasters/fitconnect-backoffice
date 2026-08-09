@@ -1,7 +1,12 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { Plus, Trash2 } from "lucide-react";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -72,41 +77,45 @@ export default function ProductsPage() {
       key: "product",
       header: t("columns.product"),
       render: (product) => (
-        <div className="flex items-center gap-3">
-          {product.pictures?.[0]?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.pictures[0].url} alt={product.name} className="h-10 w-10 rounded-lg object-cover" />
-          ) : (
-            <span className="h-10 w-10 rounded-lg border border-zinc-100 bg-zinc-50" />
-          )}
-          <div>
-            <p className="font-medium text-zinc-900">{product.name}</p>
-            <p className="max-w-md truncate text-xs text-zinc-400">{product.description}</p>
-          </div>
-        </div>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Avatar variant="rounded" src={product.pictures?.[0]?.url} sx={{ width: 40, height: 40 }} />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {product.name}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled", display: "block", maxWidth: 320 }} noWrap>
+              {product.description}
+            </Typography>
+          </Box>
+        </Stack>
       ),
     },
     {
       key: "price",
       header: t("columns.price"),
       // El precio de producto va en euros (la app móvil muestra `{price}€` tal cual)
-      render: (product) => <span className="tabular-nums text-zinc-700">{product.price.toFixed(2).replace(".", ",")} €</span>,
+      render: (product) => (
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          {product.price.toFixed(2).replace(".", ",")} €
+        </Typography>
+      ),
     },
     {
       key: "actions",
       header: "",
       className: "w-12 text-right",
       render: (product) => (
-        <button
+        <IconButton
+          size="small"
           onClick={(event) => {
             event.stopPropagation();
             setRemoving(product);
           }}
-          className="rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-red-50 hover:text-red-500"
           title={t("deleteProduct")}
+          sx={{ color: "text.disabled", "&:hover": { color: "error.main", bgcolor: "error.lighter" } }}
         >
-          <Trash2 size={15} strokeWidth={1.5} />
-        </button>
+          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+        </IconButton>
       ),
     },
   ];
@@ -120,7 +129,7 @@ export default function ProductsPage() {
             subtitle={t("subtitle")}
             actions={
               <Button variant="primary" onClick={() => setCreating(true)}>
-                <Plus size={15} strokeWidth={1.5} />
+                <Iconify icon="mingcute:add-line" width={15} />
                 {t("newProduct")}
               </Button>
             }
@@ -157,7 +166,7 @@ export default function ProductsPage() {
           </>
         }
       >
-        <div className="space-y-5">
+        <Stack spacing={2.5}>
           <Field label={t("name")}>
             <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
           </Field>
@@ -176,7 +185,7 @@ export default function ProductsPage() {
               onChange={(event) => setForm({ ...form, price: event.target.value })}
             />
           </Field>
-        </div>
+        </Stack>
       </SlideOver>
 
       <ConfirmDialog

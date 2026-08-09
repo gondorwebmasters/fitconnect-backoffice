@@ -1,7 +1,15 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { Plus, Trash2 } from "lucide-react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import LinearProgress from "@mui/material/LinearProgress";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -24,43 +32,48 @@ function PollCard({ poll, onRemove }: { poll: Poll; onRemove: () => void }) {
   const ended = new Date(Number(poll.endDate) || poll.endDate) < new Date();
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-sm font-medium text-zinc-900">{poll.title}</h3>
-          <p className="mt-0.5 text-xs text-zinc-400">
+    <Card variant="outlined" sx={{ p: 3 }}>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
+        <Box>
+          <Typography variant="subtitle2">{poll.title}</Typography>
+          <Typography variant="caption" sx={{ color: "text.disabled" }}>
             {ended ? t("ended") : t("open")} · {t("until", { date: formatDate(poll.endDate) })} ·{" "}
             {t("voteCount", { count: total })}
-          </p>
-        </div>
-        <button
+          </Typography>
+        </Box>
+        <IconButton
+          size="small"
           onClick={onRemove}
-          className="rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-red-50 hover:text-red-500"
           title={t("deletePoll")}
+          sx={{ color: "text.disabled", "&:hover": { color: "error.main", bgcolor: "error.lighter" } }}
         >
-          <Trash2 size={15} strokeWidth={1.5} />
-        </button>
-      </div>
-      <ul className="space-y-3">
+          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+        </IconButton>
+      </Stack>
+      <Stack spacing={1.5} component="ul" sx={{ listStyle: "none", p: 0, m: 0 }}>
         {poll.options.map((option) => {
           const count = votes.filter((vote) => vote.optionSelected === option).length;
           const percentage = total === 0 ? 0 : Math.round((count / total) * 100);
           return (
-            <li key={option} title={t("optionTitle", { option, count, percentage })}>
-              <div className="mb-1 flex items-baseline justify-between text-sm">
-                <span className="text-zinc-600">{option}</span>
-                <span className="tabular-nums text-zinc-400">
+            <Box component="li" key={option} title={t("optionTitle", { option, count, percentage })}>
+              <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mb: 0.5 }}>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  {option}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "text.disabled", fontVariantNumeric: "tabular-nums" }}>
                   {count} · {percentage}%
-                </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-zinc-100">
-                <div className="h-1.5 rounded-full bg-zinc-900" style={{ width: `${percentage}%` }} />
-              </div>
-            </li>
+                </Typography>
+              </Stack>
+              <LinearProgress
+                variant="determinate"
+                value={percentage}
+                sx={{ height: 6, borderRadius: 999, bgcolor: "action.hover", "& .MuiLinearProgress-bar": { borderRadius: 999 } }}
+              />
+            </Box>
           );
         })}
-      </ul>
-    </div>
+      </Stack>
+    </Card>
   );
 }
 
@@ -117,7 +130,7 @@ export default function PollsPage() {
             subtitle={t("subtitle")}
             actions={
               <Button variant="primary" onClick={() => setCreating(true)}>
-                <Plus size={15} strokeWidth={1.5} />
+                <Iconify icon="mingcute:add-line" width={15} />
                 {t("newPoll")}
               </Button>
             }
@@ -125,20 +138,28 @@ export default function PollsPage() {
         }
       >
         {loading && polls.length === 0 ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="h-40 animate-pulse rounded-xl bg-zinc-100" />
-            <div className="h-40 animate-pulse rounded-xl bg-zinc-100" />
-          </div>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Skeleton variant="rounded" height={160} />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <Skeleton variant="rounded" height={160} />
+            </Grid>
+          </Grid>
         ) : polls.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-200 py-16 text-center text-sm text-zinc-400">
-            {t("emptyState")}
-          </p>
+          <Box sx={{ borderRadius: 2, border: 1, borderStyle: "dashed", borderColor: "divider", py: 8, textAlign: "center" }}>
+            <Typography variant="body2" sx={{ color: "text.disabled" }}>
+              {t("emptyState")}
+            </Typography>
+          </Box>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <Grid container spacing={2}>
             {polls.map((poll) => (
-              <PollCard key={poll.id} poll={poll} onRemove={() => setRemoving(poll)} />
+              <Grid key={poll.id} size={{ xs: 12, lg: 6 }}>
+                <PollCard poll={poll} onRemove={() => setRemoving(poll)} />
+              </Grid>
             ))}
-          </div>
+          </Grid>
         )}
       </PageShell>
 
@@ -161,7 +182,7 @@ export default function PollsPage() {
           </>
         }
       >
-        <div className="space-y-5">
+        <Stack spacing={2.5}>
           <Field label={t("question")}>
             <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
           </Field>
@@ -178,7 +199,7 @@ export default function PollsPage() {
               onChange={(value) => setForm({ ...form, endDate: value })}
             />
           </Field>
-        </div>
+        </Stack>
       </SlideOver>
 
       <ConfirmDialog

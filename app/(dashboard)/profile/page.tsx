@@ -1,6 +1,11 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
-import { BadgeCheck, Mail } from "lucide-react";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 
 import { useSession } from "@/components/layout/session-provider";
@@ -24,65 +29,123 @@ export default function ProfilePage() {
 
   if (loading && !user) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-44 rounded-2xl bg-zinc-100" />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="h-80 rounded-2xl bg-zinc-100" />
-          <div className="h-80 rounded-2xl bg-zinc-100" />
-        </div>
-      </div>
+      <Stack spacing={3}>
+        <Skeleton variant="rounded" height={176} />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Skeleton variant="rounded" height={320} />
+          </Grid>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Skeleton variant="rounded" height={320} />
+          </Grid>
+        </Grid>
+      </Stack>
     );
   }
 
   if (!user) return null;
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-card">
-        <div
+      <Box
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: 2,
+          background: "linear-gradient(135deg, var(--palette-primary-main), var(--palette-primary-dark))",
+        }}
+      >
+        <Box
           aria-hidden
-          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-2xl"
+          sx={{
+            position: "absolute",
+            top: -96,
+            right: -64,
+            width: 256,
+            height: 256,
+            borderRadius: "50%",
+            bgcolor: "rgba(255,255,255,0.1)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+          }}
         />
-        <div
+        <Box
           aria-hidden
-          className="pointer-events-none absolute -bottom-28 right-32 h-56 w-56 rounded-full bg-black/10 blur-3xl"
+          sx={{
+            position: "absolute",
+            bottom: -112,
+            right: 128,
+            width: 224,
+            height: 224,
+            borderRadius: "50%",
+            bgcolor: "rgba(0,0,0,0.1)",
+            filter: "blur(64px)",
+            pointerEvents: "none",
+          }}
         />
-        <div className="relative flex flex-col gap-5 p-8 sm:flex-row sm:items-center sm:gap-6">
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ sm: "center" }}
+          spacing={{ xs: 2.5, sm: 3 }}
+          sx={{ position: "relative", p: 4 }}
+        >
           <AvatarUpload user={user} />
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold text-primary-foreground">{fullName(user)}</h1>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-primary-foreground">
-              <Mail size={13} strokeWidth={1.75} />
-              <span className="truncate">{user.email}</span>
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h5" sx={{ color: "primary.contrastText" }} noWrap>
+              {fullName(user)}
+            </Typography>
+            <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mt: 0.5, color: "primary.contrastText" }}>
+              <Iconify icon="solar:letter-bold" width={13} />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: "inherit" }} noWrap>
+                {user.email}
+              </Typography>
+            </Stack>
+            <Stack direction="row" flexWrap="wrap" alignItems="center" spacing={1} sx={{ mt: 1.5 }}>
               {user.contextRole ? (
-                <Chip className="border-white/20 bg-white/15 text-primary-foreground backdrop-blur-sm">
+                <Chip
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.2)",
+                    bgcolor: "rgba(255,255,255,0.15)",
+                    color: "primary.contrastText",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
                   {ROLE_LABELS[user.contextRole]}
                 </Chip>
               ) : null}
               {user.isSuperAdmin ? (
-                <Chip className="border-white/20 bg-white/15 text-primary-foreground backdrop-blur-sm">
-                  <span className="flex items-center gap-1">
-                    <BadgeCheck size={12} strokeWidth={2} />
+                <Chip
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.2)",
+                    bgcolor: "rgba(255,255,255,0.15)",
+                    color: "primary.contrastText",
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <Iconify icon="solar:verified-check-bold" width={12} />
                     {t("superadmin")}
-                  </span>
+                  </Stack>
                 </Chip>
               ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
+            </Stack>
+          </Box>
+        </Stack>
+      </Box>
 
       {/* Contenido */}
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <ProfileForm user={user} />
-        <div className="space-y-6">
-          <PasswordForm />
-          <AppearanceCard />
-        </div>
-      </div>
-    </div>
+      <Grid container spacing={3} alignItems="flex-start">
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <ProfileForm user={user} />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Stack spacing={3}>
+            <PasswordForm />
+            <AppearanceCard />
+          </Stack>
+        </Grid>
+      </Grid>
+    </Stack>
   );
 }

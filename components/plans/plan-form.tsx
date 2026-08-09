@@ -1,7 +1,18 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation } from "@apollo/client";
-import { Plus, X } from "lucide-react";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -54,7 +65,7 @@ const EMPTY_FORM = {
   name: "",
   description: "",
   amount: "",
-  interval: "month",
+  interval: INTERVAL_VALUES[0] as (typeof INTERVAL_VALUES)[number],
   trialPeriodDays: "",
   features: [] as string[],
   maxUsers: "",
@@ -85,27 +96,30 @@ function FeatureListInput({
   };
 
   return (
-    <div className="space-y-2">
+    <Stack spacing={1}>
       {features.length > 0 ? (
-        <ul className="space-y-1.5">
+        <Stack component="ul" spacing={0.75} sx={{ listStyle: "none", p: 0, m: 0 }}>
           {features.map((feature, index) => (
-            <li
+            <Stack
+              component="li"
               key={index}
-              className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700"
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              spacing={1}
+              sx={{ borderRadius: 1.5, border: 1, borderColor: "divider", bgcolor: "background.neutral", px: 1.5, py: 0.75 }}
             >
-              <span className="truncate">{feature}</span>
-              <button
-                type="button"
-                onClick={() => removeFeature(index)}
-                className="shrink-0 text-zinc-400 hover:text-red-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </li>
+              <Typography variant="body2" noWrap>
+                {feature}
+              </Typography>
+              <IconButton size="small" onClick={() => removeFeature(index)} sx={{ color: "text.disabled" }}>
+                <Iconify icon="mingcute:close-line" width={14} />
+              </IconButton>
+            </Stack>
           ))}
-        </ul>
+        </Stack>
       ) : null}
-      <div className="flex gap-2">
+      <Stack direction="row" spacing={1}>
         <Input
           value={draft}
           placeholder={placeholder}
@@ -118,10 +132,10 @@ function FeatureListInput({
           }}
         />
         <Button type="button" variant="secondary" onClick={addFeature} disabled={!draft.trim()}>
-          <Plus className="h-4 w-4" />
+          <Iconify icon="mingcute:add-line" width={16} />
         </Button>
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -143,37 +157,35 @@ function PermissionsMatrix({
   };
 
   return (
-    <div className="max-h-72 overflow-y-auto rounded-lg border border-zinc-200">
-      <table className="w-full text-xs">
-        <thead className="text-zinc-400">
-          <tr>
-            <th className="sticky top-0 z-10 bg-zinc-50 px-3 py-2 text-left font-medium uppercase tracking-wider">
-              ·
-            </th>
+    <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 288 }}>
+      <Table size="small" stickyHeader>
+        <TableHead>
+          <TableRow>
+            <TableCell>·</TableCell>
             {PERMISSION_ACTIONS.map((action) => (
-              <th key={action} className="sticky top-0 z-10 bg-zinc-50 px-2 py-2 text-center font-medium">
+              <TableCell key={action} align="center">
                 {actionLabel(action)}
-              </th>
+              </TableCell>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {PERMISSION_MODULES.map((module) => (
-            <tr key={module} className="border-t border-zinc-100">
-              <td className="px-3 py-1.5 text-zinc-700">{moduleLabel(module)}</td>
+            <TableRow key={module}>
+              <TableCell>{moduleLabel(module)}</TableCell>
               {PERMISSION_ACTIONS.map((action) => {
                 const name = `${module}:${action}`;
                 return (
-                  <td key={action} className="px-2 py-1.5 text-center">
+                  <TableCell key={action} align="center" sx={{ p: 0.5 }}>
                     <Checkbox checked={has(name)} onChange={() => toggle(name)} />
-                  </td>
+                  </TableCell>
                 );
               })}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 
@@ -301,32 +313,36 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
         </>
       }
     >
-      <div className="space-y-5">
+      <Stack spacing={2.5}>
         <Field label={t("name")}>
           <Input value={form.name} onChange={(event) => set("name")(event.target.value)} />
         </Field>
         <Field label={t("description")}>
           <Textarea value={form.description} onChange={(event) => set("description")(event.target.value)} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("price")}>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.amount}
-              onChange={(event) => set("amount")(event.target.value)}
-            />
-          </Field>
-          <Field label={t("interval")}>
-            <Dropdown
-              options={INTERVAL_OPTIONS}
-              value={form.interval}
-              onChange={set("interval")}
-              disabled={Boolean(plan)}
-            />
-          </Field>
-        </div>
+        <Grid container spacing={2}>
+          <Grid size={6}>
+            <Field label={t("price")}>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.amount}
+                onChange={(event) => set("amount")(event.target.value)}
+              />
+            </Field>
+          </Grid>
+          <Grid size={6}>
+            <Field label={t("interval")}>
+              <Dropdown
+                options={INTERVAL_OPTIONS}
+                value={form.interval}
+                onChange={set("interval")}
+                disabled={Boolean(plan)}
+              />
+            </Field>
+          </Grid>
+        </Grid>
         {!plan ? (
           <Field label={t("trialDays")} hint={t("optional")}>
             <Input
@@ -344,25 +360,29 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
             placeholder={t("addFeature")}
           />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("maxUsers")} hint={t("maxUsersHint")}>
-            <Input
-              type="number"
-              min={0}
-              value={form.maxUsers}
-              onChange={(event) => set("maxUsers")(event.target.value)}
-            />
-          </Field>
-          <Field label={t("supportLevel")}>
-            <Dropdown
-              options={SUPPORT_LEVEL_VALUES.map((value) => ({ value, label: t(`supportLevels.${value}`) }))}
-              value={form.supportLevel}
-              onChange={set("supportLevel")}
-            />
-          </Field>
-        </div>
+        <Grid container spacing={2}>
+          <Grid size={6}>
+            <Field label={t("maxUsers")} hint={t("maxUsersHint")}>
+              <Input
+                type="number"
+                min={0}
+                value={form.maxUsers}
+                onChange={(event) => set("maxUsers")(event.target.value)}
+              />
+            </Field>
+          </Grid>
+          <Grid size={6}>
+            <Field label={t("supportLevel")}>
+              <Dropdown
+                options={SUPPORT_LEVEL_VALUES.map((value) => ({ value, label: t(`supportLevels.${value}`) }))}
+                value={form.supportLevel}
+                onChange={set("supportLevel")}
+              />
+            </Field>
+          </Grid>
+        </Grid>
         <Field label={t("accessLevel")}>
-          <div className="flex gap-2">
+          <Stack direction="row" spacing={1}>
             <Button
               type="button"
               size="sm"
@@ -384,7 +404,7 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
             >
               {t("premiumPreset")}
             </Button>
-          </div>
+          </Stack>
         </Field>
         <Field label={t("permissions")} hint={t("permissionsHint")}>
           <PermissionsMatrix
@@ -394,7 +414,7 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
             actionLabel={(action) => t(`permissionActions.${action}`)}
           />
         </Field>
-      </div>
+      </Stack>
     </SlideOver>
   );
 }

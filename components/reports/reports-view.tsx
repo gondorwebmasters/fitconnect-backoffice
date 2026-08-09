@@ -1,8 +1,11 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { PDFDownloadLink } from "@react-pdf/renderer";
-import { Download, Maximize2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -10,10 +13,10 @@ import { Button } from "@/components/ui/button";
 import { GET_ACTIVE_COMPANY_LOGO, GET_ACTIVE_COMPANY_NAME } from "@/lib/graphql/companies";
 import { GET_REPORT_METRICS, type ReportMetricsData } from "@/lib/graphql/reports";
 import { fullName } from "@/lib/format";
-import { getAccentPreset } from "@/lib/theme/palette";
+import { ACCENT_HEX } from "@/theme/accents";
+import { useSettingsContext } from "@/theme/settings";
 
 import { useSession } from "@/components/layout/session-provider";
-import { useTheme } from "@/components/providers/theme-provider";
 
 import { ALL_METRIC_IDS, type MetricId, type ReportLabels } from "./metrics-catalog";
 import { MetricSelector } from "./metric-selector";
@@ -42,8 +45,8 @@ export function ReportsView() {
   const locale = useLocale();
   const intlLocale = INTL_LOCALE[locale] ?? locale;
   const { user, companies } = useSession();
-  const { accent } = useTheme();
-  const accentHex = getAccentPreset(accent).hex;
+  const { primaryColor } = useSettingsContext();
+  const accentHex = ACCENT_HEX[primaryColor].main;
   const { data, loading } = useQuery<{ getReportMetrics: { success: boolean; metrics: ReportMetricsData | null } }>(
     GET_REPORT_METRICS,
   );
@@ -122,35 +125,37 @@ export function ReportsView() {
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      <div className="lg:col-span-2">
-        <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card">
-          <h2 className="mb-5 text-sm font-medium text-zinc-900">{t("reportMetrics")}</h2>
+    <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+      <Box sx={{ gridColumn: { lg: "span 2" } }}>
+        <Box sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", p: 3, boxShadow: (theme) => theme.vars.customShadows.card }}>
+          <Typography variant="subtitle2" sx={{ mb: 2.5 }}>
+            {t("reportMetrics")}
+          </Typography>
           <MetricSelector selected={selected} onChange={setSelected} />
 
-          <div className="mt-6 border-t border-zinc-100 pt-5">
+          <Box sx={{ mt: 3, borderTop: "1px solid", borderColor: "divider", pt: 2.5 }}>
             <PDFDownloadLink document={document} fileName="reporte-fitconnect.pdf">
               {({ loading: pdfLoading }) => (
-                <Button variant="primary" className="w-full" disabled={loading || pdfLoading}>
-                  <Download size={15} strokeWidth={1.5} />
+                <Button variant="primary" fullWidth disabled={loading || pdfLoading}>
+                  <Iconify icon="solar:download-minimalistic-bold" width={15} />
                   {pdfLoading ? t("preparing") : t("confirmAndDownload")}
                 </Button>
               )}
             </PDFDownloadLink>
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="lg:col-span-3">
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-card">
-          <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-3">
-            <h2 className="text-sm font-medium text-zinc-900">{t("preview")}</h2>
+      <Box sx={{ gridColumn: { lg: "span 3" } }}>
+        <Box sx={{ overflow: "hidden", borderRadius: 4, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", boxShadow: (theme) => theme.vars.customShadows.card }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ borderBottom: "1px solid", borderColor: "divider", px: 2.5, py: 1.5 }}>
+            <Typography variant="subtitle2">{t("preview")}</Typography>
             <Button size="sm" variant="secondary" onClick={() => setLightboxOpen(true)}>
-              <Maximize2 size={13} strokeWidth={1.5} />
+              <Iconify icon="solar:full-screen-bold" width={13} />
               {t("viewFull")}
             </Button>
-          </div>
-          <div className="max-h-[730px] overflow-y-auto bg-zinc-100 p-6">
+          </Stack>
+          <Box sx={{ maxHeight: 730, overflowY: "auto", bgcolor: "background.neutral", p: 3 }}>
             <ReportPreviewHtml
               selectedMetrics={selectedMetrics}
               data={metrics}
@@ -159,11 +164,11 @@ export function ReportsView() {
               labels={labels}
               logoUrl={logoUrl}
             />
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
       <ReportLightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} document={document} />
-    </div>
+    </Box>
   );
 }

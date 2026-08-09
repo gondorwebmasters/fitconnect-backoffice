@@ -1,3 +1,6 @@
+import Box from "@mui/material/Box";
+import { useTheme } from "@mui/material/styles";
+
 import { FULL_CHART_LAYOUT, roundedTopRectPath, type ChartLayout } from "./chart-geometry";
 
 interface HtmlVerticalBarChartProps {
@@ -10,12 +13,9 @@ interface HtmlVerticalBarChartProps {
 const BAR_GAP_RATIO = 0.42;
 
 /** Espejo DOM/SVG de `PdfVerticalBarChart`, usado solo para la vista previa inline. */
-export function HtmlVerticalBarChart({
-  data,
-  formatValue,
-  color = "rgb(var(--primary-chart))",
-  layout = FULL_CHART_LAYOUT,
-}: HtmlVerticalBarChartProps) {
+export function HtmlVerticalBarChart({ data, formatValue, color, layout = FULL_CHART_LAYOUT }: HtmlVerticalBarChartProps) {
+  const theme = useTheme();
+  const resolvedColor = color ?? theme.vars.palette.primary.main;
   const format = formatValue ?? ((value: number) => String(value));
   const { width, height, padding } = layout;
   const plotWidth = width - padding.left - padding.right;
@@ -40,7 +40,7 @@ export function HtmlVerticalBarChart({
   });
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ color }}>
+    <Box component="svg" viewBox={`0 0 ${width} ${height}`} sx={{ width: "100%", color: resolvedColor }}>
       <path d={`M ${padding.left},${baseline} L ${width - padding.right},${baseline}`} stroke="#E4E4E7" strokeWidth={0.75} />
 
       {bars.map((bar, index) => (
@@ -63,6 +63,6 @@ export function HtmlVerticalBarChart({
           {bar.label}
         </text>
       ))}
-    </svg>
+    </Box>
   );
 }

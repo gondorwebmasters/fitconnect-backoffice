@@ -1,14 +1,20 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import Drawer from "@mui/material/Drawer";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import MenuItem from "@mui/material/MenuItem";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dropdown } from "@/components/ui/dropdown";
-import { Field, Input } from "@/components/ui/input";
-import { SlideOver } from "@/components/ui/slide-over";
 import { useToast } from "@/components/ui/toast";
 import { CREATE_COMPANY_MEMBER } from "@/lib/graphql/users";
 
@@ -45,47 +51,69 @@ export function CreateMemberForm({ open, onClose, onCreated }: CreateMemberFormP
   };
 
   return (
-    <SlideOver
-      open={open}
-      onClose={onClose}
-      title={t("title")}
-      subtitle={t("subtitle")}
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSubmit}
-            disabled={loading || !form.email || !form.nickname || !form.password}
-          >
-            {loading ? t("creating") : t("submit")}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-5">
-        <Field label={t("email")}>
-          <Input type="email" value={form.email} onChange={(event) => set("email")(event.target.value)} />
-        </Field>
-        <Field label={t("username")}>
-          <Input value={form.nickname} onChange={(event) => set("nickname")(event.target.value)} />
-        </Field>
-        <Field label={t("password")} hint={t("passwordHint")}>
-          <Input type="password" value={form.password} onChange={(event) => set("password")(event.target.value)} />
-        </Field>
-        <Field label={t("role")}>
-          <Dropdown options={roleOptions} value={form.role} onChange={set("role")} />
-        </Field>
-        <label className="flex items-center gap-2 text-sm text-zinc-700">
-          <Checkbox
-            checked={form.isActive}
-            onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
-          />
-          {t("activateDirectly")}
-        </label>
-      </div>
-    </SlideOver>
+    <Drawer anchor="right" open={open} onClose={onClose} slotProps={{ paper: { sx: { width: 480 } } }}>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ px: 4, py: 3 }}>
+        <Box>
+          <Typography variant="h6">{t("title")}</Typography>
+          <Typography variant="body2" sx={{ color: "text.disabled" }}>
+            {t("subtitle")}
+          </Typography>
+        </Box>
+        <IconButton onClick={onClose} aria-label={t("cancel")} size="small">
+          <Iconify icon="mingcute:close-line" width={18} />
+        </IconButton>
+      </Stack>
+
+      <Stack spacing={2.5} sx={{ flex: 1, overflowY: "auto", px: 4, py: 1 }}>
+        <TextField
+          type="email"
+          label={t("email")}
+          value={form.email}
+          onChange={(event) => set("email")(event.target.value)}
+        />
+        <TextField
+          label={t("username")}
+          value={form.nickname}
+          onChange={(event) => set("nickname")(event.target.value)}
+        />
+        <TextField
+          type="password"
+          label={t("password")}
+          helperText={t("passwordHint")}
+          value={form.password}
+          onChange={(event) => set("password")(event.target.value)}
+        />
+        <TextField select label={t("role")} value={form.role} onChange={(event) => set("role")(event.target.value)}>
+          {roleOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={form.isActive}
+              onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+            />
+          }
+          label={t("activateDirectly")}
+        />
+      </Stack>
+
+      <Stack direction="row" justifyContent="flex-end" spacing={1.5} sx={{ borderTop: 1, borderColor: "divider", px: 4, py: 2 }}>
+        <Button variant="text" color="inherit" onClick={onClose}>
+          {t("cancel")}
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          loading={loading}
+          disabled={!form.email || !form.nickname || !form.password}
+        >
+          {t("submit")}
+        </Button>
+      </Stack>
+    </Drawer>
   );
 }

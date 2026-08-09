@@ -1,6 +1,11 @@
 "use client";
 
 import { useMutation } from "@apollo/client";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardHeader from "@mui/material/CardHeader";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -40,20 +45,30 @@ export default function DangerSettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl">
-      <section className="rounded-2xl border border-red-200 bg-white shadow-card">
-        <header className="border-b border-red-200/60 px-7 py-5">
-          <h2 className="text-sm font-semibold text-red-600">{t("title")}</h2>
-          <p className="text-xs text-zinc-400">{t("subtitle")}</p>
-        </header>
+    <Box sx={{ maxWidth: 672 }}>
+      <Card variant="outlined" sx={{ borderColor: "error.main" }}>
+        <CardHeader
+          title={t("title")}
+          subheader={t("subtitle")}
+          titleTypographyProps={{ variant: "subtitle1", color: "error.main" }}
+          sx={{ borderBottom: 1, borderColor: "error.light" }}
+        />
 
-        <div className="flex flex-col gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-md text-sm leading-relaxed text-zinc-500">{t("description")}</p>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          alignItems={{ sm: "center" }}
+          justifyContent="space-between"
+          spacing={2}
+          sx={{ p: 3 }}
+        >
+          <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 400 }}>
+            {t("description")}
+          </Typography>
           <Button variant="danger" onClick={() => setConfirming(true)} disabled={!user}>
             {t("deleteAccount")}
           </Button>
-        </div>
-      </section>
+        </Stack>
+      </Card>
 
       <ConfirmDialog
         open={confirming}
@@ -65,6 +80,6 @@ export default function DangerSettingsPage() {
         onConfirm={handleDelete}
         onCancel={() => setConfirming(false)}
       />
-    </div>
+    </Box>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -7,6 +10,7 @@ import { Suspense, useState } from "react";
 import { HeroAnimation } from "@/components/layout/hero-animation";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { varAlpha } from "@/theme/styles";
 
 function LoginForm() {
   const t = useTranslations("login");
@@ -42,15 +46,29 @@ function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
-      <div className="flex flex-col items-center gap-1">
+    <Stack component="form" onSubmit={handleSubmit} spacing={3} sx={{ width: "100%", maxWidth: 384 }}>
+      <Stack alignItems="center" spacing={0.5}>
         <HeroAnimation />
-        <div className="text-center">
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900">FitConnect</h1>
-          <p className="mt-1 text-sm text-zinc-500">{t("subtitle")}</p>
-        </div>
-      </div>
-      <div className="space-y-4 rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-pop">
+        <Box sx={{ textAlign: "center" }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: "-0.02em" }}>
+            FitConnect
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, color: "text.secondary" }}>
+            {t("subtitle")}
+          </Typography>
+        </Box>
+      </Stack>
+      <Stack
+        spacing={2}
+        sx={{
+          borderRadius: 4,
+          border: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+          p: 4,
+          boxShadow: (theme) => theme.vars.customShadows.dialog,
+        }}
+      >
         <Field label={t("emailOrUsername")}>
           <Input
             value={emailOrNickname}
@@ -69,29 +87,65 @@ function LoginForm() {
             required
           />
         </Field>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+        {error ? (
+          <Typography variant="body2" sx={{ color: "error.main" }}>
+            {error}
+          </Typography>
+        ) : null}
+        <Button type="submit" variant="primary" fullWidth disabled={loading}>
           {loading ? t("loggingIn") : t("login")}
         </Button>
-      </div>
-    </form>
+      </Stack>
+    </Stack>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-background px-6">
-      <div
+    <Box
+      component="main"
+      sx={{
+        position: "relative",
+        display: "flex",
+        minHeight: "100dvh",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+        bgcolor: "background.default",
+        px: 3,
+      }}
+    >
+      <Box
         aria-hidden
-        className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/15 blur-3xl"
+        sx={{
+          pointerEvents: "none",
+          position: "absolute",
+          left: -128,
+          top: -128,
+          height: 384,
+          width: 384,
+          borderRadius: "50%",
+          bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.15),
+          filter: "blur(64px)",
+        }}
       />
-      <div
+      <Box
         aria-hidden
-        className="pointer-events-none absolute -bottom-40 -right-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl"
+        sx={{
+          pointerEvents: "none",
+          position: "absolute",
+          bottom: -160,
+          right: -96,
+          height: 384,
+          width: 384,
+          borderRadius: "50%",
+          bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.1),
+          filter: "blur(64px)",
+        }}
       />
       <Suspense>
         <LoginForm />
       </Suspense>
-    </main>
+    </Box>
   );
 }

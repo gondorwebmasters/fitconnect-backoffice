@@ -1,14 +1,17 @@
 "use client";
 
+import { Iconify } from "@/components/iconify";
+import { Logo } from "@/components/logo";
+
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import appIcon from "@/assets/icon.png";
-import { cn } from "@/lib/cn";
+import { varAlpha } from "@/theme/styles";
 
 import { useShell } from "./app-shell";
 import { MAIN_NAV, SYSTEM_NAV, type NavItem } from "./nav";
@@ -16,30 +19,53 @@ import { useSession } from "./session-provider";
 
 function NavLink({ item, label, collapsed }: { item: NavItem; label: string; collapsed: boolean }) {
   const pathname = usePathname();
-  const { href, icon: Icon } = item;
+  const { href, icon } = item;
   const active =
     href === "/" || href === "/system" ? pathname === href : pathname.startsWith(href);
 
   return (
-    <Link
+    <Stack
+      component={Link}
       href={href}
       title={collapsed ? label : undefined}
-      className={cn(
-        "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200",
-        collapsed && "justify-center px-0",
-        active ? "font-semibold text-primary-foreground" : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900",
-      )}
+      direction="row"
+      alignItems="center"
+      spacing={1.5}
+      sx={{
+        position: "relative",
+        borderRadius: 3,
+        px: 1.5,
+        py: 1,
+        fontSize: 14,
+        textDecoration: "none",
+        transition: (theme) => theme.transitions.create("color", { duration: 200 }),
+        ...(collapsed && { justifyContent: "center", px: 0 }),
+        ...(active
+          ? { fontWeight: 600, color: "primary.contrastText" }
+          : { color: "text.secondary", "&:hover": { bgcolor: "action.hover", color: "text.primary" } }),
+      }}
     >
       {active ? (
-        <motion.span
+        <Box
+          component={motion.span}
           layoutId="sidebar-active-pill"
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
-          className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-primary/85 shadow-md shadow-primary/25"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 3,
+            background: (theme) => `linear-gradient(to right, ${theme.vars.palette.primary.main}, ${varAlpha(theme.vars.palette.primary.mainChannel, 0.85)})`,
+            boxShadow: (theme) => `0 4px 6px -1px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.25)}`,
+          }}
         />
       ) : null}
-      <Icon size={16} strokeWidth={1.5} className="relative shrink-0" />
-      {!collapsed && <span className="relative truncate">{label}</span>}
-    </Link>
+      <Iconify icon={icon} width={22} sx={{ position: "relative", flexShrink: 0 }} />
+      {!collapsed && (
+        <Box component="span" sx={{ position: "relative", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {label}
+        </Box>
+      )}
+    </Stack>
   );
 }
 
@@ -51,83 +77,123 @@ export function Sidebar() {
   const tSidebar = useTranslations("sidebar");
 
   return (
-    <motion.aside
+    <Box
+      component={motion.aside}
       initial={false}
-      animate={{ width: collapsed ? 64 : 240 }}
+      animate={{ width: collapsed ? 88 : 280 }}
       transition={{ type: "spring", stiffness: 400, damping: 40 }}
-      className="fixed inset-y-4 left-4 z-20 flex flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-card"
+      sx={{
+        position: "fixed",
+        inset: "0 auto 0 0",
+        zIndex: (theme) => theme.zIndex.drawer,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        borderRight: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.paper",
+      }}
     >
-      <div
-        className={cn(
-          "flex items-center gap-2.5 py-6",
-          collapsed ? "justify-center px-0" : "px-6",
-        )}
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={1.25}
+        sx={{ py: 3, ...(collapsed ? { justifyContent: "center", px: 0 } : { px: 3 }) }}
       >
-        <motion.span
+        <Box
+          component={motion.span}
           whileHover={{ rotate: -8, scale: 1.05 }}
-          className="flex h-8 w-8 shrink-0 items-center justify-center"
+          sx={{ display: "flex", height: 32, width: 32, flexShrink: 0, alignItems: "center", justifyContent: "center" }}
         >
-          <Image src={appIcon} alt="" width={80} height={80} className="rounded-[5px]" priority />
-        </motion.span>
+          <Logo disableLink height={32} />
+        </Box>
         <AnimatePresence initial={false}>
           {!collapsed && (
-            <motion.span
+            <Stack
+              component={motion.span}
+              direction="row"
+              alignItems="center"
+              spacing={1.25}
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap"
+              sx={{ overflow: "hidden", whiteSpace: "nowrap" }}
             >
-              <span className="truncate text-sm font-semibold tracking-tight text-zinc-900">
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600, letterSpacing: "-0.01em" }}>
                 FitConnect
-              </span>
-              <span className="rounded border border-zinc-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  borderRadius: 1,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  px: 0.75,
+                  py: 0.25,
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "text.disabled",
+                }}
+              >
                 {tSidebar("adminBadge")}
-              </span>
-            </motion.span>
+              </Box>
+            </Stack>
           )}
         </AnimatePresence>
-      </div>
+      </Stack>
 
-      <nav className={cn("flex-1 space-y-0.5 overflow-y-auto pb-4", collapsed ? "px-2.5" : "px-3")}>
+      <Stack component="nav" spacing={0.25} sx={{ flex: 1, overflowY: "auto", pb: 2, ...(collapsed ? { px: 1.25 } : { px: 1.5 }) }}>
         {MAIN_NAV.map((item) => (
           <NavLink key={item.href} item={item} label={t(item.labelKey)} collapsed={collapsed} />
         ))}
         {user?.isSuperAdmin ? (
           <>
             {collapsed ? (
-              <div className="mx-2 my-3 border-t border-zinc-100" />
+              <Box sx={{ mx: 1, my: 1.5, borderTop: "1px solid", borderColor: "divider" }} />
             ) : (
-              <p className="px-3 pb-1 pt-6 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+              <Typography variant="caption" sx={{ px: 1.5, pb: 0.5, pt: 3, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
                 {tSidebar("system")}
-              </p>
+              </Typography>
             )}
             {SYSTEM_NAV.map((item) => (
               <NavLink key={item.href} item={item} label={tSystem(item.labelKey)} collapsed={collapsed} />
             ))}
           </>
         ) : null}
-      </nav>
+      </Stack>
 
-      <div className={cn("border-t border-zinc-100 py-3", collapsed ? "px-2.5" : "px-3")}>
-        <button
+      <Box sx={{ borderTop: "1px solid", borderColor: "divider", py: 1.5, ...(collapsed ? { px: 1.25 } : { px: 1.5 }) }}>
+        <Stack
+          component="button"
+          direction="row"
+          alignItems="center"
+          spacing={1.5}
           onClick={toggleCollapsed}
           title={collapsed ? tSidebar("expand") : tSidebar("collapse")}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-zinc-50 hover:text-zinc-900",
-            collapsed && "justify-center px-0",
-          )}
+          sx={{
+            width: "100%",
+            borderRadius: 2,
+            px: 1.5,
+            py: 1,
+            fontSize: 14,
+            color: "text.disabled",
+            transition: (theme) => theme.transitions.create(["background-color", "color"]),
+            "&:hover": { bgcolor: "action.hover", color: "text.primary" },
+            ...(collapsed && { justifyContent: "center", px: 0 }),
+          }}
         >
           {collapsed ? (
-            <ChevronsRight size={16} strokeWidth={1.5} />
+            <Iconify icon="solar:double-alt-arrow-right-linear" width={16} />
           ) : (
             <>
-              <ChevronsLeft size={16} strokeWidth={1.5} />
-              <span>{tSidebar("collapse")}</span>
+              <Iconify icon="solar:double-alt-arrow-left-linear" width={16} />
+              <Box component="span">{tSidebar("collapse")}</Box>
             </>
           )}
-        </button>
-      </div>
-    </motion.aside>
+        </Stack>
+      </Box>
+    </Box>
   );
 }

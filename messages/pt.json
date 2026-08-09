@@ -73,7 +73,11 @@
     "now": "agora",
     "minutesAgo": "há {count} min",
     "hoursAgo": "há {count} h",
-    "daysAgo": "há {count} d"
+    "daysAgo": "há {count} d",
+    "types": { "info": "Informação", "message": "Mensagem", "warning": "Aviso", "error": "Urgente" },
+    "all": "Todas",
+    "unread": "Não lidas",
+    "markAllRead": "Marcar tudo como lido"
   },
   "profileMenu": {
     "profile": "Meu perfil",
@@ -198,10 +202,15 @@
         "member": "Membro",
         "role": "Função",
         "phone": "Telefone",
-        "state": "Status"
+        "state": "Status",
+        "actions": "Ações"
       },
       "emptyTable": "Nenhum membro corresponde aos filtros",
-      "pageLabel": "Página {page}"
+      "pageLabel": "Página {page}",
+      "allTab": "Todos",
+      "dense": "Compacto",
+      "edit": "Editar",
+      "moreActions": "Mais ações"
     },
     "filters": {
       "searchPlaceholder": "Buscar por nome, email ou usuário…",
@@ -517,6 +526,7 @@
     "subtitle": "Aulas e horários da semana",
     "newClass": "Nova aula",
     "today": "Hoje",
+    "views": { "month": "Mês", "week": "Semana", "day": "Dia", "agenda": "Agenda" },
     "days": { "0": "Seg", "1": "Ter", "2": "Qua", "3": "Qui", "4": "Sex", "5": "Sáb", "6": "Dom" },
     "scheduleBlock": {
       "morningShift": "Turno da manhã",

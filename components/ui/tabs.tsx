@@ -1,6 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import MuiTab from "@mui/material/Tab";
+import MuiTabs from "@mui/material/Tabs";
 
 interface TabsProps {
   items: { value: string; label: string }[];
@@ -10,21 +11,10 @@ interface TabsProps {
 
 export function Tabs({ items, value, onChange }: TabsProps) {
   return (
-    <div className="flex gap-1 border-b border-zinc-100">
+    <MuiTabs value={value} onChange={(_event, newValue: string) => onChange(newValue)}>
       {items.map((item) => (
-        <button
-          key={item.value}
-          onClick={() => onChange(item.value)}
-          className={cn(
-            "-mb-px border-b-2 px-3 pb-2.5 pt-1 text-sm transition-colors duration-200",
-            item.value === value
-              ? "border-primary font-semibold text-primary"
-              : "border-transparent text-zinc-400 hover:border-zinc-200 hover:text-zinc-600",
-          )}
-        >
-          {item.label}
-        </button>
+        <MuiTab key={item.value} value={item.value} label={item.label} />
       ))}
-    </div>
+    </MuiTabs>
   );
 }

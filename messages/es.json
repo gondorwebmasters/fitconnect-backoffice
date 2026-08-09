@@ -73,7 +73,11 @@
     "now": "ahora",
     "minutesAgo": "hace {count} min",
     "hoursAgo": "hace {count} h",
-    "daysAgo": "hace {count} d"
+    "daysAgo": "hace {count} d",
+    "types": { "info": "Información", "message": "Mensaje", "warning": "Aviso", "error": "Urgente" },
+    "all": "Todas",
+    "unread": "Sin leer",
+    "markAllRead": "Marcar todo como leído"
   },
   "profileMenu": {
     "profile": "Mi perfil",
@@ -185,9 +189,13 @@
       "newMember": "Nuevo miembro",
       "roleLabels": { "standard": "Estándar", "coach": "Coach", "admin": "Admin" },
       "stateLabels": { "blocked": "Bloqueado", "pending": "Pendiente", "inactive": "Inactivo", "active": "Activo" },
-      "columns": { "member": "Miembro", "role": "Rol", "phone": "Teléfono", "state": "Estado" },
+      "columns": { "member": "Miembro", "role": "Rol", "phone": "Teléfono", "state": "Estado", "actions": "Acciones" },
       "emptyTable": "No hay miembros que coincidan con los filtros",
-      "pageLabel": "Página {page}"
+      "pageLabel": "Página {page}",
+      "allTab": "Todos",
+      "dense": "Compacto",
+      "edit": "Editar",
+      "moreActions": "Más acciones"
     },
     "filters": {
       "searchPlaceholder": "Buscar por nombre, email o usuario…",
@@ -494,6 +502,7 @@
     "subtitle": "Clases y horarios de la semana",
     "newClass": "Nueva clase",
     "today": "Hoy",
+    "views": { "month": "Mes", "week": "Semana", "day": "Día", "agenda": "Agenda" },
     "days": { "0": "Lun", "1": "Mar", "2": "Mié", "3": "Jue", "4": "Vie", "5": "Sáb", "6": "Dom" },
     "scheduleBlock": {
       "morningShift": "Turno de mañana",

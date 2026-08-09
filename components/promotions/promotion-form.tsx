@@ -1,6 +1,10 @@
 "use client";
 
 import { useMutation } from "@apollo/client";
+import Box from "@mui/material/Box";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -134,63 +138,82 @@ export function PromotionForm({ open, promotion, onClose, onSaved }: PromotionFo
         </>
       }
     >
-      <div className="space-y-5">
+      <Stack spacing={2.5}>
         <Field label={t("titleField")}>
           <Input value={form.title} onChange={(event) => set("title")(event.target.value)} />
         </Field>
         <Field label={t("description")}>
           <Textarea value={form.description} onChange={(event) => set("description")(event.target.value)} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("discountTag")} hint={t("discountTagHint")}>
-            <Input value={form.discountTag} onChange={(event) => set("discountTag")(event.target.value)} />
-          </Field>
-          <Field label={t("accentColor")}>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={form.accentColor}
-                onChange={(event) => set("accentColor")(event.target.value)}
-                className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border border-zinc-200 bg-white p-1"
+        <Grid container spacing={2}>
+          <Grid size={6}>
+            <Field label={t("discountTag")} hint={t("discountTagHint")}>
+              <Input value={form.discountTag} onChange={(event) => set("discountTag")(event.target.value)} />
+            </Field>
+          </Grid>
+          <Grid size={6}>
+            <Field label={t("accentColor")}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box
+                  component="input"
+                  type="color"
+                  value={form.accentColor}
+                  onChange={(event) => set("accentColor")(event.target.value)}
+                  sx={{
+                    height: 36,
+                    width: 36,
+                    flexShrink: 0,
+                    cursor: "pointer",
+                    borderRadius: 1.5,
+                    border: 1,
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                    p: 0.5,
+                  }}
+                />
+                <Input value={form.accentColor} onChange={(event) => set("accentColor")(event.target.value)} />
+              </Stack>
+            </Field>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid size={6}>
+            <Field label={t("originalPrice")}>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.originalPrice}
+                onChange={(event) => set("originalPrice")(event.target.value)}
               />
-              <Input value={form.accentColor} onChange={(event) => set("accentColor")(event.target.value)} />
-            </div>
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label={t("originalPrice")}>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.originalPrice}
-              onChange={(event) => set("originalPrice")(event.target.value)}
-            />
-          </Field>
-          <Field label={t("discountedPrice")}>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.newPrice}
-              onChange={(event) => set("newPrice")(event.target.value)}
-            />
-          </Field>
-        </div>
+            </Field>
+          </Grid>
+          <Grid size={6}>
+            <Field label={t("discountedPrice")}>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.newPrice}
+                onChange={(event) => set("newPrice")(event.target.value)}
+              />
+            </Field>
+          </Grid>
+        </Grid>
         <Field label={t("expires")}>
           <DatePicker withTime value={form.expiresAt} onChange={set("expiresAt")} />
         </Field>
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 text-sm text-zinc-700">
-            <Checkbox checked={form.isActive} onChange={(event) => set("isActive")(event.target.checked)} />
-            {t("active")}
-          </label>
-          <label className="flex items-center gap-2 text-sm text-zinc-700">
-            <Checkbox checked={form.isHero} onChange={(event) => set("isHero")(event.target.checked)} />
-            {t("featured")}
-          </label>
-        </div>
-      </div>
+        <Stack direction="row" spacing={3}>
+          <FormControlLabel
+            control={<Checkbox checked={form.isActive} onChange={(event) => set("isActive")(event.target.checked)} />}
+            label={t("active")}
+          />
+          <FormControlLabel
+            control={<Checkbox checked={form.isHero} onChange={(event) => set("isHero")(event.target.checked)} />}
+            label={t("featured")}
+          />
+        </Stack>
+      </Stack>
     </SlideOver>
   );
 }

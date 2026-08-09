@@ -1,31 +1,56 @@
 "use client";
 
 import { useMutation } from "@apollo/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z as zod } from "zod";
 
+import { Form, Field } from "@/components/hook-form";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Field, Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { CREATE_COMPANY, UPDATE_COMPANY } from "@/lib/graphql/companies";
 import type { Company } from "@/lib/graphql/types";
 
 const CONFIG_KEYS = ["pollsEnabled", "productsEnabled", "chatEnabled", "trainingEnabled"] as const;
 
+const CompanySchema = zod.object({
+  name: zod.string().min(1),
+  email: zod.string().min(1).email(),
+  phoneNumber: zod.string(),
+  address: zod.string().min(1),
+  code: zod.string(),
+});
+
+type CompanyValues = zod.infer<typeof CompanySchema>;
+
+const CompanyConfigSchema = CompanySchema.extend({
+  config: zod.object({
+    pollsEnabled: zod.boolean(),
+    productsEnabled: zod.boolean(),
+    chatEnabled: zod.boolean(),
+    trainingEnabled: zod.boolean(),
+  }),
+});
+
+type CompanyConfigValues = zod.infer<typeof CompanyConfigSchema>;
+
 export function CreateCompanyForm({ onDone }: { onDone: () => void }) {
   const t = useTranslations("system.companyForm");
   const toast = useToast();
-  const [form, setForm] = useState({ name: "", email: "", phoneNumber: "", address: "" });
   const [createCompany, { loading }] = useMutation(CREATE_COMPANY);
 
-  const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((current) => ({ ...current, [key]: event.target.value }));
+  const methods = useForm<CompanyValues>({
+    resolver: zodResolver(CompanySchema),
+    defaultValues: { name: "", email: "", phoneNumber: "", address: "", code: "" },
+  });
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const onSubmit = methods.handleSubmit(async (values) => {
     try {
-      const { data } = await createCompany({ variables: { company: form } });
+      const { data } = await createCompany({ variables: { company: values } });
       if (data?.createCompany?.success) {
         toast(t("created"));
         onDone();
@@ -35,28 +60,29 @@ export function CreateCompanyForm({ onDone }: { onDone: () => void }) {
     } catch {
       toast(t("createFailed"), "error");
     }
-  };
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <Field label={t("name")}>
-        <Input value={form.name} onChange={set("name")} required autoFocus />
-      </Field>
-      <Field label={t("email")}>
-        <Input type="email" value={form.email} onChange={set("email")} required />
-      </Field>
-      <Field label={t("phone")}>
-        <Input type="tel" value={form.phoneNumber} onChange={set("phoneNumber")} required />
-      </Field>
-      <Field label={t("address")}>
-        <Input value={form.address} onChange={set("address")} required />
-      </Field>
-      <div className="flex justify-end pt-1">
-        <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? t("creating") : t("createCompany")}
-        </Button>
-      </div>
-    </form>
+    <Form methods={methods} onSubmit={onSubmit}>
+      <Stack spacing={2.5}>
+        <Field.Text name="name" label={t("name")} required autoFocus />
+        <Field.Text name="email" type="email" label={t("email")} required />
+        <Field.Phone name="phoneNumber" label={t("phone")} />
+        <Field.Text name="address" label={t("address")} required />
+        <Field.Text
+          name="code"
+          label={t("accessCode")}
+          helperText={t("accessCodeHint")}
+          required
+          sx={{ "& input": { fontFamily: "monospace", letterSpacing: "0.1em" } }}
+        />
+        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 0.5 }}>
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? t("creating") : t("createCompany")}
+          </Button>
+        </Stack>
+      </Stack>
+    </Form>
   );
 }
 
@@ -70,38 +96,37 @@ export function EditCompanyForm({ company, onDone }: { company: Company; onDone:
     chatEnabled: t("configLabels.chatEnabled"),
     trainingEnabled: t("configLabels.trainingEnabled"),
   };
-  const [form, setForm] = useState({
-    name: company.name,
-    email: company.email ?? "",
-    phoneNumber: company.phoneNumber ?? "",
-    address: company.address ?? "",
-    code: company.code ?? "",
-    config: {
-      pollsEnabled: company.companyConfig?.pollsEnabled ?? true,
-      productsEnabled: company.companyConfig?.productsEnabled ?? true,
-      chatEnabled: company.companyConfig?.chatEnabled ?? true,
-      trainingEnabled: company.companyConfig?.trainingEnabled ?? true,
-    },
-  });
   const [updateCompany, { loading }] = useMutation(UPDATE_COMPANY);
 
-  const set = (key: "name" | "email" | "phoneNumber" | "address" | "code") =>
-    (event: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((current) => ({ ...current, [key]: event.target.value }));
+  const methods = useForm<CompanyConfigValues>({
+    resolver: zodResolver(CompanyConfigSchema),
+    defaultValues: {
+      name: company.name,
+      email: company.email ?? "",
+      phoneNumber: company.phoneNumber ?? "",
+      address: company.address ?? "",
+      code: company.code ?? "",
+      config: {
+        pollsEnabled: company.companyConfig?.pollsEnabled ?? true,
+        productsEnabled: company.companyConfig?.productsEnabled ?? true,
+        chatEnabled: company.companyConfig?.chatEnabled ?? true,
+        trainingEnabled: company.companyConfig?.trainingEnabled ?? true,
+      },
+    },
+  });
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const onSubmit = methods.handleSubmit(async (values) => {
     try {
       const { data } = await updateCompany({
         variables: {
           companyId: company.id,
           companyData: {
-            name: form.name,
-            email: form.email,
-            phoneNumber: form.phoneNumber,
-            address: form.address,
-            code: form.code || undefined,
-            companyConfig: form.config,
+            name: values.name,
+            email: values.email,
+            phoneNumber: values.phoneNumber,
+            address: values.address,
+            code: values.code || undefined,
+            companyConfig: values.config,
           },
           scheduleOptions: {
             maxActiveReservations: company.scheduleOptions?.maxActiveReservations,
@@ -122,56 +147,54 @@ export function EditCompanyForm({ company, onDone }: { company: Company; onDone:
     } catch {
       toast(t("updateFailed"), "error");
     }
-  };
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <Field label={t("name")}>
-        <Input value={form.name} onChange={set("name")} required />
-      </Field>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label={t("email")}>
-          <Input type="email" value={form.email} onChange={set("email")} />
-        </Field>
-        <Field label={t("phone")}>
-          <Input type="tel" value={form.phoneNumber} onChange={set("phoneNumber")} />
-        </Field>
-      </div>
-      <Field label={t("address")}>
-        <Input value={form.address} onChange={set("address")} />
-      </Field>
-      <Field label={t("accessCode")} hint={t("accessCodeHint")}>
-        <Input value={form.code} onChange={set("code")} className="font-mono tracking-widest" />
-      </Field>
+    <Form methods={methods} onSubmit={onSubmit}>
+      <Stack spacing={2.5}>
+        <Field.Text name="name" label={t("name")} required />
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Field.Text name="email" type="email" label={t("email")} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <Field.Phone name="phoneNumber" label={t("phone")} />
+          </Grid>
+        </Grid>
+        <Field.Text name="address" label={t("address")} />
+        <Field.Text
+          name="code"
+          label={t("accessCode")}
+          helperText={t("accessCodeHint")}
+          sx={{ "& input": { fontFamily: "monospace", letterSpacing: "0.1em" } }}
+        />
 
-      <div className="space-y-1.5">
-        <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">{t("activeModules")}</span>
-        <div className="grid gap-2.5">
-          {(Object.keys(CONFIG_LABELS) as (keyof typeof CONFIG_LABELS)[]).map((key) => (
-            <label
-              key={key}
-              className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-2.5 text-sm text-zinc-700"
-            >
-              {CONFIG_LABELS[key]}
-              <Checkbox
-                checked={form.config[key]}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    config: { ...current.config, [key]: event.target.checked },
-                  }))
-                }
-              />
-            </label>
-          ))}
-        </div>
-      </div>
+        <Stack spacing={1}>
+          <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            {t("activeModules")}
+          </Typography>
+          <Stack spacing={1}>
+            {(Object.keys(CONFIG_LABELS) as (keyof typeof CONFIG_LABELS)[]).map((key) => (
+              <Stack
+                key={key}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ borderRadius: 1.5, border: 1, borderColor: "divider", px: 2, py: 1.25 }}
+              >
+                <Typography variant="body2">{CONFIG_LABELS[key]}</Typography>
+                <Field.Checkbox name={`config.${key}`} label="" sx={{ m: 0 }} />
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
 
-      <div className="flex justify-end pt-1">
-        <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? t("saving") : t("saveChanges")}
-        </Button>
-      </div>
-    </form>
+        <Stack direction="row" justifyContent="flex-end" sx={{ pt: 0.5 }}>
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? t("saving") : t("saveChanges")}
+          </Button>
+        </Stack>
+      </Stack>
+    </Form>
   );
 }

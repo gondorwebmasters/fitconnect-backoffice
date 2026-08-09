@@ -1,10 +1,18 @@
 "use client";
 
 import { useMutation, useQuery } from "@apollo/client";
+import Card from "@mui/material/Card";
+import Divider from "@mui/material/Divider";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { useSession } from "@/components/layout/session-provider";
+import { PhoneInput } from "@/components/phone-input";
 import { CompanyLogoUpload } from "@/components/settings/company-logo-upload";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,10 +33,12 @@ const OPTION_KEYS = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-card">
-      <h2 className="mb-6 text-sm font-medium text-zinc-900">{title}</h2>
+    <Card variant="outlined" sx={{ p: 4 }}>
+      <Typography variant="subtitle1" sx={{ mb: 3 }}>
+        {title}
+      </Typography>
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -120,59 +130,70 @@ export default function SettingsPage() {
   };
 
   if (loading && !company) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-zinc-100" />;
+    return <Skeleton variant="rounded" height={256} />;
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <Section title={t("companyData")}>
-          {company ? (
-            <div className="mb-6 border-b border-zinc-100 pb-6">
-              <CompanyLogoUpload company={company} />
-            </div>
-          ) : null}
-          <div className="grid gap-5 md:grid-cols-2">
+    <Stack spacing={3}>
+      <Section title={t("companyData")}>
+        {company ? (
+          <>
+            <CompanyLogoUpload company={company} />
+            <Divider sx={{ my: 3 }} />
+          </>
+        ) : null}
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Field label={t("name")}>
               <Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
             </Field>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Field label={t("email")}>
               <Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
             </Field>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Field label={t("phone")}>
-              <Input value={form.phoneNumber} onChange={(event) => setForm({ ...form, phoneNumber: event.target.value })} />
+              <PhoneInput value={form.phoneNumber} onChange={(value) => setForm({ ...form, phoneNumber: value ?? "" })} />
             </Field>
-            <div className="md:col-span-2">
-              <Field label={t("address")}>
-                <Input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
-              </Field>
-            </div>
-          </div>
-        </Section>
+          </Grid>
+          <Grid size={12}>
+            <Field label={t("address")}>
+              <Input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
+            </Field>
+          </Grid>
+        </Grid>
+      </Section>
 
-        <Section title={t("activeModules")}>
-          <div className="grid gap-3 md:grid-cols-2">
-            {(Object.keys(CONFIG_LABELS) as (keyof typeof CONFIG_LABELS)[]).map((key) => (
-              <label
-                key={key}
-                className="flex items-center justify-between rounded-lg border border-zinc-100 px-4 py-3 text-sm text-zinc-700"
+      <Section title={t("activeModules")}>
+        <Grid container spacing={1.5}>
+          {(Object.keys(CONFIG_LABELS) as (keyof typeof CONFIG_LABELS)[]).map((key) => (
+            <Grid key={key} size={{ xs: 12, md: 6 }}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ borderRadius: 1.5, border: 1, borderColor: "divider", px: 2, py: 1.5 }}
               >
-                {CONFIG_LABELS[key]}
+                <Typography variant="body2">{CONFIG_LABELS[key]}</Typography>
                 <Checkbox
                   checked={form.config[key]}
                   onChange={(event) =>
                     setForm({ ...form, config: { ...form.config, [key]: event.target.checked } })
                   }
                 />
-              </label>
-            ))}
-          </div>
-        </Section>
+              </Stack>
+            </Grid>
+          ))}
+        </Grid>
+      </Section>
 
-        <Section title={t("bookingRules")}>
-          <div className="grid gap-5 md:grid-cols-3">
-            {OPTION_FIELDS.map(({ key, label }) => (
-              <Field key={key} label={label}>
+      <Section title={t("bookingRules")}>
+        <Grid container spacing={2.5}>
+          {OPTION_FIELDS.map(({ key, label }) => (
+            <Grid key={key} size={{ xs: 12, md: 4 }}>
+              <Field label={label}>
                 <Input
                   type="number"
                   min={0}
@@ -182,28 +203,32 @@ export default function SettingsPage() {
                   }
                 />
               </Field>
-            ))}
-            <label className="flex items-center gap-2.5 self-end pb-2 text-sm text-zinc-600">
-              <Checkbox
-                checked={form.options.sameDayBookingAllowed}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    options: { ...form.options, sameDayBookingAllowed: event.target.checked },
-                  })
-                }
-              />
-              {t("sameDayBooking")}
-            </label>
-          </div>
-        </Section>
+            </Grid>
+          ))}
+          <Grid size={{ xs: 12, md: 4 }} sx={{ display: "flex", alignItems: "flex-end" }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={form.options.sameDayBookingAllowed}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      options: { ...form.options, sameDayBookingAllowed: event.target.checked },
+                    })
+                  }
+                />
+              }
+              label={t("sameDayBooking")}
+            />
+          </Grid>
+        </Grid>
+      </Section>
 
-        <div className="flex justify-end">
-          <Button variant="primary" onClick={handleSave} disabled={saving || !companyId}>
-            {saving ? t("saving") : t("saveChanges")}
-          </Button>
-        </div>
-      </div>
-    </>
+      <Stack direction="row" justifyContent="flex-end">
+        <Button variant="primary" onClick={handleSave} disabled={saving || !companyId}>
+          {saving ? t("saving") : t("saveChanges")}
+        </Button>
+      </Stack>
+    </Stack>
   );
 }

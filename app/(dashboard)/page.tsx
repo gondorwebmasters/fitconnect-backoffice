@@ -1,6 +1,10 @@
 "use client";
 
 import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import MuiCard from "@mui/material/Card";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -51,18 +55,20 @@ function Card({
   delay?: number;
 }) {
   return (
-    <motion.section
+    <MuiCard
+      component={motion.section}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card"
+      variant="outlined"
+      sx={{ p: 3 }}
     >
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-zinc-900">{title}</h2>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
+        <Typography variant="subtitle2">{title}</Typography>
         {actions}
-      </div>
+      </Stack>
       {children}
-    </motion.section>
+    </MuiCard>
   );
 }
 
@@ -108,7 +114,7 @@ export default function DashboardPage() {
         />
       }
     >
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" }, gap: 2 }}>
         <KpiCard
           index={0}
           label={t("kpi.members")}
@@ -150,10 +156,10 @@ export default function DashboardPage() {
           detail={t("kpi.occupancyDetail", { month: MONTHS[month].toLowerCase() })}
           loading={schedulesStats.loading && !monthlyStats}
         />
-      </div>
+      </Box>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+        <Box sx={{ gridColumn: { lg: "span 3" } }}>
           <Card
             title={t("cards.occupancyByTimeSlot")}
             delay={0.15}
@@ -162,7 +168,8 @@ export default function DashboardPage() {
                 options={MONTHS.map((name, index) => ({ value: String(index), label: name }))}
                 value={String(month)}
                 onChange={(value) => setMonth(Number(value))}
-                className="w-36"
+                size="small"
+                sx={{ width: 144 }}
               />
             }
           >
@@ -171,31 +178,31 @@ export default function DashboardPage() {
               loading={schedulesStats.loading && !schedulesStats.data}
             />
           </Card>
-        </div>
-        <div className="lg:col-span-2">
+        </Box>
+        <Box sx={{ gridColumn: { lg: "span 2" } }}>
           <Card title={t("cards.membersByPlan")} delay={0.2}>
             <PlanDistributionChart
               stats={subscriptionsStats.data?.getSubscriptionsStats?.stats ?? []}
               loading={subscriptionsStats.loading && !subscriptionsStats.data}
             />
           </Card>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-2">
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+        <Box sx={{ gridColumn: { lg: "span 2" } }}>
           <Card title={t("cards.membersStatus")} delay={0.25}>
             <UsersStatusChart users={stats?.users} loading={adminStats.loading && !stats} />
           </Card>
-        </div>
-        <div className="lg:col-span-3">
+        </Box>
+        <Box sx={{ gridColumn: { lg: "span 3" } }}>
           <Card title={t("cards.generalActivity")} delay={0.3}>
             <ActivityOverviewChart stats={stats} loading={adminStats.loading && !stats} />
           </Card>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
         <StatCard
           index={0}
           label={t("kpi.totalRevenue")}
@@ -215,9 +222,9 @@ export default function DashboardPage() {
           value={report?.promotionsApplied ?? "—"}
           loading={reportMetrics.loading && !report}
         />
-      </div>
+      </Box>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" } }}>
         <Card title={t("cards.signupsChurn")} delay={0.3}>
           <SignupsChurnChart
             newByMonth={report?.newUsersByMonth ?? []}
@@ -228,9 +235,9 @@ export default function DashboardPage() {
         <Card title={t("cards.ageRange")} delay={0.35}>
           <AgeRangeChart data={report?.usersByAgeRange ?? []} loading={reportMetrics.loading && !report} />
         </Card>
-      </div>
+      </Box>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" } }}>
         <Card title={t("cards.revenueTrend")} delay={0.3}>
           <RevenueTrendChart data={report?.revenueByMonth ?? []} loading={reportMetrics.loading && !report} />
         </Card>
@@ -240,9 +247,9 @@ export default function DashboardPage() {
             loading={reportMetrics.loading && !report}
           />
         </Card>
-      </div>
+      </Box>
 
-      <div className="mt-6">
+      <Box sx={{ mt: 3 }}>
         <Card title={t("cards.needsAttention")} delay={0.35}>
           <AttentionList
             overdueInvoices={overdue.data?.getOverdueInvoices?.invoices ?? []}
@@ -250,7 +257,7 @@ export default function DashboardPage() {
             loading={overdue.loading && !overdue.data}
           />
         </Card>
-      </div>
+      </Box>
     </PageShell>
   );
 }

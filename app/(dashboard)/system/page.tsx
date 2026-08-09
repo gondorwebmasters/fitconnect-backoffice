@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@apollo/client";
+import Grid from "@mui/material/Grid";
 import { useTranslations } from "next-intl";
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -22,23 +23,25 @@ export default function SystemPage() {
   const stats = data?.getGlobalSystemStats;
 
   return (
-    <>
-      <PageShell header={<PageHeader title={t("title")} subtitle={t("subtitle")} />}>
-        <div className="grid grid-cols-2 gap-4 lg:max-w-lg">
+    <PageShell header={<PageHeader title={t("title")} subtitle={t("subtitle")} />}>
+      <Grid container spacing={2} sx={{ maxWidth: 512 }}>
+        <Grid size={6}>
           <KpiCard
             label={t("totalUsers")}
             value={stats?.totalUsers ?? "—"}
             detail={t("totalUsersDetail")}
             loading={loading && !stats}
           />
+        </Grid>
+        <Grid size={6}>
           <KpiCard
             label={t("companies")}
             value={stats?.totalCompanies ?? "—"}
             detail={t("companiesDetail")}
             loading={loading && !stats}
           />
-        </div>
-      </PageShell>
-    </>
+        </Grid>
+      </Grid>
+    </PageShell>
   );
 }

@@ -1,7 +1,13 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useColorScheme, useTheme } from "@mui/material/styles";
 import { useTranslations } from "next-intl";
 
+import { varAlpha } from "@/theme/styles";
 import type { SchedulesStat } from "@/lib/graphql/types";
 
 // El server emite dayAndTime con formato moment "ddd HH:mm"
@@ -12,10 +18,12 @@ const DAY_ORDER: Record<string, number> = {
 
 export function OccupancyHeatmap({ stats, loading }: { stats: SchedulesStat[]; loading?: boolean }) {
   const t = useTranslations("dashboard.occupancyHeatmap");
+  const theme = useTheme();
+  const { colorScheme } = useColorScheme();
   const DAY_LABELS = Array.from({ length: 7 }, (_, index) => t(`days.${index}`));
 
   if (loading) {
-    return <div className="h-64 animate-pulse rounded-lg bg-zinc-100" />;
+    return <Skeleton variant="rounded" height={256} />;
   }
 
   const cells = new Map<string, number>();
@@ -35,43 +43,67 @@ export function OccupancyHeatmap({ stats, loading }: { stats: SchedulesStat[]; l
   const days = [...daysSet].sort((a, b) => a - b);
 
   if (times.length === 0) {
-    return <p className="py-16 text-center text-sm text-zinc-400">{t("empty")}</p>;
+    return (
+      <Typography variant="body2" sx={{ py: 8, textAlign: "center", color: "text.disabled" }}>
+        {t("empty")}
+      </Typography>
+    );
   }
 
+  const primaryChannel = colorScheme === "dark" ? theme.vars.palette.primary.lightChannel : theme.vars.palette.primary.mainChannel;
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-separate" style={{ borderSpacing: 2 }}>
+    <Box sx={{ overflowX: "auto" }}>
+      <Box
+        component="table"
+        sx={{
+          width: "100%",
+          borderCollapse: "separate",
+          borderSpacing: "2px",
+          "@keyframes cellIn": {
+            from: { opacity: 0, transform: "scale(0.6)" },
+            to: { opacity: 1, transform: "scale(1)" },
+          },
+        }}
+      >
         <thead>
           <tr>
             <th />
             {times.map((time) => (
-              <th key={time} className="pb-1 text-center text-[10px] font-normal text-zinc-400">
+              <Box key={time} component="th" sx={{ pb: 0.5, textAlign: "center", fontSize: 10, fontWeight: 400, color: "text.disabled" }}>
                 {time}
-              </th>
+              </Box>
             ))}
           </tr>
         </thead>
         <tbody>
           {days.map((day, dayIndex) => (
             <tr key={day}>
-              <td className="pr-2 text-right text-[10px] text-zinc-400">{DAY_LABELS[day]}</td>
+              <Box component="td" sx={{ pr: 1, textAlign: "right", fontSize: 10, color: "text.disabled" }}>
+                {DAY_LABELS[day]}
+              </Box>
               {times.map((time, timeIndex) => {
                 const ratio = cells.get(`${day}-${time}`);
                 return (
-                  <td
+                  <Box
+                    component="td"
                     key={time}
                     title={
                       ratio === undefined
                         ? t("cellEmpty", { day: DAY_LABELS[day], time })
                         : t("cellFilled", { day: DAY_LABELS[day], time, ratio: Math.round(ratio) })
                     }
-                    className="h-8 min-w-8 rounded transition-transform duration-150 hover:scale-110"
-                    style={{
-                      backgroundColor:
+                    sx={{
+                      height: 32,
+                      minWidth: 32,
+                      borderRadius: 1,
+                      transition: (theme) => theme.transitions.create("transform", { duration: 150 }),
+                      "&:hover": { transform: "scale(1.1)" },
+                      bgcolor:
                         ratio === undefined
-                          ? "rgb(var(--z-100))"
-                          : `rgb(var(--primary-chart) / ${Math.max(0.12, Math.min(ratio, 100) / 100)})`,
-                      animation: "cell-in 0.4s cubic-bezier(0.16,1,0.3,1) both",
+                          ? "background.neutral"
+                          : varAlpha(primaryChannel, Math.max(0.12, Math.min(ratio, 100) / 100)),
+                      animation: "cellIn 0.4s cubic-bezier(0.16,1,0.3,1) both",
                       animationDelay: `${(dayIndex * times.length + timeIndex) * 8}ms`,
                     }}
                   />
@@ -80,20 +112,16 @@ export function OccupancyHeatmap({ stats, loading }: { stats: SchedulesStat[]; l
             </tr>
           ))}
         </tbody>
-      </table>
-      <div className="mt-3 flex items-center justify-end gap-2 text-[10px] text-zinc-400">
-        <span>0%</span>
-        <div className="flex gap-0.5">
+      </Box>
+      <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1} sx={{ mt: 1.5, fontSize: 10, color: "text.disabled" }}>
+        <Box component="span">0%</Box>
+        <Stack direction="row" spacing={0.5}>
           {[0.12, 0.25, 0.5, 0.75, 1].map((alpha) => (
-            <span
-              key={alpha}
-              className="h-3 w-6 rounded-sm"
-              style={{ backgroundColor: `rgb(var(--primary-chart) / ${alpha})` }}
-            />
+            <Box key={alpha} sx={{ height: 12, width: 24, borderRadius: 0.5, bgcolor: varAlpha(primaryChannel, alpha) }} />
           ))}
-        </div>
-        <span>{t("legendFull")}</span>
-      </div>
-    </div>
+        </Stack>
+        <Box component="span">{t("legendFull")}</Box>
+      </Stack>
+    </Box>
   );
 }

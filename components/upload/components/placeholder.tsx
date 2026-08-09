@@ -1,0 +1,39 @@
+import type { BoxProps } from '@mui/material/Box';
+
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+
+import { Iconify } from '../../iconify';
+
+// ----------------------------------------------------------------------
+
+export function UploadPlaceholder({ ...other }: BoxProps) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 1.5,
+      }}
+      {...other}
+    >
+      <Iconify icon="solar:cloud-upload-bold-duotone" width={48} sx={{ color: 'text.disabled' }} />
+
+      <Stack spacing={1} sx={{ textAlign: 'center' }}>
+        <Box sx={{ typography: 'h6' }}>Drop or select file</Box>
+        <Box sx={{ typography: 'body2', color: 'text.secondary' }}>
+          Drop files here or click to
+          <Box
+            component="span"
+            sx={{ mx: 0.5, color: 'primary.main', textDecoration: 'underline' }}
+          >
+            browse
+          </Box>
+          through your machine.
+        </Box>
+      </Stack>
+    </Box>
+  );
+}

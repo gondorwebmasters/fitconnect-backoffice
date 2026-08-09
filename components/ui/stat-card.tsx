@@ -1,9 +1,13 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { motion } from "framer-motion";
 
-import { cn } from "@/lib/cn";
+import { Iconify } from "@/components/iconify";
 
 import { AnimatedNumber } from "./animated-number";
 import { Sparkline } from "./sparkline";
@@ -17,72 +21,75 @@ interface StatCardProps {
   detail?: string;
   trend?: number[];
   loading?: boolean;
-  className?: string;
   index?: number;
 }
 
 function DeltaBadge({ delta, deltaLabel }: { delta: number; deltaLabel?: string }) {
-  const Icon = delta > 0 ? ArrowUpRight : delta < 0 ? ArrowDownRight : Minus;
-  const tone =
-    delta > 0
-      ? "bg-emerald-500/10 text-emerald-600"
-      : delta < 0
-        ? "bg-red-500/10 text-red-600"
-        : "bg-zinc-400/10 text-zinc-500";
+  const icon = delta > 0 ? "solar:arrow-right-up-linear" : delta < 0 ? "solar:arrow-right-down-linear" : "solar:minus-circle-bold";
+  const color = delta > 0 ? "success" : delta < 0 ? "error" : "text.disabled";
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1">
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
-          tone,
-        )}
+    <Stack alignItems="flex-end" spacing={0.25} sx={{ flexShrink: 0 }}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={0.5}
+        sx={{
+          borderRadius: 999,
+          px: 1,
+          py: 0.5,
+          typography: "caption",
+          fontWeight: 600,
+          fontVariantNumeric: "tabular-nums",
+          whiteSpace: "nowrap",
+          bgcolor: delta === 0 ? "action.hover" : `${color}.lighter`,
+          color: delta === 0 ? "text.disabled" : `${color}.dark`,
+        }}
       >
-        <Icon size={12} strokeWidth={2.5} />
+        <Iconify icon={icon} width={12} />
         {Math.abs(delta).toLocaleString("es-ES", { maximumFractionDigits: 1 })}%
-      </span>
-      {deltaLabel ? <span className="whitespace-nowrap text-[10px] text-zinc-400">{deltaLabel}</span> : null}
-    </div>
+      </Stack>
+      {deltaLabel ? (
+        <Typography variant="caption" sx={{ color: "text.disabled", whiteSpace: "nowrap" }}>
+          {deltaLabel}
+        </Typography>
+      ) : null}
+    </Stack>
   );
 }
 
-export function StatCard({
-  label,
-  value,
-  delta,
-  deltaLabel,
-  detail,
-  trend,
-  loading,
-  className,
-  index = 0,
-}: StatCardProps) {
+export function StatCard({ label, value, delta, deltaLabel, detail, trend, loading, index = 0 }: StatCardProps) {
   return (
-    <motion.div
+    <Card
+      component={motion.div}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3 }}
-      className={cn(
-        "rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover",
-        className,
-      )}
+      variant="outlined"
+      sx={{ p: 3 }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">{label}</p>
+      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1.5}>
+        <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          {label}
+        </Typography>
         {delta !== undefined && !loading ? <DeltaBadge delta={delta} deltaLabel={deltaLabel} /> : null}
-      </div>
+      </Stack>
       {loading ? (
-        <div className="mt-3 h-8 w-20 animate-pulse rounded bg-zinc-100" />
+        <Skeleton variant="text" width={80} height={40} sx={{ mt: 1 }} />
       ) : (
-        <div className="mt-2 flex items-end justify-between gap-3">
-          <p className="text-3xl font-bold tabular-nums tracking-tight text-zinc-900">
+        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" spacing={1.5} sx={{ mt: 1 }}>
+          <Typography variant="h4" sx={{ fontVariantNumeric: "tabular-nums" }}>
             {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
-          </p>
-          {trend && trend.length > 1 ? <Sparkline data={trend} className="shrink-0" /> : null}
-        </div>
+          </Typography>
+          {trend && trend.length > 1 ? <Box sx={{ flexShrink: 0 }}><Sparkline data={trend} /></Box> : null}
+        </Stack>
       )}
-      {detail ? <p className="mt-1 text-xs text-zinc-400">{detail}</p> : null}
-    </motion.div>
+      {detail ? (
+        <Typography variant="caption" sx={{ color: "text.disabled", mt: 0.5, display: "block" }}>
+          {detail}
+        </Typography>
+      ) : null}
+    </Card>
   );
 }

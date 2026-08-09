@@ -1,3 +1,6 @@
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+
 interface HtmlBarChartProps {
   data: { label: string; value: number }[];
   formatValue?: (value: number) => string;
@@ -9,19 +12,28 @@ export function HtmlBarChart({ data, formatValue }: HtmlBarChartProps) {
   const format = formatValue ?? ((value: number) => String(value));
 
   return (
-    <div className="space-y-1.5">
+    <Stack spacing={0.75}>
       {data.map((item) => (
-        <div key={item.label} className="flex items-center gap-2">
-          <span className="w-16 shrink-0 text-[10px] text-zinc-500">{item.label}</span>
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
-            <div
-              className="h-2.5 rounded-full bg-primary transition-[width] duration-300 ease-out"
-              style={{ width: `${(item.value / max) * 100}%` }}
+        <Stack key={item.label} direction="row" alignItems="center" spacing={1}>
+          <Box component="span" sx={{ width: 64, flexShrink: 0, fontSize: 10, color: "#71717a" }}>
+            {item.label}
+          </Box>
+          <Box sx={{ height: 10, flex: 1, overflow: "hidden", borderRadius: 999, bgcolor: "#f4f4f5" }}>
+            <Box
+              sx={{
+                height: "100%",
+                borderRadius: 999,
+                bgcolor: "primary.main",
+                transition: (theme) => theme.transitions.create("width", { duration: 300 }),
+                width: `${(item.value / max) * 100}%`,
+              }}
             />
-          </div>
-          <span className="w-11 shrink-0 text-right text-[10px] tabular-nums text-zinc-900">{format(item.value)}</span>
-        </div>
+          </Box>
+          <Box component="span" sx={{ width: 44, flexShrink: 0, textAlign: "right", fontSize: 10, fontVariantNumeric: "tabular-nums", color: "#18181b" }}>
+            {format(item.value)}
+          </Box>
+        </Stack>
       ))}
-    </div>
+    </Stack>
   );
 }

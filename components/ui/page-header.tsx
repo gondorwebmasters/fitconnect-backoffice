@@ -1,4 +1,9 @@
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
+
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 
 export function PageHeader({
   title,
@@ -10,13 +15,23 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex items-end justify-between">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{title}</h1>
-        {subtitle ? <p className="mt-1 text-sm text-zinc-500">{subtitle}</p> : null}
-        <div className="mt-3 h-1 w-10 rounded-full bg-gradient-to-r from-primary to-primary/40" aria-hidden />
-      </div>
-      {actions ? <div className="flex items-center gap-3">{actions}</div> : null}
-    </div>
+    <Stack direction="row" alignItems="flex-end" justifyContent="space-between" sx={{ mb: 4 }}>
+      <Box>
+        <Typography variant="h4">{title}</Typography>
+        <Box sx={{ mt: 1 }}>
+          <Breadcrumbs />
+        </Box>
+        {subtitle ? (
+          <Typography variant="body2" sx={{ color: "text.disabled", mt: 0.5 }}>
+            {subtitle}
+          </Typography>
+        ) : null}
+      </Box>
+      {actions ? (
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          {actions}
+        </Stack>
+      ) : null}
+    </Stack>
   );
 }

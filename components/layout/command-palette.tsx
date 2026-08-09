@@ -1,13 +1,18 @@
 "use client";
 
+import { Iconify } from "@/components/iconify";
+
 import { useQuery } from "@apollo/client";
+import Box from "@mui/material/Box";
+import InputBase from "@mui/material/InputBase";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { varAlpha } from "@/theme/styles";
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Search, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { cn } from "@/lib/cn";
 import { fullName } from "@/lib/format";
 import { GET_USERS } from "@/lib/graphql/users";
 import type { User } from "@/lib/graphql/types";
@@ -71,7 +76,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         id: `nav-${item.href}`,
         group: t("groupNavigation"),
         label: item.label,
-        icon: <item.icon size={15} strokeWidth={1.5} />,
+        icon: <Iconify icon={item.icon} width={15} />,
         action: () => router.push(item.href),
       }));
 
@@ -80,7 +85,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       group: t("groupMembers"),
       label: fullName(member),
       description: member.email ?? undefined,
-      icon: <UserRound size={15} strokeWidth={1.5} />,
+      icon: <Iconify icon="solar:user-rounded-bold" width={15} />,
       action: () => router.push(`/members?q=${encodeURIComponent(member.email ?? fullName(member))}`),
     }));
 
@@ -117,88 +122,119 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   return (
     <AnimatePresence>
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[15vh]">
-          <motion.div
+        <Box sx={{ position: "fixed", inset: 0, zIndex: (theme) => theme.zIndex.modal, display: "flex", alignItems: "flex-start", justifyContent: "center", px: 2, pt: "15vh" }}>
+          <Box
+            component={motion.div}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute inset-0 bg-zinc-950/30 backdrop-blur-sm"
             onClick={onClose}
+            sx={{ position: "absolute", inset: 0, bgcolor: (theme) => varAlpha(theme.vars.palette.grey["900Channel"], 0.3), backdropFilter: "blur(4px)" }}
           />
-          <motion.div
+          <Box
+            component={motion.div}
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-pop"
+            sx={{
+              position: "relative",
+              width: "100%",
+              maxWidth: 512,
+              overflow: "hidden",
+              borderRadius: 4,
+              border: "1px solid",
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              boxShadow: (theme) => theme.vars.customShadows.dialog,
+            }}
           >
-        <div className="flex items-center gap-2.5 border-b border-zinc-100 px-4">
-          <Search size={15} strokeWidth={1.5} className="shrink-0 text-zinc-400" />
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={t("placeholder")}
-            className="h-12 w-full bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-400"
-          />
-        </div>
-        <ul className="max-h-80 overflow-y-auto py-1.5">
-          {items.map((item, index) => {
-            const showGroup = item.group !== lastGroup;
-            lastGroup = item.group;
-            return (
-              <li key={item.id}>
-                {showGroup ? (
-                  <p className="px-4 pb-1 pt-2.5 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                    {item.group}
-                  </p>
-                ) : null}
-                <button
-                  onClick={() => run(item)}
-                  onMouseEnter={() => setHighlighted(index)}
-                  className={cn(
-                    "flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors",
-                    index === highlighted ? "bg-primary/10 text-primary" : "text-zinc-600",
-                  )}
-                >
-                  <span className={index === highlighted ? "text-primary" : "text-zinc-400"}>
-                    {item.icon}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate">{item.label}</span>
-                    {item.description ? (
-                      <span
-                        className={cn(
-                          "block truncate text-xs",
-                          index === highlighted ? "text-primary/70" : "text-zinc-400",
-                        )}
-                      >
-                        {item.description}
-                      </span>
+            <Stack direction="row" alignItems="center" spacing={1.25} sx={{ borderBottom: "1px solid", borderColor: "divider", px: 2 }}>
+              <Iconify icon="eva:search-fill" width={15} sx={{ flexShrink: 0, color: "text.disabled" }} />
+              <InputBase
+                inputRef={inputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={onKeyDown}
+                placeholder={t("placeholder")}
+                sx={{ height: 48, width: "100%", fontSize: 14 }}
+              />
+            </Stack>
+            <Box component="ul" sx={{ maxHeight: 320, overflowY: "auto", listStyle: "none", m: 0, py: 0.75 }}>
+              {items.map((item, index) => {
+                const showGroup = item.group !== lastGroup;
+                lastGroup = item.group;
+                const isHighlighted = index === highlighted;
+                return (
+                  <li key={item.id}>
+                    {showGroup ? (
+                      <Typography variant="caption" sx={{ px: 2, pb: 0.5, pt: 1.5, display: "block", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
+                        {item.group}
+                      </Typography>
                     ) : null}
-                  </span>
-                  {index === highlighted ? (
-                    <CornerDownLeft size={13} strokeWidth={1.5} className="shrink-0 opacity-60" />
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-          {items.length === 0 ? (
-            <li className="px-4 py-10 text-center text-xs text-zinc-400">
-              {loadingUsers ? t("searching") : t("noResults")}
-            </li>
-          ) : null}
-        </ul>
-        <div className="flex items-center gap-3 border-t border-zinc-100 px-4 py-2 text-[10px] text-zinc-400">
-          <span>↑↓ {t("navigate")}</span>
-          <span>↵ {t("open")}</span>
-          <span>esc {t("close")}</span>
-        </div>
-          </motion.div>
-        </div>
+                    <Stack
+                      component="button"
+                      onClick={() => run(item)}
+                      onMouseEnter={() => setHighlighted(index)}
+                      direction="row"
+                      alignItems="center"
+                      spacing={1.5}
+                      sx={{
+                        width: "100%",
+                        px: 2,
+                        py: 1,
+                        textAlign: "left",
+                        fontSize: 14,
+                        transition: (theme) => theme.transitions.create(["background-color", "color"]),
+                        ...(isHighlighted
+                          ? { bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.1), color: "primary.main" }
+                          : { color: "text.secondary" }),
+                      }}
+                    >
+                      <Box component="span" sx={{ color: isHighlighted ? "primary.main" : "text.disabled" }}>
+                        {item.icon}
+                      </Box>
+                      <Box component="span" sx={{ minWidth: 0, flex: 1 }}>
+                        <Box component="span" sx={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.label}
+                        </Box>
+                        {item.description ? (
+                          <Box
+                            component="span"
+                            sx={{
+                              display: "block",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontSize: 12,
+                              color: isHighlighted ? (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.7) : "text.disabled",
+                            }}
+                          >
+                            {item.description}
+                          </Box>
+                        ) : null}
+                      </Box>
+                      {isHighlighted ? (
+                        <Iconify icon="solar:reply-bold" width={13} sx={{ flexShrink: 0, opacity: 0.6 }} />
+                      ) : null}
+                    </Stack>
+                  </li>
+                );
+              })}
+              {items.length === 0 ? (
+                <Typography component="li" variant="caption" sx={{ display: "block", px: 2, py: 5, textAlign: "center", color: "text.disabled" }}>
+                  {loadingUsers ? t("searching") : t("noResults")}
+                </Typography>
+              ) : null}
+            </Box>
+            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ borderTop: "1px solid", borderColor: "divider", px: 2, py: 1, fontSize: 10, color: "text.disabled" }}>
+              <Box component="span">↑↓ {t("navigate")}</Box>
+              <Box component="span">↵ {t("open")}</Box>
+              <Box component="span">esc {t("close")}</Box>
+            </Stack>
+          </Box>
+        </Box>
       ) : null}
     </AnimatePresence>
   );

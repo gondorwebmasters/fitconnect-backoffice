@@ -1,7 +1,11 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useQuery } from "@apollo/client";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -44,21 +48,29 @@ export default function SystemCompaniesPage() {
       key: "company",
       header: t("columns.company"),
       render: (company) => (
-        <div className="flex items-center gap-3">
+        <Stack direction="row" alignItems="center" spacing={1.5}>
           <Avatar size="sm" name={company.name} url={company.logo?.url} />
-          <div>
-            <p className="font-medium text-zinc-900">{company.name}</p>
-            <p className="text-xs text-zinc-400">{company.email}</p>
-          </div>
-        </div>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {company.name}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled" }}>
+              {company.email}
+            </Typography>
+          </Box>
+        </Stack>
       ),
     },
-    { key: "phone", header: t("columns.phone"), render: (company) => <span className="text-zinc-600">{company.phoneNumber ?? "—"}</span> },
-    { key: "address", header: t("columns.address"), render: (company) => <span className="text-zinc-600">{company.address ?? "—"}</span> },
+    { key: "phone", header: t("columns.phone"), render: (company) => <Typography variant="body2">{company.phoneNumber ?? "—"}</Typography> },
+    { key: "address", header: t("columns.address"), render: (company) => <Typography variant="body2">{company.address ?? "—"}</Typography> },
     {
       key: "code",
       header: t("columns.code"),
-      render: (company) => <span className="font-mono text-xs text-zinc-500">{company.code ?? "—"}</span>,
+      render: (company) => (
+        <Typography variant="caption" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
+          {company.code ?? "—"}
+        </Typography>
+      ),
     },
   ];
 
@@ -72,21 +84,20 @@ export default function SystemCompaniesPage() {
               subtitle={t("subtitle")}
               actions={
                 <Button variant="primary" onClick={() => setCreating(true)}>
-                  <Plus size={15} strokeWidth={2} />
+                  <Iconify icon="mingcute:add-line" width={15} />
                   {t("newCompany")}
                 </Button>
               }
             />
 
-            <div className="relative mb-6 w-72">
-              <Search size={15} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <Box sx={{ position: "relative", width: 288, mb: 3 }}>
               <Input
                 placeholder={t("searchPlaceholder")}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="pl-9"
+                slotProps={{ input: { startAdornment: <Iconify icon="eva:search-fill" width={15} /> } }}
               />
-            </div>
+            </Box>
           </>
         }
       >
@@ -99,20 +110,17 @@ export default function SystemCompaniesPage() {
           emptyMessage={t("emptyTable")}
         />
 
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <span className="text-xs text-zinc-400">{t("pageLabel", { page })}</span>
-          <Button size="sm" variant="ghost" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>
-            <ChevronLeft size={15} strokeWidth={1.5} />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={companies.length < 10}
-            onClick={() => setPage((value) => value + 1)}
-          >
-            <ChevronRight size={15} strokeWidth={1.5} />
-          </Button>
-        </div>
+        <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1} sx={{ mt: 2 }}>
+          <Typography variant="caption" sx={{ color: "text.disabled" }}>
+            {t("pageLabel", { page })}
+          </Typography>
+          <IconButton size="small" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>
+            <Iconify icon="eva:arrow-ios-back-fill" width={15} />
+          </IconButton>
+          <IconButton size="small" disabled={companies.length < 10} onClick={() => setPage((value) => value + 1)}>
+            <Iconify icon="eva:arrow-ios-forward-fill" width={15} />
+          </IconButton>
+        </Stack>
       </PageShell>
 
       <SlideOver open={creating} onClose={() => setCreating(false)} title={t("newCompany")} subtitle={t("newCompanySubtitle")}>

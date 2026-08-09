@@ -1,7 +1,12 @@
 "use client";
+import { Iconify } from "@/components/iconify";
 
 import { useMutation, useQuery } from "@apollo/client";
-import { Plus, Star, Trash2 } from "lucide-react";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -63,39 +68,43 @@ export default function PromotionsPage() {
       key: "title",
       header: t("columns.promotion"),
       render: (promo) => (
-        <div className="flex items-center gap-2">
-          {promo.isHero ? <Star size={14} className="shrink-0 text-amber-500" fill="currentColor" /> : null}
-          <div>
-            <p className="font-medium text-zinc-900">{promo.title}</p>
-            <p className="mt-0.5 max-w-md truncate text-xs text-zinc-400">{promo.description}</p>
-          </div>
-        </div>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          {promo.isHero ? <Iconify icon="solar:star-bold" width={14} color="var(--palette-warning-main)" /> : null}
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {promo.title}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.disabled", display: "block", maxWidth: 320 }} noWrap>
+              {promo.description}
+            </Typography>
+          </Box>
+        </Stack>
       ),
     },
     {
       key: "discount",
       header: t("columns.discount"),
-      render: (promo) => (
-        <span className="inline-flex rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-          {promo.discountTag}
-        </span>
-      ),
+      render: (promo) => <Chip size="small" variant="soft" color="default" label={promo.discountTag} />,
     },
     {
       key: "pricing",
       header: t("columns.price"),
       render: (promo) => (
-        <span className="tabular-nums text-zinc-700">
-          <span className="text-zinc-400 line-through">{formatEuros(promo.originalPrice)}</span>
+        <Typography variant="body2" sx={{ fontVariantNumeric: "tabular-nums" }}>
+          <Typography component="span" variant="body2" sx={{ color: "text.disabled", textDecoration: "line-through" }}>
+            {formatEuros(promo.originalPrice)}
+          </Typography>
           {" → "}
-          <span className="font-medium text-zinc-900">{formatEuros(promo.newPrice)}</span>
-        </span>
+          <Typography component="span" variant="body2" sx={{ fontWeight: 600 }}>
+            {formatEuros(promo.newPrice)}
+          </Typography>
+        </Typography>
       ),
     },
     {
       key: "expiresAt",
       header: t("columns.expires"),
-      render: (promo) => <span className="text-zinc-600">{formatDateTime(promo.expiresAt)}</span>,
+      render: (promo) => <Typography variant="body2">{formatDateTime(promo.expiresAt)}</Typography>,
     },
     {
       key: "status",
@@ -114,16 +123,17 @@ export default function PromotionsPage() {
       header: "",
       className: "w-12 text-right",
       render: (promo) => (
-        <button
+        <IconButton
+          size="small"
           onClick={(event) => {
             event.stopPropagation();
             setDeleting(promo);
           }}
-          className="rounded-lg p-1.5 text-zinc-300 transition-colors hover:bg-red-50 hover:text-red-500"
           title={t("deletePromotion")}
+          sx={{ color: "text.disabled", "&:hover": { color: "error.main", bgcolor: "error.lighter" } }}
         >
-          <Trash2 size={15} strokeWidth={1.5} />
-        </button>
+          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+        </IconButton>
       ),
     },
   ];
@@ -143,7 +153,7 @@ export default function PromotionsPage() {
                   setFormOpen(true);
                 }}
               >
-                <Plus size={15} strokeWidth={1.5} />
+                <Iconify icon="mingcute:add-line" width={15} />
                 {t("newPromotion")}
               </Button>
             }
