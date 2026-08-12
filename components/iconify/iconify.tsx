@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import NoSsr from '@mui/material/NoSsr';
 
 import { iconifyClasses } from './classes';
+import './register-icons';
 
 import type { IconifyProps } from './types';
 

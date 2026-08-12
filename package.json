@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run icons:build",
     "dev": "next dev -p 3100",
+    "prebuild": "npm run icons:build",
     "build": "next build",
     "start": "next start -p 3100",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "icons:build": "node scripts/generate-icon-subset.mjs"
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
@@ -52,6 +55,12 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@iconify-json/eva": "^1.2.3",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/mingcute": "^1.2.8",
+    "@iconify-json/solar": "^1.2.6",
+    "@iconify-json/svg-spinners": "^1.2.4",
+    "@iconify/utils": "^3.1.4",
     "@types/node": "^22.9.0",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.0.0",
