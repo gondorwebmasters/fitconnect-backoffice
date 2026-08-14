@@ -75,15 +75,23 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
     () =>
       schedules.map((schedule) => {
         const cancelled = schedule.state === "cancelled";
+        const occupancy = schedule.maxUsers > 0 ? (schedule.users?.length ?? 0) / schedule.maxUsers : 0;
+
+        const [background, text] = cancelled
+          ? [theme.vars.palette.grey[500], theme.vars.palette.grey[700]]
+          : occupancy >= 0.9
+            ? [theme.vars.palette.error.main, theme.vars.palette.error.dark]
+            : occupancy >= 0.5
+              ? [theme.vars.palette.warning.main, theme.vars.palette.warning.dark]
+              : [theme.vars.palette.success.main, theme.vars.palette.success.dark];
+
         return {
           id: schedule.id,
           title: schedule.title,
           start: schedule.startDate,
           end: schedule.endDate,
-          backgroundColor: cancelled
-            ? theme.vars.palette.error.main
-            : theme.vars.palette.primary.main,
-          textColor: cancelled ? theme.vars.palette.error.dark : theme.vars.palette.primary.dark,
+          backgroundColor: background,
+          textColor: text,
         };
       }),
     [schedules, theme],

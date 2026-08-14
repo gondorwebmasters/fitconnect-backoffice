@@ -92,17 +92,17 @@ function RowActions({ user, onChanged }: { user: User; onChanged: () => void }) 
         align="end"
         trigger={() => (
           <IconButton size="small" aria-label={tPage("moreActions")} disabled={updating || deleting}>
-            <Iconify icon="eva:more-vertical-fill" width={18} />
+            <Iconify icon="eva:more-vertical-fill" width={22} />
           </IconButton>
         )}
       >
-        <MenuItem icon={<Iconify icon="solar:check-circle-bold" width={18} />} onClick={() => setBlocked(false)}>
+        <MenuItem icon={<Iconify icon="solar:check-circle-bold" width={22} />} onClick={() => setBlocked(false)}>
           {t("unblock")}
         </MenuItem>
-        <MenuItem icon={<Iconify icon="solar:forbidden-circle-bold" width={18} />} onClick={() => setBlocked(true)}>
+        <MenuItem icon={<Iconify icon="solar:forbidden-circle-bold" width={22} />} onClick={() => setBlocked(true)}>
           {t("block")}
         </MenuItem>
-        <MenuItem icon={<Iconify icon="solar:trash-bin-trash-bold" width={18} />} tone="danger" onClick={() => setConfirmDelete(true)}>
+        <MenuItem icon={<Iconify icon="solar:trash-bin-trash-bold" width={22} />} tone="danger" onClick={() => setConfirmDelete(true)}>
           {t("delete")}
         </MenuItem>
       </Menu>
@@ -249,7 +249,7 @@ function MembersContent() {
             {t("subtitle")}
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<Iconify icon="mingcute:add-line" width={18} />} onClick={() => setCreating(true)}>
+        <Button variant="contained" color="primary" startIcon={<Iconify icon="mingcute:add-line" width={15} />} onClick={() => setCreating(true)}>
           {t("newMember")}
         </Button>
       </Stack>
@@ -387,10 +387,10 @@ function MembersContent() {
               {t("pageLabel", { page: serverPage * (SERVER_PAGE_SIZE / PAGE_SIZE) + subPage + 1 })}
             </Typography>
             <IconButton size="small" disabled={!canGoPrev} onClick={goPrev}>
-              <Iconify icon="eva:arrow-ios-back-fill" width={18} />
+              <Iconify icon="eva:arrow-ios-back-fill" width={22} />
             </IconButton>
             <IconButton size="small" disabled={!canGoNext} onClick={goNext}>
-              <Iconify icon="eva:arrow-ios-forward-fill" width={18} />
+              <Iconify icon="eva:arrow-ios-forward-fill" width={22} />
             </IconButton>
           </Stack>
         </Stack>

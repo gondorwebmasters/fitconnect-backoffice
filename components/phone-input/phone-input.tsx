@@ -1,13 +1,19 @@
-import type { TextFieldProps } from '@mui/material/TextField';
+'use client';
+
+import type { AnimationEvent, ChangeEvent, FocusEvent } from 'react';
 import type { Country, Value } from 'react-phone-number-input/input';
 
-import { useState, forwardRef } from 'react';
-import PhoneNumberInput, { getCountryCallingCode, parsePhoneNumber } from 'react-phone-number-input/input';
+import { useMemo, useState, forwardRef } from 'react';
+import { AsYouType } from 'libphonenumber-js';
 
 import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
-import { getCountryCode } from './utils';
+import { Iconify } from '@/components/iconify';
+import { AUTOFILL_ANIMATION_NAME } from '@/theme/core/components/textfield';
+
+import { getCountryCode, resolvePhoneNumber } from './utils';
 import { CountryListPopover } from './list';
 
 import type { PhoneInputProps } from './types';
@@ -15,48 +21,78 @@ import type { PhoneInputProps } from './types';
 // ----------------------------------------------------------------------
 
 /**
- * Nuestro backend guarda el teléfono como dígitos nacionales sin prefijo
- * (p. ej. "620433331"), pero `react-phone-number-input` exige E.164 interno
- * ("+34620433331") — sin esta conversión advierte en consola y no puede
- * detectar el país ni formatear mientras se escribe.
+ * Controlamos el parseo/formateo del teléfono directamente (en vez de dejar
+ * que `react-phone-number-input` lo haga con `country` fijo en modo "solo
+ * nacional") porque ese modo no sabe separar un código de país que llegue
+ * pegado sin "+" — algo que pasa a menudo cuando el navegador autorrellena
+ * el campo de golpe. Aquí, cada cambio (tecleo o autorrelleno) se reinterpreta
+ * con `resolvePhoneNumber`, que sí distingue ambos casos.
  */
-function toE164(value: string, country: Country): Value | undefined {
-  if (!value) return undefined;
-  if (value.startsWith('+')) return value as Value;
-  const callingCode = getCountryCallingCode(country);
-  return `+${callingCode}${value.replace(/^0+/, '')}` as Value;
-}
-
-function fromE164(value: Value | undefined, country: Country): string {
-  if (!value) return '';
-  const callingCode = getCountryCallingCode(country);
-  if (value.startsWith(`+${callingCode}`)) return value.slice(callingCode.length + 1);
-  const parsed = parsePhoneNumber(value);
-  return parsed?.nationalNumber ? String(parsed.nationalNumber) : value.replace(/^\+/, '');
-}
-
 export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
-  ({ value, onChange, placeholder, country: inputCountryCode, disableSelect, ...other }, ref) => {
-    const defaultCountryCode = getCountryCode(value, inputCountryCode);
+  ({ value, onChange, onBlur, placeholder, country: inputCountryCode, disableSelect, sx, ...other }, ref) => {
+    const [selectedCountry, setSelectedCountry] = useState(() => getCountryCode(value, inputCountryCode));
 
-    const [selectedCountry, setSelectedCountry] = useState(defaultCountryCode);
+    // Texto mostrado en el campo: solo el número nacional, formateado con
+    // separadores como en el país seleccionado (p. ej. "691 66 07 72") — el
+    // código de país lo aporta la bandera, no el texto.
+    const displayValue = useMemo(() => {
+      if (!value) return '';
+      return new AsYouType(selectedCountry).input(value);
+    }, [value, selectedCountry]);
+
+    /**
+     * Reinterpreta el texto crudo del campo (lo que haya, completo o a medio
+     * escribir) y actualiza el valor guardado y, si corresponde, la bandera.
+     * Si todavía no es un número reconocible se guardan los dígitos tal cual
+     * se van tecleando, sin forzar ninguna interpretación.
+     */
+    const applyRawText = (raw: string) => {
+      const resolved = resolvePhoneNumber(raw, selectedCountry);
+      if (resolved) {
+        if (resolved.country !== selectedCountry) setSelectedCountry(resolved.country);
+        if (resolved.nationalNumber !== value) onChange(resolved.nationalNumber as Value);
+        return;
+      }
+      // Todavía no es un número completo/reconocible (p. ej. "+3", "+35" al
+      // empezar a teclear en internacional) — se conserva el "+" en vez de
+      // descartarlo a ciegas, o se pierde lo que el usuario está escribiendo.
+      const digitsOnly = raw.replace(/[^\d+]/g, '');
+      if (digitsOnly !== value) onChange(digitsOnly as Value);
+    };
+
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => applyRawText(event.target.value);
+
+    const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+      applyRawText(event.target.value);
+      onBlur?.(event);
+    };
 
     return (
-      <PhoneNumberInput
-        ref={ref}
-        // `InputSmart` (the default caret-aware renderer) ignores
-        // `inputComponent` entirely — only `InputBasic` (smartCaret={false})
-        // actually mounts it, which is what lets this render as a real MUI
-        // TextField (floating label, size, etc.) instead of a bare <input>.
-        smartCaret={false}
-        className="phone-input"
-        country={selectedCountry}
-        inputComponent={CustomInput}
-        value={toE164(value, selectedCountry)}
-        onChange={(newValue) => onChange(fromE164(newValue, selectedCountry))}
+      <TextField
+        inputRef={ref}
+        fullWidth
+        autoComplete="tel"
+        value={displayValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
         placeholder={placeholder ?? 'Introduzca el número de teléfono '}
-        InputProps={
-          disableSelect
+        // Transparente, igual que el resto de inputs del sistema — sin fondo
+        // propio, más allá de cualquier resto de estado de autorrelleno del
+        // navegador (que puede persistir de una interacción anterior).
+        sx={[
+          { '& .MuiOutlinedInput-root': { bgcolor: 'transparent' } },
+          ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+        ]}
+        slotProps={{
+          htmlInput: {
+            // El autorrelleno del navegador puede escribir el número
+            // completo en el <input> nativo sin disparar `onChange` — este
+            // truco de CSS (ver `textfield.tsx`) lo detecta en cuanto ocurre.
+            onAnimationStart: (event: AnimationEvent<HTMLInputElement>) => {
+              if (event.animationName === AUTOFILL_ANIMATION_NAME) applyRawText(event.currentTarget.value);
+            },
+          },
+          input: disableSelect
             ? undefined
             : {
                 startAdornment: (
@@ -67,16 +103,24 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(
                     />
                   </InputAdornment>
                 ),
-              }
-        }
+                endAdornment: value ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      edge="end"
+                      aria-label="Borrar número"
+                      tabIndex={-1}
+                      onClick={() => onChange('' as Value)}
+                      sx={{ bgcolor: 'transparent', '&:hover': { bgcolor: 'action.hover' } }}
+                    >
+                      <Iconify icon="mingcute:close-line" width={16} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
+              },
+        }}
         {...other}
       />
     );
   }
 );
-
-// ----------------------------------------------------------------------
-
-const CustomInput = forwardRef<HTMLInputElement, TextFieldProps>(({ ...props }, ref) => (
-  <TextField inputRef={ref} fullWidth {...props} />
-));

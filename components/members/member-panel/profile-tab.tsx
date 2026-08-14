@@ -24,6 +24,7 @@ import { z as zod } from "zod";
 
 import { useSession } from "@/components/layout/session-provider";
 import { Form, Field } from "@/components/hook-form";
+import { normalizePhoneNumber } from "@/components/phone-input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { ADMIN_UPDATE_PASSWORD } from "@/lib/graphql/auth";
@@ -39,7 +40,10 @@ const ProfileSchema = zod.object({
   surname: zod.string(),
   email: zod.string().min(1).email(),
   nickname: zod.string().min(1),
-  phoneNumber: zod.string(),
+  // Se normaliza por si el navegador autorrellenó el formulario entero sin
+  // que este campo llegara a perder el foco (absorbe el código de país en
+  // vez de dejarlo pegado al número, ver components/phone-input).
+  phoneNumber: zod.string().transform((value) => (value ? normalizePhoneNumber(value) : value)),
   role: zod.enum(["standard", "coach", "admin"]),
   isActive: zod.boolean(),
   isBlocked: zod.boolean(),

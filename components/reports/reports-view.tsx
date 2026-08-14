@@ -37,6 +37,9 @@ const EMPTY_METRICS: ReportMetricsData = {
   productsSold: 0,
   promotionsApplied: 0,
   promotionsAppliedByMonth: [],
+  subscriptionsByMonth: [],
+  schedulesByMonth: [],
+  transactionsByMonth: [],
 };
 
 export function ReportsView() {

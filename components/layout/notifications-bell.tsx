@@ -3,6 +3,8 @@
 import { Iconify } from "@/components/iconify";
 
 import { useQuery } from "@apollo/client";
+import Avatar from "@mui/material/Avatar";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
@@ -18,6 +20,9 @@ import { Label } from "@/components/label";
 import { Popover } from "@/components/ui/popover";
 import { varAlpha } from "@/theme/styles";
 import { GET_NOTIFICATIONS } from "@/lib/graphql/notifications";
+import { GET_ACTIVE_COMPANY_LOGO } from "@/lib/graphql/companies";
+
+import { useSession } from "./session-provider";
 
 interface Notification {
   id: string;
@@ -75,15 +80,30 @@ function readStoredIds(): Set<string> {
   }
 }
 
+type CompanyLogoData = {
+  getCompanies: {
+    success: boolean;
+    company: { id: string; name: string; logo?: { url: string } | null } | null;
+  } | null;
+};
+
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | "unread">("all");
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const t = useTranslations("notificationsBell");
+  const { user } = useSession();
   const { data, loading } = useQuery<NotificationsData>(GET_NOTIFICATIONS, {
     fetchPolicy: "cache-and-network",
     pollInterval: 120_000,
   });
+  // Las notificaciones las envía el gimnasio (no hay remitente individual en
+  // el backend), así que el avatar que se muestra es el del propio gimnasio.
+  const { data: companyData } = useQuery<CompanyLogoData>(GET_ACTIVE_COMPANY_LOGO, {
+    variables: { companyId: user?.activeCompanyId },
+    skip: !user?.activeCompanyId,
+  });
+  const company = companyData?.getCompanies?.company;
 
   useEffect(() => {
     setReadIds(readStoredIds());
@@ -204,21 +224,33 @@ export function NotificationsBell() {
                   "&:hover": { bgcolor: "action.hover" },
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: 40,
-                    width: 40,
-                    flexShrink: 0,
-                    borderRadius: "50%",
-                    bgcolor: `${meta.color}.lighter`,
-                    color: `${meta.color}.dark`,
-                  }}
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  badgeContent={
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: 18,
+                        width: 18,
+                        borderRadius: "50%",
+                        border: "2px solid",
+                        borderColor: "background.paper",
+                        bgcolor: `${meta.color}.lighter`,
+                        color: `${meta.color}.dark`,
+                      }}
+                    >
+                      <Iconify icon={meta.icon} width={11} />
+                    </Box>
+                  }
+                  sx={{ flexShrink: 0 }}
                 >
-                  <Iconify icon={meta.icon} width={20} />
-                </Box>
+                  <Avatar src={company?.logo?.url} sx={{ height: 40, width: 40 }}>
+                    {company?.name?.charAt(0)}
+                  </Avatar>
+                </Badge>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography variant="body2" sx={{ color: "text.primary" }}>
                     {notification.message}

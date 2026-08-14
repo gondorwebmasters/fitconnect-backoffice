@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { useSession } from "@/components/layout/session-provider";
-import { PhoneInput } from "@/components/phone-input";
+import { normalizePhoneNumber, PhoneInput } from "@/components/phone-input";
 import { CompanyLogoUpload } from "@/components/settings/company-logo-upload";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -114,7 +114,10 @@ export default function SettingsPage() {
         companyData: {
           name: form.name,
           email: form.email,
-          phoneNumber: form.phoneNumber,
+          // Por si el navegador autorrelleno el formulario entero sin que
+          // este campo llegara a perder el foco (absorbe el código de país
+          // en vez de dejarlo pegado al número, ver components/phone-input).
+          phoneNumber: form.phoneNumber ? normalizePhoneNumber(form.phoneNumber) : form.phoneNumber,
           address: form.address,
           code: company?.code || undefined,
           companyConfig: form.config,

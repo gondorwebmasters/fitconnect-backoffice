@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Skeleton from "@mui/material/Skeleton";
 import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { motion } from "framer-motion";
 
@@ -20,35 +21,25 @@ interface StatCardProps {
   deltaLabel?: string;
   detail?: string;
   trend?: number[];
+  /** Color del sparkline de barras (por defecto, el primary del tema). */
+  trendColor?: "primary" | "info" | "success" | "warning" | "error";
   loading?: boolean;
   index?: number;
 }
 
-function DeltaBadge({ delta, deltaLabel }: { delta: number; deltaLabel?: string }) {
+function DeltaRow({ delta, deltaLabel }: { delta: number; deltaLabel?: string }) {
   const icon = delta > 0 ? "solar:arrow-right-up-linear" : delta < 0 ? "solar:arrow-right-down-linear" : "solar:minus-circle-bold";
-  const color = delta > 0 ? "success" : delta < 0 ? "error" : "text.disabled";
+  const color = delta > 0 ? "success.main" : delta < 0 ? "error.main" : "text.disabled";
 
   return (
-    <Stack alignItems="flex-end" spacing={0.25} sx={{ flexShrink: 0 }}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={0.5}
-        sx={{
-          borderRadius: 999,
-          px: 1,
-          py: 0.5,
-          typography: "caption",
-          fontWeight: 600,
-          fontVariantNumeric: "tabular-nums",
-          whiteSpace: "nowrap",
-          bgcolor: delta === 0 ? "action.hover" : `${color}.lighter`,
-          color: delta === 0 ? "text.disabled" : `${color}.dark`,
-        }}
+    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+      <Iconify icon={icon} width={14} sx={{ color, flexShrink: 0 }} />
+      <Typography
+        variant="caption"
+        sx={{ color, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
       >
-        <Iconify icon={icon} width={12} />
         {Math.abs(delta).toLocaleString("es-ES", { maximumFractionDigits: 1 })}%
-      </Stack>
+      </Typography>
       {deltaLabel ? (
         <Typography variant="caption" sx={{ color: "text.disabled", whiteSpace: "nowrap" }}>
           {deltaLabel}
@@ -58,7 +49,20 @@ function DeltaBadge({ delta, deltaLabel }: { delta: number; deltaLabel?: string 
   );
 }
 
-export function StatCard({ label, value, delta, deltaLabel, detail, trend, loading, index = 0 }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  delta,
+  deltaLabel,
+  detail,
+  trend,
+  trendColor = "primary",
+  loading,
+  index = 0,
+}: StatCardProps) {
+  const theme = useTheme();
+  const sparklineColor = theme.palette[trendColor].main;
+
   return (
     <Card
       component={motion.div}
@@ -66,15 +70,11 @@ export function StatCard({ label, value, delta, deltaLabel, detail, trend, loadi
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3 }}
-      variant="outlined"
-      sx={{ p: 3 }}
+      sx={{ p: 3, boxShadow: theme.vars.customShadows.card }}
     >
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1.5}>
-        <Typography variant="caption" sx={{ color: "text.disabled", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-          {label}
-        </Typography>
-        {delta !== undefined && !loading ? <DeltaBadge delta={delta} deltaLabel={deltaLabel} /> : null}
-      </Stack>
+      <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+        {label}
+      </Typography>
       {loading ? (
         <Skeleton variant="text" width={80} height={40} sx={{ mt: 1 }} />
       ) : (
@@ -82,11 +82,16 @@ export function StatCard({ label, value, delta, deltaLabel, detail, trend, loadi
           <Typography variant="h4" sx={{ fontVariantNumeric: "tabular-nums" }}>
             {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
           </Typography>
-          {trend && trend.length > 1 ? <Box sx={{ flexShrink: 0 }}><Sparkline data={trend} /></Box> : null}
+          {trend && trend.length > 1 ? (
+            <Box sx={{ flexShrink: 0, lineHeight: 0 }}>
+              <Sparkline data={trend} width={64} height={32} color={sparklineColor} />
+            </Box>
+          ) : null}
         </Stack>
       )}
-      {detail ? (
-        <Typography variant="caption" sx={{ color: "text.disabled", mt: 0.5, display: "block" }}>
+      {!loading && delta !== undefined ? <DeltaRow delta={delta} deltaLabel={deltaLabel} /> : null}
+      {!loading && delta === undefined && detail ? (
+        <Typography variant="caption" sx={{ color: "text.disabled", mt: 1, display: "block" }}>
           {detail}
         </Typography>
       ) : null}

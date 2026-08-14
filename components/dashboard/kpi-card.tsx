@@ -2,6 +2,7 @@
 
 import Card from "@mui/material/Card";
 import Skeleton from "@mui/material/Skeleton";
+import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { motion } from "framer-motion";
 
@@ -20,6 +21,8 @@ export function KpiCard({
   loading?: boolean;
   index?: number;
 }) {
+  const theme = useTheme();
+
   return (
     <Card
       component={motion.div}
@@ -27,10 +30,9 @@ export function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3 }}
-      variant="outlined"
-      sx={{ p: 3 }}
+      sx={{ p: 3, boxShadow: theme.vars.customShadows.card }}
     >
-      <Typography variant="caption" sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
+      <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600 }}>
         {label}
       </Typography>
       {loading ? (
@@ -41,7 +43,7 @@ export function KpiCard({
         </Typography>
       )}
       {detail ? (
-        <Typography variant="caption" sx={{ mt: 0.5, display: "block", color: "text.disabled" }}>
+        <Typography variant="caption" sx={{ mt: 1, display: "block", color: "text.disabled" }}>
           {detail}
         </Typography>
       ) : null}

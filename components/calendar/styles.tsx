@@ -12,7 +12,7 @@ export const StyledCalendar = styled('div')(({ theme }) => ({
   '& .fc': {
     '--fc-border-color': varAlpha(theme.vars.palette.grey['500Channel'], 0.16),
     '--fc-now-indicator-color': theme.vars.palette.error.main,
-    '--fc-today-bg-color': varAlpha(theme.vars.palette.grey['500Channel'], 0.08),
+    '--fc-today-bg-color': varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
     '--fc-page-bg-color': theme.vars.palette.background.default,
     '--fc-neutral-bg-color': theme.vars.palette.background.neutral,
     '--fc-list-event-hover-bg-color': theme.vars.palette.action.hover,
@@ -38,6 +38,7 @@ export const StyledCalendar = styled('div')(({ theme }) => ({
 
   // Event
   '& .fc .fc-event': {
+    cursor: 'pointer',
     borderColor: 'transparent !important',
     backgroundColor: 'transparent !important',
   },
@@ -96,6 +97,26 @@ export const StyledCalendar = styled('div')(({ theme }) => ({
   '& .fc .fc-popover-body': {
     '& .fc-daygrid-event.fc-event-start, & .fc-daygrid-event.fc-event-end': { margin: '2px 0' },
   },
+
+  // Today
+  '& .fc .fc-day-today .fc-daygrid-day-number': {
+    width: 24,
+    height: 24,
+    padding: 0,
+    margin: theme.spacing(1, 1, 0),
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    color: theme.vars.palette.primary.contrastText,
+    backgroundColor: theme.vars.palette.primary.main,
+    fontWeight: theme.typography.fontWeightBold,
+  },
+  '& .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion': {
+    color: theme.vars.palette.primary.main,
+  },
+  '& .fc-direction-ltr .fc-list-day.fc-day-today .fc-list-day-text, & .fc-direction-ltr .fc-list-day.fc-day-today .fc-list-day-side-text':
+    { color: theme.vars.palette.primary.main },
 
   // Month View
   '& .fc .fc-day-other .fc-daygrid-day-top': {
