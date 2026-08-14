@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { z as zod } from "zod";
 
 import { Form, Field } from "@/components/hook-form";
+import { normalizePhoneNumber } from "@/components/phone-input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { CREATE_COMPANY, UPDATE_COMPANY } from "@/lib/graphql/companies";
@@ -20,7 +21,10 @@ const CONFIG_KEYS = ["pollsEnabled", "productsEnabled", "chatEnabled", "training
 const CompanySchema = zod.object({
   name: zod.string().min(1),
   email: zod.string().min(1).email(),
-  phoneNumber: zod.string(),
+  // Se normaliza por si el navegador autorrellenó el formulario entero sin
+  // que este campo llegara a perder el foco (absorbe el código de país en
+  // vez de dejarlo pegado al número, ver components/phone-input).
+  phoneNumber: zod.string().transform((value) => (value ? normalizePhoneNumber(value) : value)),
   address: zod.string().min(1),
   code: zod.string(),
 });

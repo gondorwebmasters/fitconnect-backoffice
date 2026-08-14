@@ -114,7 +114,7 @@ export default function ProductsPage() {
           title={t("deleteProduct")}
           sx={{ color: "text.disabled", "&:hover": { color: "error.main", bgcolor: "error.lighter" } }}
         >
-          <Iconify icon="solar:trash-bin-trash-bold" width={15} />
+          <Iconify icon="solar:trash-bin-trash-bold" width={22} />
         </IconButton>
       ),
     },

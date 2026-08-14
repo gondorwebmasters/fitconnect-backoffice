@@ -14,6 +14,7 @@ import { z as zod } from "zod";
 
 import { useSession } from "@/components/layout/session-provider";
 import { Form, Field } from "@/components/hook-form";
+import { normalizePhoneNumber } from "@/components/phone-input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { UPDATE_USER } from "@/lib/graphql/users";
@@ -24,9 +25,17 @@ const ProfileSchema = zod.object({
   surname: zod.string(),
   nickname: zod.string().min(1),
   email: zod.string().min(1).email(),
+  // El valor guardado son dígitos nacionales sin "+" (ver components/phone-input).
+  // Se normaliza antes de validar por si el navegador autorrellenó el
+  // formulario entero sin que el campo llegara a perder el foco (el propio
+  // input no tiene ocasión de corregirlo) — así absorbe el código de país en
+  // vez de fallar la validación con un número que en realidad es correcto.
+  // Se valida asumiendo España, mismo supuesto de mercado principal que usa
+  // el propio input para interpretar números sin prefijo.
   phoneNumber: zod
     .string()
-    .refine((value) => !value || isValidPhoneNumber(value), { message: "Invalid phone number" }),
+    .transform((value) => (value ? normalizePhoneNumber(value) : value))
+    .refine((value) => !value || isValidPhoneNumber(value, "ES"), { message: "Invalid phone number" }),
 });
 
 type ProfileValues = zod.infer<typeof ProfileSchema>;

@@ -119,7 +119,7 @@ export default function PlansPage() {
             title={t("archivePlan")}
             sx={{ color: "text.disabled" }}
           >
-            <Iconify icon="solar:archive-bold" width={15} />
+            <Iconify icon="solar:archive-bold" width={22} />
           </IconButton>
         ) : null,
     },

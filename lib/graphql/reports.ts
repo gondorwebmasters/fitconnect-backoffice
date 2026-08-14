@@ -26,6 +26,9 @@ export interface ReportMetricsData {
   productsSold: number;
   promotionsApplied: number;
   promotionsAppliedByMonth: MonthCount[];
+  subscriptionsByMonth: MonthCount[];
+  schedulesByMonth: MonthCount[];
+  transactionsByMonth: MonthCount[];
 }
 
 export const GET_REPORT_METRICS = gql`
@@ -56,6 +59,18 @@ export const GET_REPORT_METRICS = gql`
         productsSold
         promotionsApplied
         promotionsAppliedByMonth {
+          month
+          count
+        }
+        subscriptionsByMonth {
+          month
+          count
+        }
+        schedulesByMonth {
+          month
+          count
+        }
+        transactionsByMonth {
           month
           count
         }

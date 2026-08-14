@@ -115,10 +115,10 @@ export default function SystemCompaniesPage() {
             {t("pageLabel", { page })}
           </Typography>
           <IconButton size="small" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>
-            <Iconify icon="eva:arrow-ios-back-fill" width={15} />
+            <Iconify icon="eva:arrow-ios-back-fill" width={22} />
           </IconButton>
           <IconButton size="small" disabled={companies.length < 10} onClick={() => setPage((value) => value + 1)}>
-            <Iconify icon="eva:arrow-ios-forward-fill" width={15} />
+            <Iconify icon="eva:arrow-ios-forward-fill" width={22} />
           </IconButton>
         </Stack>
       </PageShell>

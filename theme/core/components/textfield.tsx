@@ -9,6 +9,10 @@ import { varAlpha } from '../../styles';
 
 // ----------------------------------------------------------------------
 
+// Nombre literal (no generado) para que components/phone-input pueda
+// comparar `event.animationName` contra la misma cadena vía `onAnimationStart`.
+export const AUTOFILL_ANIMATION_NAME = 'mui-auto-fill';
+
 const MuiInputBase: Components<Theme>['MuiInputBase'] = {
   /** **************************************
    * STYLE
@@ -29,6 +33,24 @@ const MuiInputBase: Components<Theme>['MuiInputBase'] = {
         opacity: 1,
         color: theme.vars.palette.text.disabled,
       },
+      // El navegador pinta el fondo autocompletado con su propio color (a
+      // menudo amarillo) vía :-webkit-autofill; se sobreescribe con
+      // transparente para que, una vez relleno, no quede ningún tinte
+      // "pegado" — se ve igual que cualquier otro campo del sistema (que no
+      // tienen fondo propio). La animación de 1ms no se ve, pero dispara
+      // `onAnimationStart` — el único evento fiable para detectar un
+      // autorrelleno del navegador (no siempre dispara `onChange`, ver
+      // components/phone-input).
+      '&:-webkit-autofill': {
+        WebkitBoxShadow: '0 0 0 100px transparent inset',
+        WebkitTextFillColor: theme.vars.palette.text.primary,
+        caretColor: theme.vars.palette.text.primary,
+        borderRadius: 'inherit',
+        transition: 'background-color 5000s ease-in-out 0s',
+        animationName: AUTOFILL_ANIMATION_NAME,
+        animationDuration: '1ms',
+      },
+      [`@keyframes ${AUTOFILL_ANIMATION_NAME}`]: { from: {}, to: {} },
     }),
   },
 };

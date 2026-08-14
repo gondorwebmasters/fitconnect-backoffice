@@ -71,13 +71,17 @@ export const GET_ACTIVE_COMPANY_NAME = gql`
   }
 `;
 
-/** Solo el logo de la empresa activa — para el fondo decorativo del layout. */
+/**
+ * Logo (+ nombre, para el fallback con inicial) de la empresa activa — para
+ * el fondo decorativo del layout y el avatar del remitente en notificaciones.
+ */
 export const GET_ACTIVE_COMPANY_LOGO = gql`
   query GetActiveCompanyLogo($companyId: ID!) {
     getCompanies(companyId: $companyId) {
       success
       company {
         id
+        name
         logo {
           id
           url

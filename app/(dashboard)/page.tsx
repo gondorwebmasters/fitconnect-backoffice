@@ -43,6 +43,15 @@ function averageRatio(stats: SchedulesStat[] | undefined): number | null {
   return stats.reduce((sum, stat) => sum + stat.ratio, 0) / stats.length;
 }
 
+/** Variación (%) entre los dos últimos puntos de una serie mensual cronológica. */
+function lastMonthDelta(series: { count: number }[] | undefined): number | undefined {
+  if (!series || series.length < 2) return undefined;
+  const previous = series[series.length - 2].count;
+  const current = series[series.length - 1].count;
+  if (previous <= 0) return undefined;
+  return ((current - previous) / previous) * 100;
+}
+
 function Card({
   title,
   children,
@@ -115,36 +124,48 @@ export default function DashboardPage() {
       }
     >
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" }, gap: 2 }}>
-        <KpiCard
+        <StatCard
           index={0}
           label={t("kpi.members")}
           value={stats?.users.totalUsers ?? "—"}
-          detail={
+          delta={lastMonthDelta(report?.newUsersByMonth)}
+          deltaLabel={
             stats
               ? t("kpi.membersDetail", { newUsers: stats.users.newUsers, pendingUsers: stats.users.pendingUsers })
               : undefined
           }
+          trend={report?.newUsersByMonth.map((entry) => entry.count)}
+          trendColor="success"
           loading={adminStats.loading && !stats}
         />
-        <KpiCard
+        <StatCard
           index={1}
           label={t("kpi.subscriptions")}
           value={stats?.subscriptions ?? "—"}
-          detail={stats ? t("kpi.subscriptionsDetail", { plans: stats.plans }) : undefined}
+          delta={lastMonthDelta(report?.subscriptionsByMonth)}
+          deltaLabel={stats ? t("kpi.subscriptionsDetail", { plans: stats.plans }) : undefined}
+          trend={report?.subscriptionsByMonth.map((entry) => entry.count)}
+          trendColor="info"
           loading={adminStats.loading && !stats}
         />
-        <KpiCard
+        <StatCard
           index={2}
           label={t("kpi.classes")}
           value={stats?.schedules ?? "—"}
-          detail={t("kpi.classesDetail")}
+          delta={lastMonthDelta(report?.schedulesByMonth)}
+          deltaLabel={t("kpi.classesDetail")}
+          trend={report?.schedulesByMonth.map((entry) => entry.count)}
+          trendColor="primary"
           loading={adminStats.loading && !stats}
         />
-        <KpiCard
+        <StatCard
           index={3}
           label={t("kpi.transactions")}
           value={stats?.transactions ?? "—"}
-          detail={t("kpi.transactionsDetail")}
+          delta={lastMonthDelta(report?.transactionsByMonth)}
+          deltaLabel={t("kpi.transactionsDetail")}
+          trend={report?.transactionsByMonth.map((entry) => entry.count)}
+          trendColor="warning"
           loading={adminStats.loading && !stats}
         />
         <StatCard
@@ -152,8 +173,9 @@ export default function DashboardPage() {
           label={t("kpi.occupancy")}
           value={currentOccupancy !== null ? `${Math.round(currentOccupancy)}%` : "—"}
           delta={occupancyDelta}
-          deltaLabel={t("kpi.occupancyDeltaLabel")}
-          detail={t("kpi.occupancyDetail", { month: MONTHS[month].toLowerCase() })}
+          deltaLabel={`${t("kpi.occupancyDeltaLabel")} · ${t("kpi.occupancyDetail", { month: MONTHS[month].toLowerCase() })}`}
+          trend={monthlyStats?.[0]?.map((stat) => Math.round(stat.ratio))}
+          trendColor="info"
           loading={schedulesStats.loading && !monthlyStats}
         />
       </Box>
@@ -208,6 +230,8 @@ export default function DashboardPage() {
           label={t("kpi.totalRevenue")}
           value={report ? formatEuros(report.totalRevenue, intlLocale) : "—"}
           detail={t("kpi.totalRevenueDetail")}
+          trend={report?.revenueByMonth.map((entry) => entry.amount)}
+          trendColor="success"
           loading={reportMetrics.loading && !report}
         />
         <KpiCard
@@ -216,10 +240,13 @@ export default function DashboardPage() {
           value={report?.productsSold ?? "—"}
           loading={reportMetrics.loading && !report}
         />
-        <KpiCard
+        <StatCard
           index={2}
           label={t("kpi.promotionsApplied")}
           value={report?.promotionsApplied ?? "—"}
+          delta={lastMonthDelta(report?.promotionsAppliedByMonth)}
+          trend={report?.promotionsAppliedByMonth.map((entry) => entry.count)}
+          trendColor="warning"
           loading={reportMetrics.loading && !report}
         />
       </Box>
