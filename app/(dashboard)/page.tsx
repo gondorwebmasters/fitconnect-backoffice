@@ -70,7 +70,7 @@ function Card({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
       variant="outlined"
-      sx={{ p: 3 }}
+      sx={{ p: 3, minWidth: 0, overflow: "hidden" }}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
         <Typography variant="subtitle2">{title}</Typography>
@@ -123,7 +123,17 @@ export default function DashboardPage() {
         />
       }
     >
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" }, gap: 2 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(5, minmax(0, 1fr))",
+          },
+          gap: 2,
+        }}
+      >
         <StatCard
           index={0}
           label={t("kpi.members")}
@@ -180,7 +190,7 @@ export default function DashboardPage() {
         />
       </Box>
 
-      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(5, minmax(0, 1fr))" } }}>
         <Box sx={{ gridColumn: { lg: "span 3" } }}>
           <Card
             title={t("cards.occupancyByTimeSlot")}
@@ -211,7 +221,7 @@ export default function DashboardPage() {
         </Box>
       </Box>
 
-      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(5, minmax(0, 1fr))" } }}>
         <Box sx={{ gridColumn: { lg: "span 2" } }}>
           <Card title={t("cards.membersStatus")} delay={0.25}>
             <UsersStatusChart users={stats?.users} loading={adminStats.loading && !stats} />
@@ -224,7 +234,18 @@ export default function DashboardPage() {
         </Box>
       </Box>
 
-      <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 2 }}>
+      <Box
+        sx={{
+          mt: 3,
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(3, minmax(0, 1fr))",
+          },
+          gap: 2,
+        }}
+      >
         <StatCard
           index={0}
           label={t("kpi.totalRevenue")}
@@ -251,7 +272,7 @@ export default function DashboardPage() {
         />
       </Box>
 
-      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" } }}>
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
         <Card title={t("cards.signupsChurn")} delay={0.3}>
           <SignupsChurnChart
             newByMonth={report?.newUsersByMonth ?? []}
@@ -264,7 +285,7 @@ export default function DashboardPage() {
         </Card>
       </Box>
 
-      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" } }}>
+      <Box sx={{ mt: 3, display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
         <Card title={t("cards.revenueTrend")} delay={0.3}>
           <RevenueTrendChart data={report?.revenueByMonth ?? []} loading={reportMetrics.loading && !report} />
         </Card>

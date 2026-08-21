@@ -25,7 +25,7 @@ export default function SystemPage() {
   return (
     <PageShell header={<PageHeader title={t("title")} subtitle={t("subtitle")} />}>
       <Grid container spacing={2} sx={{ maxWidth: 512 }}>
-        <Grid size={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <KpiCard
             label={t("totalUsers")}
             value={stats?.totalUsers ?? "—"}
@@ -33,7 +33,7 @@ export default function SystemPage() {
             loading={loading && !stats}
           />
         </Grid>
-        <Grid size={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <KpiCard
             label={t("companies")}
             value={stats?.totalCompanies ?? "—"}

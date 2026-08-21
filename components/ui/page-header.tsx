@@ -15,7 +15,13 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <Stack direction="row" alignItems="flex-end" justifyContent="space-between" sx={{ mb: 4 }}>
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      alignItems={{ xs: "flex-start", sm: "flex-end" }}
+      justifyContent="space-between"
+      spacing={2}
+      sx={{ mb: 4 }}
+    >
       <Box>
         <Typography variant="h4">{title}</Typography>
         <Box sx={{ mt: 1 }}>
@@ -28,7 +34,13 @@ export function PageHeader({
         ) : null}
       </Box>
       {actions ? (
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          flexWrap="wrap"
+          spacing={1.5}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           {actions}
         </Stack>
       ) : null}

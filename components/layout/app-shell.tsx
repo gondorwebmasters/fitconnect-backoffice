@@ -1,6 +1,8 @@
 "use client";
 
 import Box from "@mui/material/Box";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import {
@@ -25,12 +27,18 @@ interface ShellContextValue {
   collapsed: boolean;
   toggleCollapsed: () => void;
   openPalette: () => void;
+  mobileNavOpen: boolean;
+  toggleMobileNav: () => void;
+  closeMobileNav: () => void;
 }
 
 const ShellContext = createContext<ShellContextValue>({
   collapsed: false,
   toggleCollapsed: () => {},
   openPalette: () => {},
+  mobileNavOpen: false,
+  toggleMobileNav: () => {},
+  closeMobileNav: () => {},
 });
 
 export function useShell() {
@@ -42,8 +50,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   // se aplica tras montar.
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const { user } = useSession();
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+
+  // El drawer móvil se cierra al navegar o al cruzar a viewport de escritorio,
+  // para que no quede abierto de fondo tras un resize o un cambio de ruta.
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname, isDesktop]);
 
   useEffect(() => {
     try {
@@ -65,6 +82,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
+  const toggleMobileNav = useCallback(() => setMobileNavOpen((value) => !value), []);
+  const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
 
   // Atajo global ⌘K / Ctrl+K
   useEffect(() => {
@@ -79,7 +98,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ShellContext.Provider value={{ collapsed, toggleCollapsed, openPalette }}>
+    <ShellContext.Provider
+      value={{ collapsed, toggleCollapsed, openPalette, mobileNavOpen, toggleMobileNav, closeMobileNav }}
+    >
       <SessionSplash />
       <CompanyBackdrop />
       <Sidebar />
@@ -87,11 +108,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         sx={{
           position: "relative",
           transition: (theme) => theme.transitions.create("padding-left", { duration: 200 }),
-          pl: collapsed ? "88px" : "280px",
+          pl: { xs: 0, md: collapsed ? "88px" : "280px" },
         }}
       >
         <Topbar />
-        <Box component="main" sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2.5, lg: 5 }, py: 4 }}>
+        <Box component="main" sx={{ maxWidth: 1400, mx: "auto", px: { xs: 2, sm: 2.5, lg: 5 }, py: { xs: 2.5, sm: 4 } }}>
           {/*
             Solo opacity, nunca x/y/scale: cualquier motion value de
             transform (incluido "y") hace que framer-motion fije un
