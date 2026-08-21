@@ -128,7 +128,7 @@ export function ReportsView() {
   );
 
   return (
-    <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "repeat(5, 1fr)" } }}>
+    <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(5, minmax(0, 1fr))" } }}>
       <Box sx={{ gridColumn: { lg: "span 2" } }}>
         <Box sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", p: 3, boxShadow: (theme) => theme.vars.customShadows.card }}>
           <Typography variant="subtitle2" sx={{ mb: 2.5 }}>

@@ -4,6 +4,7 @@ import { Iconify } from "@/components/iconify";
 import { Logo } from "@/components/logo";
 
 import Box from "@mui/material/Box";
+import Drawer from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
@@ -69,31 +70,21 @@ function NavLink({ item, label, collapsed }: { item: NavItem; label: string; col
   );
 }
 
-export function Sidebar() {
+function SidebarContent({
+  collapsed,
+  onToggleCollapsed,
+}: {
+  collapsed: boolean;
+  /** Omitido en el drawer móvil: no tiene sentido "colapsar" un overlay. */
+  onToggleCollapsed?: () => void;
+}) {
   const { user } = useSession();
-  const { collapsed, toggleCollapsed } = useShell();
   const t = useTranslations("nav.main");
   const tSystem = useTranslations("nav.system");
   const tSidebar = useTranslations("sidebar");
 
   return (
-    <Box
-      component={motion.aside}
-      initial={false}
-      animate={{ width: collapsed ? 88 : 280 }}
-      transition={{ type: "spring", stiffness: 400, damping: 40 }}
-      sx={{
-        position: "fixed",
-        inset: "0 auto 0 0",
-        zIndex: (theme) => theme.zIndex.drawer,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        borderRight: "1px solid",
-        borderColor: "divider",
-        bgcolor: "background.paper",
-      }}
-    >
+    <>
       <Stack
         direction="row"
         alignItems="center"
@@ -164,36 +155,81 @@ export function Sidebar() {
         ) : null}
       </Stack>
 
-      <Box sx={{ borderTop: "1px solid", borderColor: "divider", py: 1.5, ...(collapsed ? { px: 1.25 } : { px: 1.5 }) }}>
-        <Stack
-          component="button"
-          direction="row"
-          alignItems="center"
-          spacing={1.5}
-          onClick={toggleCollapsed}
-          title={collapsed ? tSidebar("expand") : tSidebar("collapse")}
-          sx={{
-            width: "100%",
-            borderRadius: 2,
-            px: 1.5,
-            py: 1,
-            fontSize: 14,
-            color: "text.disabled",
-            transition: (theme) => theme.transitions.create(["background-color", "color"]),
-            "&:hover": { bgcolor: "action.hover", color: "text.primary" },
-            ...(collapsed && { justifyContent: "center", px: 0 }),
-          }}
-        >
-          {collapsed ? (
-            <Iconify icon="solar:double-alt-arrow-right-linear" width={16} />
-          ) : (
-            <>
-              <Iconify icon="solar:double-alt-arrow-left-linear" width={16} />
-              <Box component="span">{tSidebar("collapse")}</Box>
-            </>
-          )}
-        </Stack>
+      {onToggleCollapsed ? (
+        <Box sx={{ borderTop: "1px solid", borderColor: "divider", py: 1.5, ...(collapsed ? { px: 1.25 } : { px: 1.5 }) }}>
+          <Stack
+            component="button"
+            direction="row"
+            alignItems="center"
+            spacing={1.5}
+            onClick={onToggleCollapsed}
+            title={collapsed ? tSidebar("expand") : tSidebar("collapse")}
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              px: 1.5,
+              py: 1,
+              fontSize: 14,
+              color: "text.disabled",
+              transition: (theme) => theme.transitions.create(["background-color", "color"]),
+              "&:hover": { bgcolor: "action.hover", color: "text.primary" },
+              ...(collapsed && { justifyContent: "center", px: 0 }),
+            }}
+          >
+            {collapsed ? (
+              <Iconify icon="solar:double-alt-arrow-right-linear" width={16} />
+            ) : (
+              <>
+                <Iconify icon="solar:double-alt-arrow-left-linear" width={16} />
+                <Box component="span">{tSidebar("collapse")}</Box>
+              </>
+            )}
+          </Stack>
+        </Box>
+      ) : null}
+    </>
+  );
+}
+
+export function Sidebar() {
+  const { collapsed, toggleCollapsed, mobileNavOpen, closeMobileNav } = useShell();
+
+  return (
+    <>
+      {/* Escritorio (md+): columna fija que empuja el contenido, colapsable. */}
+      <Box
+        component={motion.aside}
+        initial={false}
+        animate={{ width: collapsed ? 88 : 280 }}
+        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+        sx={{
+          display: { xs: "none", md: "flex" },
+          position: "fixed",
+          inset: "0 auto 0 0",
+          zIndex: (theme) => theme.zIndex.drawer,
+          flexDirection: "column",
+          overflow: "hidden",
+          borderRight: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+        }}
+      >
+        <SidebarContent collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </Box>
-    </Box>
+
+      {/* Móvil/tablet (< md): drawer temporal sobre el contenido, sin empujar. */}
+      <Drawer
+        open={mobileNavOpen}
+        onClose={closeMobileNav}
+        anchor="left"
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { width: 280, display: "flex", flexDirection: "column" },
+        }}
+      >
+        <SidebarContent collapsed={false} />
+      </Drawer>
+    </>
   );
 }

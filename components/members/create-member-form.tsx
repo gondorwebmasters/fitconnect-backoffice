@@ -21,6 +21,7 @@ import { CREATE_COMPANY_MEMBER } from "@/lib/graphql/users";
 import { useRoleOptions } from "./member-filters";
 
 const EMPTY_FORM = { email: "", nickname: "", password: "", role: "standard", isActive: true };
+const EMPTY_FIELD_ERRORS = { email: "", nickname: "" };
 
 interface CreateMemberFormProps {
   open: boolean;
@@ -33,20 +34,38 @@ export function CreateMemberForm({ open, onClose, onCreated }: CreateMemberFormP
   const toast = useToast();
   const roleOptions = useRoleOptions();
   const [form, setForm] = useState(EMPTY_FORM);
+  const [fieldErrors, setFieldErrors] = useState(EMPTY_FIELD_ERRORS);
   const [createCompanyMember, { loading }] = useMutation(CREATE_COMPANY_MEMBER);
 
-  const set = (key: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const set = (key: keyof typeof form) => (value: string) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    if (key === "email" || key === "nickname") {
+      setFieldErrors((current) => ({ ...current, [key]: "" }));
+    }
+  };
 
   const handleSubmit = async () => {
-    const { data } = await createCompanyMember({ variables: { user: form } });
-    const result = data?.createCompanyMember;
-    if (result?.success) {
-      toast(t("created"));
-      setForm(EMPTY_FORM);
-      onCreated();
-      onClose();
-    } else {
-      toast(result?.message ?? t("createFailed"), "error");
+    setFieldErrors(EMPTY_FIELD_ERRORS);
+    try {
+      const { data } = await createCompanyMember({ variables: { user: form } });
+      const result = data?.createCompanyMember;
+      if (result?.success) {
+        toast(t("created"));
+        setForm(EMPTY_FORM);
+        onCreated();
+        onClose();
+      } else {
+        toast(result?.message ?? t("createFailed"), "error");
+      }
+    } catch (error: any) {
+      const message: string = error?.message ?? "";
+      if (/email/i.test(message)) {
+        setFieldErrors((current) => ({ ...current, email: t("emailExists") }));
+      } else if (/nickname/i.test(message)) {
+        setFieldErrors((current) => ({ ...current, nickname: t("usernameExists") }));
+      } else {
+        toast(message || t("createFailed"), "error");
+      }
     }
   };
 
@@ -70,11 +89,15 @@ export function CreateMemberForm({ open, onClose, onCreated }: CreateMemberFormP
           label={t("email")}
           value={form.email}
           onChange={(event) => set("email")(event.target.value)}
+          error={Boolean(fieldErrors.email)}
+          helperText={fieldErrors.email}
         />
         <TextField
           label={t("username")}
           value={form.nickname}
           onChange={(event) => set("nickname")(event.target.value)}
+          error={Boolean(fieldErrors.nickname)}
+          helperText={fieldErrors.nickname}
         />
         <TextField
           type="password"

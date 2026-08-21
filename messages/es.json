@@ -95,7 +95,8 @@
     "subtitle": "Panel de administración"
   },
   "topbar": {
-    "search": "Buscar…"
+    "search": "Buscar…",
+    "menu": "Abrir menú"
   },
   "dashboard": {
     "greeting": "Hola{name}",
@@ -231,6 +232,8 @@
       "submit": "Crear miembro",
       "created": "Miembro creado",
       "createFailed": "No se pudo crear el miembro",
+      "emailExists": "Ya existe un usuario con este email",
+      "usernameExists": "Ya existe un usuario con este nombre de usuario",
       "email": "Email",
       "username": "Usuario",
       "password": "Contraseña",

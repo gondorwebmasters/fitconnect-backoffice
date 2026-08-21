@@ -132,7 +132,7 @@ export function NotificationsBell() {
     <Popover
       open={open}
       onClose={() => setOpen(false)}
-      panelSx={{ width: 400 }}
+      panelSx={{ width: { xs: "calc(100vw - 32px)", sm: 400 }, maxWidth: 400 }}
       trigger={
         <IconButton
           onClick={() => setOpen((value) => !value)}

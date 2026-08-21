@@ -30,7 +30,7 @@ export function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3 }}
-      sx={{ p: 3, boxShadow: theme.vars.customShadows.card }}
+      sx={{ p: 3, minWidth: 0, overflow: "hidden", boxShadow: theme.vars.customShadows.card }}
     >
       <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600 }}>
         {label}

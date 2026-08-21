@@ -78,12 +78,20 @@ export function CompanyBackdrop() {
           filter: "blur(110px)",
         }}
       />
+      {/*
+        La foto y su gradiente de refuerzo solo se muestran desde `md`: sus
+        porcentajes de fundido están calibrados para el ancho/alto de un
+        viewport de escritorio. En pantallas estrechas y altas (móvil) el
+        recuadro de la imagen queda desproporcionado y su borde recto asoma
+        por debajo del fundido — mejor no mostrarla que mostrarla mal.
+      */}
       <Box
         component="img"
         src={logoUrl}
         alt=""
         style={LOGO_MASK}
         sx={{
+          display: { xs: "none", md: "block" },
           position: "absolute",
           right: "-6%",
           top: "50%",
@@ -99,6 +107,7 @@ export function CompanyBackdrop() {
       {/* Refuerza la fusión con el fondo por si el logo tiene su propio recuadro/color sólido */}
       <Box
         sx={{
+          display: { xs: "none", md: "block" },
           position: "absolute",
           inset: "0 0 0 auto",
           right: 0,

@@ -3,6 +3,7 @@
 import { Iconify } from "@/components/iconify";
 
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
@@ -16,7 +17,7 @@ import { ProfileMenu } from "./profile-menu";
 import { ThemeToggle } from "./theme-toggle";
 
 export function Topbar() {
-  const { openPalette } = useShell();
+  const { openPalette, toggleMobileNav } = useShell();
   const t = useTranslations("topbar");
   const [scrolled, setScrolled] = useState(false);
 
@@ -47,14 +48,23 @@ export function Topbar() {
         borderBottom: "1px solid",
         borderColor: "divider",
         bgcolor: "background.paper",
-        px: { xs: 2, lg: 3 },
+        px: { xs: 1, sm: 2, lg: 3 },
         transition: (theme) => theme.transitions.create("box-shadow", { duration: 300 }),
         boxShadow: scrolled ? (theme) => theme.vars.customShadows.z8 : "none",
       }}
     >
+      <IconButton
+        onClick={toggleMobileNav}
+        aria-label={t("menu")}
+        size="small"
+        sx={{ display: { xs: "inline-flex", md: "none" } }}
+      >
+        <Iconify icon="eva:menu-2-fill" width={22} />
+      </IconButton>
+
       <Box sx={{ flex: 1 }} />
 
-      <Stack direction="row" alignItems="center" spacing={1.5}>
+      <Stack direction="row" alignItems="center" spacing={{ xs: 0.5, sm: 1.5 }}>
         <Stack
           component={motion.button}
           direction="row"
@@ -69,7 +79,7 @@ export function Topbar() {
             border: "1px solid",
             borderColor: "divider",
             bgcolor: "background.paper",
-            px: 1.5,
+            px: { xs: 1, md: 1.5 },
             fontSize: 12,
             color: "text.disabled",
             transition: (theme) => theme.transitions.create(["border-color", "color"]),
@@ -99,7 +109,7 @@ export function Topbar() {
           </Box>
         </Stack>
 
-        <Box sx={{ height: 24, width: "1px", flexShrink: 0, bgcolor: "divider" }} />
+        <Box sx={{ display: { xs: "none", sm: "block" }, height: 24, width: "1px", flexShrink: 0, bgcolor: "divider" }} />
 
         <CompanySwitcher />
 

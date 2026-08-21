@@ -32,16 +32,19 @@ function DeltaRow({ delta, deltaLabel }: { delta: number; deltaLabel?: string })
   const color = delta > 0 ? "success.main" : delta < 0 ? "error.main" : "text.disabled";
 
   return (
-    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1 }}>
+    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 1, minWidth: 0, flexWrap: "wrap", rowGap: 0.25 }}>
       <Iconify icon={icon} width={14} sx={{ color, flexShrink: 0 }} />
       <Typography
         variant="caption"
-        sx={{ color, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
+        sx={{ color, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flexShrink: 0 }}
       >
         {Math.abs(delta).toLocaleString("es-ES", { maximumFractionDigits: 1 })}%
       </Typography>
       {deltaLabel ? (
-        <Typography variant="caption" sx={{ color: "text.disabled", whiteSpace: "nowrap" }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.disabled", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        >
           {deltaLabel}
         </Typography>
       ) : null}
@@ -70,7 +73,7 @@ export function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -3 }}
-      sx={{ p: 3, boxShadow: theme.vars.customShadows.card }}
+      sx={{ p: 3, minWidth: 0, overflow: "hidden", boxShadow: theme.vars.customShadows.card }}
     >
       <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600 }}>
         {label}

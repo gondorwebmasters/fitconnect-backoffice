@@ -96,7 +96,7 @@ export function CompanySwitcher() {
             border: "1px solid",
             borderColor: "divider",
             bgcolor: "background.paper",
-            px: 1.25,
+            px: { xs: 0.75, sm: 1.25 },
             fontSize: 12,
             color: "text.secondary",
             boxShadow: (theme) => theme.vars.customShadows.z1,
@@ -106,7 +106,13 @@ export function CompanySwitcher() {
           }}
         >
           <Iconify icon="solar:buildings-2-bold" width={13} sx={{ color: "text.disabled" }} />
-          <Box component="span" sx={{ maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {/* Solo icono + chevron en xs: el nombre completo de la empresa se
+              muestra dentro del popover al abrirlo, así que no hace falta
+              reservarle sitio en el topbar cuando el espacio escasea. */}
+          <Box
+            component="span"
+            sx={{ display: { xs: "none", sm: "block" }, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+          >
             {switching ? t("switching") : (activeCompany?.name ?? t("select"))}
           </Box>
           <Iconify icon="solar:sort-vertical-linear" width={12} sx={{ color: "text.disabled" }} />
