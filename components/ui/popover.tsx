@@ -37,6 +37,12 @@ export function Popover({ open, onClose, trigger, children, align = "end", class
         onClose={onClose}
         anchorOrigin={{ vertical: "bottom", horizontal: align === "end" ? "right" : "left" }}
         transformOrigin={{ vertical: "top", horizontal: align === "end" ? "right" : "left" }}
+        // El "auto height duration" por defecto de Grow escala con la altura del
+        // panel (puede superar 300ms en paneles largos como notificaciones), lo
+        // que hace que todos los dropdowns del topbar se sientan lentos al abrir.
+        // Con una duración fija y corta se sienten instantáneos sin perder la
+        // transición.
+        transitionDuration={{ enter: 120, exit: 80 }}
         slotProps={{ paper: { sx: [{ minWidth: 192, mt: 1 }, ...(Array.isArray(panelSx) ? panelSx : [panelSx])] } }}
       >
         {children}

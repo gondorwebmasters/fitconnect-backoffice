@@ -18,7 +18,21 @@ import { useShell } from "./app-shell";
 import { MAIN_NAV, SYSTEM_NAV, type NavItem } from "./nav";
 import { useSession } from "./session-provider";
 
-function NavLink({ item, label, collapsed }: { item: NavItem; label: string; collapsed: boolean }) {
+function NavLink({
+  item,
+  label,
+  collapsed,
+  variant,
+}: {
+  item: NavItem;
+  label: string;
+  collapsed: boolean;
+  /** Espacio de nombres del layoutId: el drawer móvil se queda montado (keepMounted)
+      en paralelo al aside de escritorio, así que ambos comparten pathname; sin esto
+      competirían por el mismo layoutId y Framer Motion dejaría uno de los dos en
+      opacity 0. */
+  variant: "desktop" | "mobile";
+}) {
   const pathname = usePathname();
   const { href, icon } = item;
   const active =
@@ -49,7 +63,7 @@ function NavLink({ item, label, collapsed }: { item: NavItem; label: string; col
       {active ? (
         <Box
           component={motion.span}
-          layoutId="sidebar-active-pill"
+          layoutId={`sidebar-active-pill-${variant}`}
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
           sx={{
             position: "absolute",
@@ -73,10 +87,12 @@ function NavLink({ item, label, collapsed }: { item: NavItem; label: string; col
 function SidebarContent({
   collapsed,
   onToggleCollapsed,
+  variant,
 }: {
   collapsed: boolean;
   /** Omitido en el drawer móvil: no tiene sentido "colapsar" un overlay. */
   onToggleCollapsed?: () => void;
+  variant: "desktop" | "mobile";
 }) {
   const { user } = useSession();
   const t = useTranslations("nav.main");
@@ -137,7 +153,7 @@ function SidebarContent({
 
       <Stack component="nav" spacing={0.25} sx={{ flex: 1, overflowY: "auto", pb: 2, ...(collapsed ? { px: 1.25 } : { px: 1.5 }) }}>
         {MAIN_NAV.map((item) => (
-          <NavLink key={item.href} item={item} label={t(item.labelKey)} collapsed={collapsed} />
+          <NavLink key={item.href} item={item} label={t(item.labelKey)} collapsed={collapsed} variant={variant} />
         ))}
         {user?.isSuperAdmin ? (
           <>
@@ -149,7 +165,7 @@ function SidebarContent({
               </Typography>
             )}
             {SYSTEM_NAV.map((item) => (
-              <NavLink key={item.href} item={item} label={tSystem(item.labelKey)} collapsed={collapsed} />
+              <NavLink key={item.href} item={item} label={tSystem(item.labelKey)} collapsed={collapsed} variant={variant} />
             ))}
           </>
         ) : null}
@@ -214,7 +230,7 @@ export function Sidebar() {
           bgcolor: "background.paper",
         }}
       >
-        <SidebarContent collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+        <SidebarContent collapsed={collapsed} onToggleCollapsed={toggleCollapsed} variant="desktop" />
       </Box>
 
       {/* Móvil/tablet (< md): drawer temporal sobre el contenido, sin empujar. */}
@@ -228,7 +244,7 @@ export function Sidebar() {
           "& .MuiDrawer-paper": { width: 280, display: "flex", flexDirection: "column" },
         }}
       >
-        <SidebarContent collapsed={false} />
+        <SidebarContent collapsed={false} variant="mobile" />
       </Drawer>
     </>
   );
