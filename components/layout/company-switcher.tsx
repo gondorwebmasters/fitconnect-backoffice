@@ -36,11 +36,13 @@ export function CompanySwitcher() {
   const isSuperAdmin = Boolean(user?.isSuperAdmin);
 
   // Superadmin: todas las empresas del sistema, con búsqueda en servidor.
+  // Se precarga al montar (no se espera a abrir el dropdown) para que el
+  // panel no tarde en mostrar contenido, sobre todo en redes móviles lentas.
   const { data: optionsData, loading: loadingOptions } = useQuery<CompanyOptionsData>(
     GET_COMPANY_OPTIONS,
     {
       variables: { page: 1, query: search || undefined },
-      skip: !isSuperAdmin || !open,
+      skip: !isSuperAdmin,
       fetchPolicy: "cache-and-network",
     },
   );

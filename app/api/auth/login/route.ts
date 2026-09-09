@@ -51,7 +51,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: "Credenciales incompletas" }, { status: 400 });
   }
 
-  const { data, errors } = await gqlRequest<LoginData>(LOGIN_QUERY, { emailOrNickname, password });
+  const normalizedEmailOrNickname = String(emailOrNickname).trim().toLowerCase();
+
+  const { data, errors } = await gqlRequest<LoginData>(LOGIN_QUERY, {
+    emailOrNickname: normalizedEmailOrNickname,
+    password,
+  });
 
   if (errors?.length || !data?.login?.success) {
     return NextResponse.json(
