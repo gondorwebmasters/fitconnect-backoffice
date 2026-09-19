@@ -715,6 +715,7 @@
     "intervals": { "day": "diário", "week": "semanal", "month": "mensal", "year": "anual" },
     "columns": { "plan": "Plano", "price": "Preço", "trial": "Teste", "status": "Status" },
     "trialDays": "{count} dias",
+    "sessionPackBadge": "Pacote · {count, plural, one {# sessão} other {# sessões}}",
     "statusLabels": { "active": "Ativo", "archived": "Arquivado", "inactive": "Inativo" },
     "archivePlan": "Arquivar plano",
     "emptyTable": "Ainda não há planos criados",
@@ -739,6 +740,9 @@
       "interval": "Intervalo",
       "trialDays": "Dias de teste",
       "optional": "Opcional",
+      "sessionCount": "Nº de sessões",
+      "sessionCountHint": "Vazio = sessões ilimitadas durante o período",
+      "sessionCountPackHint": "Pacote: não admite dias de teste e não se renova automaticamente",
       "features": "Características",
       "addFeature": "Adicionar característica",
       "maxUsers": "Máximo de usuários",
@@ -778,7 +782,11 @@
       "updated": "Plano atualizado",
       "updateFailed": "Não foi possível atualizar",
       "created": "Plano criado",
-      "createFailed": "Não foi possível criar"
+      "createFailed": "Não foi possível criar",
+      "errors": {
+        "sessionCountPositive": "O nº de sessões deve ser um inteiro maior que 0 (ou vazio para ilimitado)",
+        "sessionPackNoTrial": "Um pacote não pode ter dias de teste"
+      }
     }
   },
   "promotions": {

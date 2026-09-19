@@ -121,6 +121,8 @@ export interface Plan {
   interval: PlanInterval;
   intervalCount: number;
   trialPeriodDays?: number | null;
+  /** Session Pack (Bono): nº de sesiones. null = ilimitado (plan temporal clásico). */
+  sessionCount?: number | null;
   status: PlanStatus;
   isActive: boolean;
   features?: string[] | null;

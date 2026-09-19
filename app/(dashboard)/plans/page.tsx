@@ -4,6 +4,7 @@ import { Iconify } from "@/components/iconify";
 import { useMutation, useQuery } from "@apollo/client";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import { useState } from "react";
 import { PlanForm } from "@/components/plans/plan-form";
 import { BadgeDot } from "@/components/ui/badge-dot";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
@@ -63,9 +65,14 @@ export default function PlansPage() {
       header: t("columns.plan"),
       render: (plan) => (
         <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {plan.name}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {plan.name}
+            </Typography>
+            {plan.sessionCount ? (
+              <Chip tone="primary">{t("sessionPackBadge", { count: plan.sessionCount })}</Chip>
+            ) : null}
+          </Stack>
           {plan.description ? (
             <Typography variant="caption" sx={{ color: "text.disabled", display: "block", maxWidth: 320 }} noWrap>
               {plan.description}

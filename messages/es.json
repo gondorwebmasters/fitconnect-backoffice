@@ -691,6 +691,7 @@
     "intervals": { "day": "diario", "week": "semanal", "month": "mensual", "year": "anual" },
     "columns": { "plan": "Plan", "price": "Precio", "trial": "Prueba", "status": "Estado" },
     "trialDays": "{count} días",
+    "sessionPackBadge": "Bono · {count, plural, one {# sesión} other {# sesiones}}",
     "statusLabels": { "active": "Activo", "archived": "Archivado", "inactive": "Inactivo" },
     "archivePlan": "Archivar plan",
     "emptyTable": "Aún no hay planes creados",
@@ -715,6 +716,9 @@
       "interval": "Intervalo",
       "trialDays": "Días de prueba",
       "optional": "Opcional",
+      "sessionCount": "Nº de sesiones",
+      "sessionCountHint": "Vacío = sesiones ilimitadas durante el periodo",
+      "sessionCountPackHint": "Bono: no admite días de prueba y no se renueva automáticamente",
       "features": "Características",
       "addFeature": "Añadir característica",
       "maxUsers": "Máximo de usuarios",
@@ -754,7 +758,11 @@
       "updated": "Plan actualizado",
       "updateFailed": "No se pudo actualizar",
       "created": "Plan creado",
-      "createFailed": "No se pudo crear"
+      "createFailed": "No se pudo crear",
+      "errors": {
+        "sessionCountPositive": "El nº de sesiones debe ser un entero mayor que 0 (o vacío para ilimitado)",
+        "sessionPackNoTrial": "Un bono no puede tener días de prueba"
+      }
     }
   },
   "promotions": {

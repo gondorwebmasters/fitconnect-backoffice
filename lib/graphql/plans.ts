@@ -10,6 +10,7 @@ export const PLAN_FIELDS = gql`
     interval
     intervalCount
     trialPeriodDays
+    sessionCount
     status
     isActive
     features
