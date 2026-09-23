@@ -1,5 +1,6 @@
 "use client";
 
+import type { EventMountArg } from "@fullcalendar/core";
 import Calendar from "@fullcalendar/react";
 import listPlugin from "@fullcalendar/list";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -93,6 +94,8 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
     () =>
       schedules.map((schedule) => {
         const cancelled = schedule.state === "cancelled";
+        const planNames = (schedule.allowedPlans ?? []).map((plan) => plan.name);
+        const restricted = planNames.length > 0;
         const occupancy = schedule.maxUsers > 0 ? (schedule.users?.length ?? 0) / schedule.maxUsers : 0;
 
         const [background, text] = cancelled
@@ -105,14 +108,33 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
 
         return {
           id: schedule.id,
-          title: schedule.title,
+          // El candado marca la clase restringida y los planes van en el propio
+          // título para poder auditar el calendario sin abrir cada clase. El color
+          // sigue siendo el del aforo, que es otra cosa y no debe pisarse.
+          title: restricted
+            ? `\u{1F512} ${schedule.title} · ${planNames.join(", ")}`
+            : schedule.title,
           start: schedule.startDate,
           end: schedule.endDate,
           backgroundColor: background,
           textColor: text,
+          borderColor: restricted ? text : background,
+          extendedProps: { allowedPlanNames: planNames },
         };
       }),
     [schedules, theme],
+  );
+
+  // El título se recorta cuando la celda es estrecha; el tooltip nativo da la
+  // lista completa de planes al pasar por encima.
+  const onEventDidMount = useCallback(
+    (arg: EventMountArg) => {
+      const planNames = arg.event.extendedProps.allowedPlanNames as string[] | undefined;
+      if (planNames && planNames.length > 0) {
+        arg.el.title = t("restrictedTo", { plans: planNames.join(", ") });
+      }
+    },
+    [t],
   );
 
   const labels = {
@@ -158,6 +180,7 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
             headerToolbar={false}
             select={onSelectRange}
             eventClick={onClickEvent}
+            eventDidMount={onEventDidMount}
             datesSet={onDatesSet}
             aspectRatio={3}
             plugins={[listPlugin, dayGridPlugin, timeGridPlugin, interactionPlugin]}

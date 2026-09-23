@@ -527,6 +527,7 @@
   "calendar": {
     "title": "Calendário",
     "subtitle": "Aulas e horários da semana",
+    "restrictedTo": "Apenas para: {plans}",
     "newClass": "Nova aula",
     "today": "Hoje",
     "views": { "month": "Mês", "week": "Semana", "day": "Dia", "agenda": "Agenda" },
@@ -553,7 +554,9 @@
       "deleteClass": "Excluir aula",
       "deleteClassDescription": "A aula e as reservas associadas serão excluídas. Esta ação não pode ser desfeita.",
       "deleted": "Aula excluída",
-      "deleteFailed": "Não foi possível excluir"
+      "deleteFailed": "Não foi possível excluir",
+      "allowedPlans": "Planos admitidos",
+      "openToEveryone": "Aberta a todos"
     },
     "scheduleForm": {
       "dayInitials": { "0": "D", "1": "S", "2": "T", "3": "Q", "4": "Q", "5": "S", "6": "S" },
@@ -588,7 +591,10 @@
       "saveChanges": "Salvar alterações",
       "saving": "Salvando…",
       "updated": "Aula atualizada",
-      "updateFailed": "Não foi possível atualizar a aula"
+      "updateFailed": "Não foi possível atualizar a aula",
+      "allowedPlans": "Planos admitidos",
+      "allowedPlansHint": "Deixe vazio para que a aula fique aberta a todos.",
+      "allowedPlansPlaceholder": "Sem restrição"
     }
   },
   "polls": {

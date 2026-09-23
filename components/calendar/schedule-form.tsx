@@ -10,13 +10,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker, TimePicker } from "@/components/ui/date-picker";
-import { Dropdown } from "@/components/ui/dropdown";
+import { Dropdown, MultiDropdown } from "@/components/ui/dropdown";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { SlideOver } from "@/components/ui/slide-over";
 import { useToast } from "@/components/ui/toast";
 import { fullName } from "@/lib/format";
+import { LIST_PLANS } from "@/lib/graphql/plans";
 import { CREATE_SCHEDULE, UPDATE_SCHEDULE } from "@/lib/graphql/schedules";
-import type { Schedule, User } from "@/lib/graphql/types";
+import type { Plan, Schedule, User } from "@/lib/graphql/types";
 import { GET_USERS } from "@/lib/graphql/users";
 
 function toDateInputValue(date: Date): string {
@@ -42,6 +43,7 @@ const EMPTY_FORM = {
   repeat: false,
   date: "",
   days: [] as number[],
+  allowedPlanIds: [] as string[],
 };
 
 /** Rellena el formulario con los campos editables de una clase existente. */
@@ -53,6 +55,7 @@ function formFromSchedule(schedule: Schedule) {
     type: schedule.type,
     maxUsers: String(schedule.maxUsers),
     admin: schedule.admin?.id ?? "",
+    allowedPlanIds: (schedule.allowedPlans ?? []).map((plan) => plan.id),
   };
 }
 
@@ -85,6 +88,13 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
 
   const trainers = useQuery<{ getUsers: { users: User[] | null } }>(GET_USERS, {
     variables: { roleFilter: ["admin", "coach"] },
+    skip: !open,
+  });
+
+  // `showGlobal` queda en false a propósito: solo los planes de la propia empresa
+  // pueden restringir una clase suya (el back lo ancla además en la BD).
+  const plans = useQuery<{ listPlans: { plans: Plan[] | null } }>(LIST_PLANS, {
+    variables: { onlyActive: true, showGlobal: false },
     skip: !open,
   });
 
@@ -123,6 +133,9 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
             type: form.type,
             maxUsers: Number(form.maxUsers),
             admin: form.admin,
+            // Se manda siempre, también vacío: el formulario muestra la restricción
+            // vigente, así que una lista vacía es una orden de quitarla, no un "no tocar".
+            allowedPlanIds: form.allowedPlanIds,
           },
         },
       });
@@ -154,6 +167,9 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
             repeat: form.repeat,
             days: form.repeat ? form.days : form.date ? [new Date(form.date).getDay()] : [],
             date: form.repeat ? undefined : form.date,
+            // La restricción de la plantilla semanal aún no existe (#12) y el back
+            // rechaza pedirla con repeat: true, así que solo viaja en clase puntual.
+            allowedPlanIds: form.repeat ? undefined : form.allowedPlanIds,
           },
         },
       });
@@ -229,10 +245,37 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
           />
         </Field>
 
+        {editing || !form.repeat ? (
+          <Field label={t("allowedPlans")} hint={t("allowedPlansHint")}>
+            <MultiDropdown
+              options={(plans.data?.listPlans?.plans ?? []).map((plan) => ({
+                value: plan.id,
+                label: plan.name,
+              }))}
+              placeholder={t("allowedPlansPlaceholder")}
+              value={form.allowedPlanIds}
+              onChange={(value) => set("allowedPlanIds", value)}
+            />
+          </Field>
+        ) : null}
+
         {!editing ? (
           <>
           <FormControlLabel
-            control={<Checkbox checked={form.repeat} onChange={(event) => set("repeat", event.target.checked)} />}
+            control={
+              <Checkbox
+                checked={form.repeat}
+                onChange={(event) =>
+                  // La serie semanal no admite restricción todavía: al activarla se
+                  // descarta la selección en vez de dejarla puesta y perderla al guardar.
+                  setForm((current) => ({
+                    ...current,
+                    repeat: event.target.checked,
+                    allowedPlanIds: event.target.checked ? [] : current.allowedPlanIds,
+                  }))
+                }
+              />
+            }
             label={t("repeatWeekly")}
             slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
           />

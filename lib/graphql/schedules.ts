@@ -34,6 +34,12 @@ export const SCHEDULE_FIELDS = gql`
       surname
       nickname
     }
+    # Restricted Schedule: lista vacía = sin restricción. No se pide planAccess:
+    # es derivado por llamante y el backoffice configura la restricción, no se inscribe.
+    allowedPlans {
+      id
+      name
+    }
   }
 `;
 

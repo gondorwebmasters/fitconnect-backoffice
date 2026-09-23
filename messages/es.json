@@ -503,6 +503,7 @@
   "calendar": {
     "title": "Calendario",
     "subtitle": "Clases y horarios de la semana",
+    "restrictedTo": "Solo para: {plans}",
     "newClass": "Nueva clase",
     "today": "Hoy",
     "views": { "month": "Mes", "week": "Semana", "day": "Día", "agenda": "Agenda" },
@@ -529,7 +530,9 @@
       "deleteClass": "Eliminar clase",
       "deleteClassDescription": "Se eliminará la clase y las reservas asociadas. Esta acción no se puede deshacer.",
       "deleted": "Clase eliminada",
-      "deleteFailed": "No se pudo eliminar"
+      "deleteFailed": "No se pudo eliminar",
+      "allowedPlans": "Planes admitidos",
+      "openToEveryone": "Abierta a todo el mundo"
     },
     "scheduleForm": {
       "dayInitials": { "0": "D", "1": "L", "2": "M", "3": "X", "4": "J", "5": "V", "6": "S" },
@@ -564,7 +567,10 @@
       "saveChanges": "Guardar cambios",
       "saving": "Guardando…",
       "updated": "Clase actualizada",
-      "updateFailed": "No se pudo actualizar la clase"
+      "updateFailed": "No se pudo actualizar la clase",
+      "allowedPlans": "Planes admitidos",
+      "allowedPlansHint": "Déjalo vacío para que la clase esté abierta a todo el mundo.",
+      "allowedPlansPlaceholder": "Sin restricción"
     }
   },
   "polls": {

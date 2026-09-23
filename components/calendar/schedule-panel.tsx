@@ -13,6 +13,7 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { BadgeDot } from "@/components/ui/badge-dot";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SlideOver } from "@/components/ui/slide-over";
 import { useToast } from "@/components/ui/toast";
@@ -137,6 +138,25 @@ export function SchedulePanel({ schedule, onClose, onChanged, onEdit }: Schedule
                 {fullName(schedule.admin)}
               </Typography>
             </Box>
+          </Box>
+
+          <Box component="section">
+            <Typography variant="caption" sx={{ mb: 1.5, display: "block", textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
+              {t("allowedPlans")}
+            </Typography>
+            {(schedule.allowedPlans ?? []).length === 0 ? (
+              <Typography variant="body2" sx={{ color: "text.disabled" }}>
+                {t("openToEveryone")}
+              </Typography>
+            ) : (
+              <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
+                {(schedule.allowedPlans ?? []).map((plan) => (
+                  <Chip key={plan.id} tone="primary">
+                    {plan.name}
+                  </Chip>
+                ))}
+              </Stack>
+            )}
           </Box>
 
           <Box component="section">

@@ -98,6 +98,12 @@ export interface Schedule {
   users?: User[] | null;
   waitListUsers?: User[] | null;
   admin?: User | null;
+  /**
+   * Restricted Schedule: planes que admite la clase. Lista vacía = sin restricción
+   * (abierta a todo el mundo). El back expone además `planAccess`, derivado por
+   * llamante, que el backoffice no pide: aquí nadie se inscribe, solo se configura.
+   */
+  allowedPlans?: Plan[] | null;
 }
 
 export interface ScheduleProgrammed {
