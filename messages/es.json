@@ -710,6 +710,8 @@
     "emptyTable": "Aún no hay planes creados",
     "totalLabel": "{count} planes",
     "archiveConfirmDescription": "El plan \"{name}\" dejará de estar disponible para nuevas suscripciones. Las existentes no se ven afectadas.",
+    "archiveConfirmRequiredBySchedules": "{count, plural, one {# horario exige este plan y lo seguirá exigiendo} other {# horarios exigen este plan y lo seguirán exigiendo}}: quedarán cerrados de hecho, salvo para quien ya tenga una suscripción viva. La restricción no se retira sola.",
+    "archiveConfirmRequirementUnavailable": "No se ha podido comprobar cuántos horarios exigen este plan. Si archivas ahora, los que lo exijan lo seguirán exigiendo.",
     "archive": "Archivar",
     "archived": "Plan archivado",
     "archiveFailed": "No se pudo archivar",

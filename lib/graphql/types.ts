@@ -145,6 +145,19 @@ export interface Plan {
   features?: string[] | null;
   subscriptions?: Subscription[] | null;
   metadata?: { price?: number | string | null } & Record<string, unknown> | null;
+  /** Restricted Schedule: horarios que exigen este plan. Solo se pide al archivar. */
+  requiredBySchedules?: PlanScheduleRequirement | null;
+}
+
+/**
+ * Cuántos horarios exigen un plan (Restricted Schedule). Archivar el plan no se
+ * bloquea nunca por esto ni retira la restricción: es solo el aviso con el que
+ * el administrador confirma.
+ */
+export interface PlanScheduleRequirement {
+  scheduleCount: number;
+  scheduleProgrammedCount: number;
+  total: number;
 }
 
 export interface Subscription {

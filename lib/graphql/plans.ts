@@ -85,6 +85,27 @@ export const UPDATE_PLAN = gql`
   }
 `;
 
+/**
+ * Horarios que exigen el plan, para avisar antes de archivarlo. Va aparte del
+ * listado a propósito: solo hace falta al abrir el diálogo de archivado, y
+ * pedirlo en `PlanFields` lo cobraría en cada plan de cada pantalla.
+ */
+export const PLAN_SCHEDULE_REQUIREMENT = gql`
+  query PlanScheduleRequirement($planId: ID!) {
+    getPlan(planId: $planId) {
+      success
+      plan {
+        id
+        requiredBySchedules {
+          scheduleCount
+          scheduleProgrammedCount
+          total
+        }
+      }
+    }
+  }
+`;
+
 export const ARCHIVE_PLAN = gql`
   mutation ArchivePlan($planId: ID!) {
     archivePlan(planId: $planId) {
