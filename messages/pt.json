@@ -538,6 +538,7 @@
     },
     "schedulePanel": {
       "delete": "Excluir",
+      "edit": "Editar",
       "reactivate": "Reativar aula",
       "cancelClass": "Cancelar aula",
       "cancelled": "Cancelada",
@@ -581,7 +582,13 @@
       "daysOfWeek": "Dias da semana",
       "date": "Data",
       "created": "Aula criada",
-      "createFailed": "Não foi possível criar a aula"
+      "createFailed": "Não foi possível criar a aula",
+      "editTitle": "Editar aula",
+      "editSubtitle": "A data e a hora não mudam aqui",
+      "saveChanges": "Salvar alterações",
+      "saving": "Salvando…",
+      "updated": "Aula atualizada",
+      "updateFailed": "Não foi possível atualizar a aula"
     }
   },
   "polls": {

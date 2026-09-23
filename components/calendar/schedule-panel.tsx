@@ -29,9 +29,11 @@ interface SchedulePanelProps {
   schedule: Schedule | null;
   onClose: () => void;
   onChanged: () => void;
+  /** Abre el formulario de edición para esta clase. */
+  onEdit: (schedule: Schedule) => void;
 }
 
-export function SchedulePanel({ schedule, onClose, onChanged }: SchedulePanelProps) {
+export function SchedulePanel({ schedule, onClose, onChanged, onEdit }: SchedulePanelProps) {
   const t = useTranslations("calendar.schedulePanel");
   const toast = useToast();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -64,6 +66,9 @@ export function SchedulePanel({ schedule, onClose, onChanged }: SchedulePanelPro
       footer={
         schedule ? (
           <>
+            <Button variant="ghost" onClick={() => onEdit(schedule)}>
+              {t("edit")}
+            </Button>
             <Button variant="danger" onClick={() => setConfirmDelete(true)}>
               {t("delete")}
             </Button>

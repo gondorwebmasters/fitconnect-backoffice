@@ -8,7 +8,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import { useQuery } from "@apollo/client";
 import Card from "@mui/material/Card";
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { toISODate } from "@/lib/format";
@@ -59,6 +59,7 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
   useImperativeHandle(ref, () => ({ openCreateForm: onOpenForm }), [onOpenForm]);
 
   const [visibleRange, setVisibleRange] = useState(initialRange);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (range) setVisibleRange(range);
@@ -70,6 +71,23 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
 
   const schedules = useMemo(() => data?.getSchedulesRange?.schedules ?? [], [data]);
   const selectedSchedule = schedules.find((schedule) => schedule.id === selectedEventId) ?? null;
+  const editingSchedule = schedules.find((schedule) => schedule.id === editingScheduleId) ?? null;
+
+  // El panel de detalle y el formulario comparten el mismo hueco en pantalla:
+  // al editar se cierra el panel y se abre el formulario sobre la misma clase.
+  const onEditSchedule = useCallback(
+    (schedule: Schedule) => {
+      setEditingScheduleId(schedule.id);
+      setSelectedEventId(null);
+      onOpenForm();
+    },
+    [setSelectedEventId, onOpenForm],
+  );
+
+  const onCloseScheduleForm = useCallback(() => {
+    setEditingScheduleId(null);
+    onCloseForm();
+  }, [onCloseForm]);
 
   const events = useMemo(
     () =>
@@ -151,11 +169,13 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
         schedule={selectedSchedule}
         onClose={() => setSelectedEventId(null)}
         onChanged={() => refetch()}
+        onEdit={onEditSchedule}
       />
       <ScheduleForm
         open={openForm}
-        onClose={onCloseForm}
-        onCreated={() => refetch()}
+        schedule={editingSchedule}
+        onClose={onCloseScheduleForm}
+        onSaved={() => refetch()}
         initialDate={selectedRange?.start}
       />
     </>

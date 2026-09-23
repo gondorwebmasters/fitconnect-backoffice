@@ -514,6 +514,7 @@
     },
     "schedulePanel": {
       "delete": "Eliminar",
+      "edit": "Editar",
       "reactivate": "Reactivar clase",
       "cancelClass": "Cancelar clase",
       "cancelled": "Cancelada",
@@ -557,7 +558,13 @@
       "daysOfWeek": "Días de la semana",
       "date": "Fecha",
       "created": "Clase creada",
-      "createFailed": "No se pudo crear la clase"
+      "createFailed": "No se pudo crear la clase",
+      "editTitle": "Editar clase",
+      "editSubtitle": "Los datos de fecha y hora no cambian aquí",
+      "saveChanges": "Guardar cambios",
+      "saving": "Guardando…",
+      "updated": "Clase actualizada",
+      "updateFailed": "No se pudo actualizar la clase"
     }
   },
   "polls": {

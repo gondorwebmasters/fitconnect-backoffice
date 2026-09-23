@@ -15,8 +15,8 @@ import { Field, Input, Textarea } from "@/components/ui/input";
 import { SlideOver } from "@/components/ui/slide-over";
 import { useToast } from "@/components/ui/toast";
 import { fullName } from "@/lib/format";
-import { CREATE_SCHEDULE } from "@/lib/graphql/schedules";
-import type { User } from "@/lib/graphql/types";
+import { CREATE_SCHEDULE, UPDATE_SCHEDULE } from "@/lib/graphql/schedules";
+import type { Schedule, User } from "@/lib/graphql/types";
 import { GET_USERS } from "@/lib/graphql/users";
 
 function toDateInputValue(date: Date): string {
@@ -44,24 +44,41 @@ const EMPTY_FORM = {
   days: [] as number[],
 };
 
+/** Rellena el formulario con los campos editables de una clase existente. */
+function formFromSchedule(schedule: Schedule) {
+  return {
+    ...EMPTY_FORM,
+    title: schedule.title,
+    description: schedule.description ?? "",
+    type: schedule.type,
+    maxUsers: String(schedule.maxUsers),
+    admin: schedule.admin?.id ?? "",
+  };
+}
+
 interface ScheduleFormProps {
   open: boolean;
+  schedule: Schedule | null; // null = crear
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
   /** Preselecciona la fecha al abrir (p. ej. al hacer clic en un día del calendario). */
   initialDate?: Date;
 }
 
-export function ScheduleForm({ open, onClose, onCreated, initialDate }: ScheduleFormProps) {
+export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: ScheduleFormProps) {
   const t = useTranslations("calendar.scheduleForm");
   const toast = useToast();
   const [form, setForm] = useState(EMPTY_FORM);
 
+  const editing = Boolean(schedule);
+
   useEffect(() => {
-    if (open && initialDate) {
-      setForm((current) => ({ ...current, date: toDateInputValue(initialDate) }));
+    if (schedule) {
+      setForm(formFromSchedule(schedule));
+    } else {
+      setForm(initialDate ? { ...EMPTY_FORM, date: toDateInputValue(initialDate) } : EMPTY_FORM);
     }
-  }, [open, initialDate]);
+  }, [schedule, open, initialDate]);
 
   const DAYS = DAY_VALUES.map((value) => ({ value, label: t(`dayInitials.${value}`) }));
   const TYPE_OPTIONS = TYPE_VALUES.map((value) => ({ value, label: t(`types.${value}`) }));
@@ -71,7 +88,9 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
     skip: !open,
   });
 
-  const [createSchedule, { loading }] = useMutation(CREATE_SCHEDULE);
+  const [createSchedule, createState] = useMutation(CREATE_SCHEDULE);
+  const [updateSchedule, updateState] = useMutation(UPDATE_SCHEDULE);
+  const loading = createState.loading || updateState.loading;
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -82,54 +101,91 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
       form.days.includes(day) ? form.days.filter((value) => value !== day) : [...form.days, day],
     );
 
+  // Al crear hay que decir además de qué va la clase y cuándo es; al editar esos
+  // campos no se tocan, y la descripción puede venir vacía de una clase antigua.
+  const whenValid = form.repeat ? form.days.length > 0 : Boolean(form.date);
   const valid =
     form.title &&
-    form.description &&
     form.admin &&
     Number(form.maxUsers) > 0 &&
-    (form.repeat ? form.days.length > 0 : Boolean(form.date));
+    (editing || (form.description && whenValid));
 
-  const handleSubmit = async () => {
-    const { data } = await createSchedule({
-      variables: {
-        schedule: {
-          title: form.title,
-          description: form.description,
-          type: form.type,
-          startHour: form.startHour,
-          endHour: form.endHour,
-          maxUsers: Number(form.maxUsers),
-          admin: form.admin,
-          repeat: form.repeat,
-          days: form.repeat ? form.days : form.date ? [new Date(form.date).getDay()] : [],
-          date: form.repeat ? undefined : form.date,
+  const handleUpdate = async () => {
+    if (!schedule) return;
+    // Los errores de validación del back llegan como excepción (GraphQL error), no en `ServiceResponse`.
+    try {
+      const { data } = await updateSchedule({
+        variables: {
+          schedule: {
+            id: schedule.id,
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            maxUsers: Number(form.maxUsers),
+            admin: form.admin,
+          },
         },
-      },
-    });
-    const result = data?.createSchedule;
-    if (result?.success) {
-      toast(t("created"));
-      setForm(EMPTY_FORM);
-      onCreated();
-      onClose();
-    } else {
-      toast(result?.message ?? t("createFailed"), "error");
+      });
+      const result = data?.updateSchedule;
+      if (result?.success) {
+        toast(t("updated"));
+        onSaved();
+        onClose();
+      } else {
+        toast(result?.message ?? t("updateFailed"), "error");
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : t("updateFailed"), "error");
     }
   };
+
+  const handleCreate = async () => {
+    try {
+      const { data } = await createSchedule({
+        variables: {
+          schedule: {
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            startHour: form.startHour,
+            endHour: form.endHour,
+            maxUsers: Number(form.maxUsers),
+            admin: form.admin,
+            repeat: form.repeat,
+            days: form.repeat ? form.days : form.date ? [new Date(form.date).getDay()] : [],
+            date: form.repeat ? undefined : form.date,
+          },
+        },
+      });
+      const result = data?.createSchedule;
+      if (result?.success) {
+        toast(t("created"));
+        setForm(EMPTY_FORM);
+        onSaved();
+        onClose();
+      } else {
+        toast(result?.message ?? t("createFailed"), "error");
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : t("createFailed"), "error");
+    }
+  };
+
+  const handleSubmit = editing ? handleUpdate : handleCreate;
 
   return (
     <SlideOver
       open={open}
       onClose={onClose}
-      title={t("newClass")}
-      subtitle={form.repeat ? t("weeklySeries") : t("oneTimeClass")}
+      title={editing ? t("editTitle") : t("newClass")}
+      subtitle={editing ? t("editSubtitle") : form.repeat ? t("weeklySeries") : t("oneTimeClass")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {t("cancel")}
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={!valid || loading}>
-            {loading ? t("creating") : t("createClass")}
+            {loading ? (editing ? t("saving") : t("creating")) : editing ? t("saveChanges") : t("createClass")}
           </Button>
         </>
       }
@@ -154,10 +210,12 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
             />
           </Field>
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
-          <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
-        </Box>
+        {!editing ? (
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
+            <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
+          </Box>
+        ) : null}
         <Field label={t("trainer")}>
           <Dropdown
             options={(trainers.data?.getUsers?.users ?? []).map((user) => ({
@@ -171,42 +229,46 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
           />
         </Field>
 
-        <FormControlLabel
-          control={<Checkbox checked={form.repeat} onChange={(event) => set("repeat", event.target.checked)} />}
-          label={t("repeatWeekly")}
-          slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
-        />
+        {!editing ? (
+          <>
+          <FormControlLabel
+            control={<Checkbox checked={form.repeat} onChange={(event) => set("repeat", event.target.checked)} />}
+            label={t("repeatWeekly")}
+            slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
+          />
 
-        {form.repeat ? (
-          <Field label={t("daysOfWeek")}>
-            <Stack direction="row" spacing={1}>
-              {DAYS.map((day) => (
-                <Box
-                  key={day.value}
-                  component="button"
-                  type="button"
-                  onClick={() => toggleDay(day.value)}
-                  sx={{
-                    height: 36,
-                    width: 36,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    fontSize: 14,
-                    cursor: "pointer",
-                    transition: (theme) => theme.transitions.create(["background-color", "border-color", "color"]),
-                    ...(form.days.includes(day.value)
-                      ? { borderColor: "text.primary", bgcolor: "text.primary", color: "background.paper" }
-                      : { borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "text.disabled" } }),
-                  }}
-                >
-                  {day.label}
-                </Box>
-              ))}
-            </Stack>
-          </Field>
-        ) : (
-          <DatePicker value={form.date} onChange={(value) => set("date", value)} placeholder={t("date")} />
-        )}
+          {form.repeat ? (
+            <Field label={t("daysOfWeek")}>
+              <Stack direction="row" spacing={1}>
+                {DAYS.map((day) => (
+                  <Box
+                    key={day.value}
+                    component="button"
+                    type="button"
+                    onClick={() => toggleDay(day.value)}
+                    sx={{
+                      height: 36,
+                      width: 36,
+                      borderRadius: 2,
+                      border: "1px solid",
+                      fontSize: 14,
+                      cursor: "pointer",
+                      transition: (theme) => theme.transitions.create(["background-color", "border-color", "color"]),
+                      ...(form.days.includes(day.value)
+                        ? { borderColor: "text.primary", bgcolor: "text.primary", color: "background.paper" }
+                        : { borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "text.disabled" } }),
+                    }}
+                  >
+                    {day.label}
+                  </Box>
+                ))}
+              </Stack>
+            </Field>
+          ) : (
+            <DatePicker value={form.date} onChange={(value) => set("date", value)} placeholder={t("date")} />
+          )}
+          </>
+        ) : null}
       </Stack>
     </SlideOver>
   );
