@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -55,7 +55,7 @@ function formFromSchedule(schedule: Schedule) {
     type: schedule.type,
     maxUsers: String(schedule.maxUsers),
     admin: schedule.admin?.id ?? "",
-    allowedPlanIds: (schedule.allowedPlans ?? []).map((plan) => plan.id),
+    allowedPlanIds: schedule.allowedPlans.map((plan) => plan.id),
   };
 }
 
@@ -97,6 +97,23 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
     variables: { onlyActive: true, showGlobal: false },
     skip: !open,
   });
+
+  // Las opciones son los planes activos de la empresa más los que ya restringen esta
+  // clase. Un plan archivado sigue restringiendo en el back, pero `onlyActive: true`
+  // no lo devuelve: sin unirlo aquí el selector no pintaría su chip, el formulario
+  // mentiría sobre la restricción vigente y, como `allowedPlanIds` viaja siempre,
+  // guardar cualquier otro cambio lo borraría sin que el administrador lo viera.
+  // Archivado sigue sin poder elegirse de nuevo: solo se muestra si ya estaba puesto.
+  const planOptions = useMemo(() => {
+    const options = new Map<string, { value: string; label: string }>();
+    for (const plan of plans.data?.listPlans?.plans ?? []) {
+      options.set(plan.id, { value: plan.id, label: plan.name });
+    }
+    for (const plan of schedule?.allowedPlans ?? []) {
+      if (!options.has(plan.id)) options.set(plan.id, { value: plan.id, label: plan.name });
+    }
+    return [...options.values()];
+  }, [plans.data, schedule]);
 
   const [createSchedule, createState] = useMutation(CREATE_SCHEDULE);
   const [updateSchedule, updateState] = useMutation(UPDATE_SCHEDULE);
@@ -248,10 +265,7 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate }: 
         {editing || !form.repeat ? (
           <Field label={t("allowedPlans")} hint={t("allowedPlansHint")}>
             <MultiDropdown
-              options={(plans.data?.listPlans?.plans ?? []).map((plan) => ({
-                value: plan.id,
-                label: plan.name,
-              }))}
+              options={planOptions}
               placeholder={t("allowedPlansPlaceholder")}
               value={form.allowedPlanIds}
               onChange={(value) => set("allowedPlanIds", value)}

@@ -144,13 +144,13 @@ export function SchedulePanel({ schedule, onClose, onChanged, onEdit }: Schedule
             <Typography variant="caption" sx={{ mb: 1.5, display: "block", textTransform: "uppercase", letterSpacing: "0.04em", color: "text.disabled" }}>
               {t("allowedPlans")}
             </Typography>
-            {(schedule.allowedPlans ?? []).length === 0 ? (
+            {schedule.allowedPlans.length === 0 ? (
               <Typography variant="body2" sx={{ color: "text.disabled" }}>
                 {t("openToEveryone")}
               </Typography>
             ) : (
               <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
-                {(schedule.allowedPlans ?? []).map((plan) => (
+                {schedule.allowedPlans.map((plan) => (
                   <Chip key={plan.id} tone="primary">
                     {plan.name}
                   </Chip>

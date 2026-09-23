@@ -94,7 +94,7 @@ export const CalendarView = forwardRef<CalendarViewHandle>(function CalendarView
     () =>
       schedules.map((schedule) => {
         const cancelled = schedule.state === "cancelled";
-        const planNames = (schedule.allowedPlans ?? []).map((plan) => plan.name);
+        const planNames = schedule.allowedPlans.map((plan) => plan.name);
         const restricted = planNames.length > 0;
         const occupancy = schedule.maxUsers > 0 ? (schedule.users?.length ?? 0) / schedule.maxUsers : 0;
 

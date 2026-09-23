@@ -85,6 +85,13 @@ export interface ScheduleOptions {
   quotaWarningThresholds: number[];
 }
 
+/**
+ * Los campos de `Plan` que `SCHEDULE_FIELDS` pide dentro de un Schedule. Mantener
+ * a la par con el fragmento: sin codegen, el documento y este tipo solo coinciden
+ * si se tocan juntos.
+ */
+export type ScheduleAllowedPlan = Pick<Plan, "id" | "name">;
+
 export interface Schedule {
   id: string;
   title: string;
@@ -102,8 +109,12 @@ export interface Schedule {
    * Restricted Schedule: planes que admite la clase. Lista vacía = sin restricción
    * (abierta a todo el mundo). El back expone además `planAccess`, derivado por
    * llamante, que el backoffice no pide: aquí nadie se inscribe, solo se configura.
+   *
+   * No es `Plan[]`: el back lo declara `[Plan!]!` (nunca null) y `SCHEDULE_FIELDS`
+   * solo pide `id` y `name`, así que tiparlo como `Plan` completo prometería un
+   * `amount` o un `status` que no viajan en la respuesta.
    */
-  allowedPlans?: Plan[] | null;
+  allowedPlans: ScheduleAllowedPlan[];
 }
 
 export interface ScheduleProgrammed {
