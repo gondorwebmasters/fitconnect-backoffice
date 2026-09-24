@@ -117,16 +117,36 @@ export interface Schedule {
   allowedPlans: ScheduleAllowedPlan[];
 }
 
+/**
+ * Plantilla semanal: el molde del que nacen los schedules de cada semana. No es
+ * un schedule — no tiene fecha ni estado ni inscritos, sino los días de la semana
+ * en que se repite. Editarla **pisa todos los schedules futuros** que engendró.
+ *
+ * Los campos son los de `SCHEDULE_PROGRAMMED_FIELDS`: sin codegen, el documento y
+ * este tipo solo coinciden si se tocan juntos.
+ */
 export interface ScheduleProgrammed {
   id: string;
   title: string;
   description?: string | null;
+  /** Convención del server: 0 = domingo … 6 = sábado. */
   daysOfWeek?: number[] | null;
+  /** `time` de Postgres: llega como `HH:mm:ss`, no como `HH:mm`. */
   startHour: string;
   endHour: string;
   maxUsers: number;
   type?: ScheduleType | null;
+  age?: number | null;
   admin?: User | null;
+  /**
+   * Restricted Schedule sobre la plantilla: planes que admitirán los schedules
+   * que engendre. Lista vacía = plantilla sin restricción, que sigue engendrando
+   * schedules abiertos. Editarla vuelve a sembrarla en todos los futuros (#12).
+   *
+   * Mismo `Pick` que en `Schedule` y por lo mismo: el back lo declara `[Plan!]!`
+   * y el fragmento solo pide `id` y `name`.
+   */
+  allowedPlans: ScheduleAllowedPlan[];
 }
 
 export interface Plan {

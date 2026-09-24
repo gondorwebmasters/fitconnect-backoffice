@@ -21,6 +21,7 @@
     "segments": {
       "members": "Miembros",
       "calendar": "Calendario",
+      "templates": "Plantillas semanales",
       "plans": "Planes",
       "subscriptions": "Suscripciones",
       "billing": "Facturación",
@@ -570,7 +571,40 @@
       "updateFailed": "No se pudo actualizar la clase",
       "allowedPlans": "Planes admitidos",
       "allowedPlansHint": "Déjalo vacío para que la clase esté abierta a todo el mundo.",
-      "allowedPlansPlaceholder": "Sin restricción"
+      "allowedPlansSeriesHint": "Déjalo vacío para que la serie esté abierta a todo el mundo. La restricción se guarda en la plantilla y se aplica a cada clase que genere.",
+      "allowedPlansPlaceholder": "Sin restricción",
+      "newTemplate": "Nueva plantilla semanal",
+      "createTemplate": "Crear plantilla"
+    },
+    "templates": {
+      "title": "Plantillas semanales",
+      "subtitle": "Clases que se repiten cada semana. Editar una plantilla reescribe sus clases futuras.",
+      "newTemplate": "Nueva plantilla",
+      "emptyTable": "Todavía no hay plantillas semanales",
+      "openToEveryone": "Abierta a todo el mundo",
+      "deleted": "Plantilla eliminada",
+      "deleteFailed": "No se pudo eliminar la plantilla",
+      "editTemplate": "Editar plantilla",
+      "deleteTemplate": "Eliminar plantilla",
+      "deleteTemplateDescription": "Se dejará de generar «{title}» cada semana. Sus clases futuras con inscritos se cancelan y las demás se eliminan; las clases ya pasadas se conservan. Esta acción no se puede deshacer.",
+      "delete": "Eliminar",
+      "columns": {
+        "template": "Plantilla",
+        "days": "Días",
+        "hours": "Horario",
+        "trainer": "Entrenador",
+        "spots": "Plazas",
+        "allowedPlans": "Planes admitidos"
+      },
+      "form": {
+        "editTitle": "Editar plantilla semanal",
+        "editSubtitle": "Se aplica a las clases futuras, no a las ya pasadas",
+        "overwriteWarning": "Al guardar se reescriben todas las clases futuras de esta plantilla: título, horario, aforo, entrenador y planes admitidos. Las clases ya pasadas no se tocan.",
+        "daysHint": "Quitar un día cancela o elimina sus clases futuras; añadir uno empieza a generarlas.",
+        "allowedPlansHint": "Déjalo vacío para que las clases de esta plantilla estén abiertas a todo el mundo. El cambio se aplica también a las clases futuras ya generadas.",
+        "updated": "Plantilla actualizada",
+        "updateFailed": "No se pudo actualizar la plantilla"
+      }
     }
   },
   "polls": {

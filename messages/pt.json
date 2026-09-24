@@ -21,6 +21,7 @@
     "segments": {
       "members": "Membros",
       "calendar": "Calendário",
+      "templates": "Modelos semanais",
       "plans": "Planos",
       "subscriptions": "Assinaturas",
       "billing": "Faturamento",
@@ -594,7 +595,40 @@
       "updateFailed": "Não foi possível atualizar a aula",
       "allowedPlans": "Planos admitidos",
       "allowedPlansHint": "Deixe vazio para que a aula fique aberta a todos.",
-      "allowedPlansPlaceholder": "Sem restrição"
+      "allowedPlansSeriesHint": "Deixe vazio para que a série fique aberta a todos. A restrição é guardada no modelo e aplica-se a cada aula que gerar.",
+      "allowedPlansPlaceholder": "Sem restrição",
+      "newTemplate": "Novo modelo semanal",
+      "createTemplate": "Criar modelo"
+    },
+    "templates": {
+      "title": "Modelos semanais",
+      "subtitle": "Aulas que se repetem todas as semanas. Editar um modelo reescreve as suas aulas futuras.",
+      "newTemplate": "Novo modelo",
+      "emptyTable": "Ainda não há modelos semanais",
+      "openToEveryone": "Aberta a todos",
+      "deleted": "Modelo eliminado",
+      "deleteFailed": "Não foi possível eliminar o modelo",
+      "editTemplate": "Editar modelo",
+      "deleteTemplate": "Eliminar modelo",
+      "deleteTemplateDescription": "Deixará de gerar «{title}» todas as semanas. As suas aulas futuras com inscritos são canceladas e as restantes são eliminadas; as aulas já passadas são mantidas. Esta ação não pode ser desfeita.",
+      "delete": "Eliminar",
+      "columns": {
+        "template": "Modelo",
+        "days": "Dias",
+        "hours": "Horário",
+        "trainer": "Treinador",
+        "spots": "Vagas",
+        "allowedPlans": "Planos admitidos"
+      },
+      "form": {
+        "editTitle": "Editar modelo semanal",
+        "editSubtitle": "Aplica-se às aulas futuras, não às já passadas",
+        "overwriteWarning": "Ao guardar são reescritas todas as aulas futuras deste modelo: título, horário, lotação, treinador e planos admitidos. As aulas já passadas não são tocadas.",
+        "daysHint": "Retirar um dia cancela ou elimina as suas aulas futuras; adicionar um começa a gerá-las.",
+        "allowedPlansHint": "Deixe vazio para que as aulas deste modelo fiquem abertas a todos. A alteração aplica-se também às aulas futuras já geradas.",
+        "updated": "Modelo atualizado",
+        "updateFailed": "Não foi possível atualizar o modelo"
+      }
     }
   },
   "polls": {

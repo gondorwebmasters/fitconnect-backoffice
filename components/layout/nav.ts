@@ -28,6 +28,7 @@ export const SYSTEM_NAV: NavItem[] = [
 export const SEGMENT_LABEL_KEYS: Record<string, string> = {
   members: "members",
   calendar: "calendar",
+  templates: "templates",
   plans: "plans",
   subscriptions: "subscriptions",
   billing: "billing",
