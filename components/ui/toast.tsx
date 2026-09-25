@@ -44,8 +44,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <Alert
             key={toast.id}
             severity={toast.tone}
-            variant="filled"
-            sx={{ pointerEvents: "auto", boxShadow: 16 }}
+            variant="standard"
+            sx={{ pointerEvents: "auto", minWidth: 260 }}
           >
             {toast.message}
           </Alert>

@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import InputBase from "@mui/material/InputBase";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { DURATION, EASE_IN, EASE_OUT, SPRING } from "@/lib/motion";
 import { varAlpha } from "@/theme/styles";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
@@ -128,16 +129,18 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: DURATION.standard, ease: EASE_OUT }}
             onClick={onClose}
-            sx={{ position: "absolute", inset: 0, bgcolor: (theme) => varAlpha(theme.vars.palette.grey["900Channel"], 0.3), backdropFilter: "blur(4px)" }}
+            sx={{ position: "absolute", inset: 0, bgcolor: (theme) => varAlpha(theme.vars.palette.grey["900Channel"], 0.4), backdropFilter: "blur(8px) saturate(140%)" }}
           />
           <Box
             component={motion.div}
-            initial={{ opacity: 0, scale: 0.97, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: -8 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            // Nace del buscador de la topbar (origen arriba) y se materializa: escala + desenfoque.
+            initial={{ opacity: 0, scale: 0.96, y: -8, filter: "blur(6px)" }}
+            animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)", transition: SPRING }}
+            // Salida ~65 % de la entrada: responde antes de lo que aparece.
+            exit={{ opacity: 0, scale: 0.98, y: -4, filter: "blur(4px)", transition: { duration: DURATION.quick, ease: EASE_IN } }}
+            style={{ transformOrigin: "top center" }}
             sx={{
               position: "relative",
               width: "100%",
@@ -146,8 +149,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
               borderRadius: 4,
               border: "1px solid",
               borderColor: "divider",
-              bgcolor: "background.paper",
+              bgcolor: (theme) => varAlpha(theme.vars.palette.background.paperChannel, 0.88),
+              backdropFilter: "blur(24px) saturate(180%)",
               boxShadow: (theme) => theme.vars.customShadows.dialog,
+              "@media (prefers-reduced-transparency: reduce)": { bgcolor: "background.paper", backdropFilter: "none" },
             }}
           >
             <Stack direction="row" alignItems="center" spacing={1.25} sx={{ borderBottom: "1px solid", borderColor: "divider", px: 2 }}>

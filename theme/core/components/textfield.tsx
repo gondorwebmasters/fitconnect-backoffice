@@ -77,7 +77,9 @@ const MuiOutlinedInput: Components<Theme>['MuiOutlinedInput'] = {
    *************************************** */
   styleOverrides: {
     root: ({ theme }) => ({
+      transition: 'box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1)',
       [`&.${outlinedInputClasses.focused}`]: {
+        boxShadow: `0 0 0 4px ${varAlpha(theme.vars.palette.primary.mainChannel, 0.12)}`,
         [`& .${outlinedInputClasses.notchedOutline}`]: {
           borderColor: theme.vars.palette.text.primary,
         },

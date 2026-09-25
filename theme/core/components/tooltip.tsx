@@ -3,7 +3,7 @@ import type { Theme } from '../../types';
 
 import { tooltipClasses } from '@mui/material/Tooltip';
 
-import { stylesMode } from '../../styles';
+import { glass, varAlpha, stylesMode } from '../../styles';
 
 // ----------------------------------------------------------------------
 
@@ -13,17 +13,15 @@ const MuiTooltip: Components<Theme>['MuiTooltip'] = {
    *************************************** */
   styleOverrides: {
     tooltip: ({ theme }) => ({
-      backgroundColor: theme.vars.palette.grey[800],
+      ...glass({ theme, blur: 16 }),
+      backgroundColor: varAlpha(theme.vars.palette.grey['800Channel'], 0.72),
+      color: theme.vars.palette.common.white,
+      letterSpacing: '0.01em',
       [stylesMode.dark]: {
-        backgroundColor: theme.vars.palette.grey[700],
+        backgroundColor: varAlpha(theme.vars.palette.grey['700Channel'], 0.6),
       },
     }),
-    arrow: ({ theme }) => ({
-      color: theme.vars.palette.grey[800],
-      [stylesMode.dark]: {
-        color: theme.vars.palette.grey[700],
-      },
-    }),
+    arrow: { display: 'none' },
     popper: {
       [`&.${tooltipClasses.popper}[data-popper-placement*="bottom"] .${tooltipClasses.tooltip}`]: {
         marginTop: 12,

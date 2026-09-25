@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 
+import { Reveal } from "./motion";
+
 export function PageHeader({
   title,
   subtitle,
@@ -15,6 +17,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
+    <Reveal>
     <Stack
       direction={{ xs: "column", sm: "row" }}
       alignItems={{ xs: "flex-start", sm: "flex-end" }}
@@ -45,5 +48,6 @@ export function PageHeader({
         </Stack>
       ) : null}
     </Stack>
+    </Reveal>
   );
 }

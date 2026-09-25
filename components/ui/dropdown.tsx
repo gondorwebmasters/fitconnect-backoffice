@@ -14,6 +14,8 @@ interface DropdownProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** Etiqueta flotante dentro del borde (igual que Input); `Field` la inyecta. */
+  label?: string;
   /** MUI Autocomplete siempre permite buscar; se mantiene la prop por compatibilidad. */
   searchable?: boolean;
   clearable?: boolean;
@@ -28,6 +30,7 @@ export function Dropdown({
   value,
   onChange,
   placeholder = "Seleccionar…",
+  label,
   clearable = false,
   disabled = false,
   sx,
@@ -44,7 +47,7 @@ export function Dropdown({
       onChange={(_event, newValue) => onChange(newValue?.value ?? "")}
       getOptionLabel={(option) => option.label}
       isOptionEqualToValue={(option, val) => option.value === val.value}
-      renderInput={(params) => <TextField {...params} placeholder={placeholder} />}
+      renderInput={(params) => <TextField {...params} label={label} placeholder={placeholder} />}
     />
   );
 }

@@ -1,6 +1,8 @@
 import type { Components } from '@mui/material/styles';
 import type { Theme } from '../../types';
 
+import { glass, varAlpha, stylesMode } from '../../styles';
+
 // ----------------------------------------------------------------------
 
 const MuiDialog: Components<Theme>['MuiDialog'] = {
@@ -9,9 +11,24 @@ const MuiDialog: Components<Theme>['MuiDialog'] = {
    *************************************** */
   styleOverrides: {
     paper: ({ ownerState, theme }) => ({
-      boxShadow: theme.vars.customShadows.dialog,
-      borderRadius: Number(theme.shape.borderRadius) * 2,
+      ...(!ownerState.fullScreen && {
+        // Alert/sheet de iOS 26: cristal más denso que un popover (hay formularios dentro).
+        ...glass({ theme, blur: 40, shadow: theme.vars.customShadows.dialog }),
+        backgroundColor: varAlpha(theme.vars.palette.background.paperChannel, 0.78),
+        [stylesMode.dark]: {
+          backgroundColor: varAlpha(theme.vars.palette.background.paperChannel, 0.72),
+        },
+      }),
+      borderRadius: Number(theme.shape.borderRadius) * 3,
       ...(!ownerState.fullScreen && { margin: theme.spacing(2) }),
+      // Entrada: 0.96 → 1 + 8 px. La opacidad y la salida las gestiona el
+      // Fade de MUI; esto solo añade la "materialización" del panel.
+      animation: 'fc-dialog-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both',
+      '@keyframes fc-dialog-in': {
+        from: { transform: 'scale(0.96) translateY(8px)' },
+        to: { transform: 'none' },
+      },
+      '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
     }),
     paperFullScreen: { borderRadius: 0 },
   },

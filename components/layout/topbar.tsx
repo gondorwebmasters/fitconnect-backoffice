@@ -3,11 +3,14 @@
 import { Iconify } from "@/components/iconify";
 
 import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
+import { GlassIconButton } from "@/components/ui/glass-icon-button";
 import Stack from "@mui/material/Stack";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+
+import { DURATION, EASE_OUT, SPRING, SPRING_SNAPPY } from "@/lib/motion";
+import { varAlpha } from "@/theme/styles";
 
 import { useShell } from "./app-shell";
 import { CompanySwitcher } from "./company-switcher";
@@ -39,28 +42,39 @@ export function Topbar() {
       spacing={2}
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: DURATION.slow, ease: EASE_OUT }}
       sx={{
         position: "sticky",
         top: 0,
         zIndex: (theme) => theme.zIndex.appBar,
         height: 64,
+        // Material translúcido: el contenido se ve desenfocado al pasar por
+        // debajo. El borde solo aparece al hacer scroll (scroll-edge effect),
+        // en vez de una línea dura permanente.
+        bgcolor: (theme) => varAlpha(theme.vars.palette.background.paperChannel, scrolled ? 0.72 : 0.9),
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
         borderBottom: "1px solid",
-        borderColor: "divider",
-        bgcolor: "background.paper",
+        borderColor: scrolled ? "divider" : "transparent",
         px: { xs: 1, sm: 2, lg: 3 },
-        transition: (theme) => theme.transitions.create("box-shadow", { duration: 300 }),
+        transition: (theme) =>
+          theme.transitions.create(["box-shadow", "background-color", "border-color"], { duration: 300 }),
         boxShadow: scrolled ? (theme) => theme.vars.customShadows.z8 : "none",
+        "@media (prefers-reduced-transparency: reduce)": {
+          bgcolor: "background.paper",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+        },
       }}
     >
-      <IconButton
+      <GlassIconButton
         onClick={toggleMobileNav}
         aria-label={t("menu")}
         size="small"
         sx={{ display: { xs: "inline-flex", md: "none" } }}
       >
         <Iconify icon="eva:menu-2-fill" width={22} />
-      </IconButton>
+      </GlassIconButton>
 
       <Box sx={{ flex: 1 }} />
 
@@ -71,8 +85,8 @@ export function Topbar() {
           alignItems="center"
           spacing={1}
           onClick={openPalette}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.02, transition: SPRING }}
+          whileTap={{ scale: 0.97, transition: SPRING_SNAPPY }}
           sx={{
             height: 36,
             borderRadius: 3,

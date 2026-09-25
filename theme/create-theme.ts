@@ -25,6 +25,26 @@ export function createTheme(
     // *colors* (card/dialog/dropdown/primary/…) live in customShadows above.
     shadows: shadows('light'),
     shape: { borderRadius: 8 },
+    // Easing y duraciones de firma (ver lib/motion.ts): todas las transiciones
+    // de MUI (Dialog, Menu, Drawer, Collapse, ripple…) heredan la misma
+    // sensación en vez del easeInOut genérico de Material.
+    transitions: {
+      easing: {
+        easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        easeOut: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        easeIn: 'cubic-bezier(0.4, 0, 1, 1)',
+        sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
+      },
+      duration: {
+        shortest: 100,
+        shorter: 150,
+        short: 200,
+        standard: 250,
+        complex: 320,
+        enteringScreen: 280,
+        leavingScreen: 180,
+      },
+    },
     components,
     typography,
     cssVariables: {

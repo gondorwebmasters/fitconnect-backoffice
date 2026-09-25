@@ -6,6 +6,8 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { motion } from "framer-motion";
 
+import { DURATION, EASE_OUT, SPRING, SPRING_SNAPPY, staggerDelay } from "@/lib/motion";
+
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function KpiCard({
@@ -28,9 +30,17 @@ export function KpiCard({
       component={motion.div}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -3 }}
-      sx={{ p: 3, minWidth: 0, overflow: "hidden", boxShadow: theme.vars.customShadows.card }}
+      transition={{ duration: DURATION.slow, delay: staggerDelay(index), ease: EASE_OUT }}
+      whileHover={{ y: -2, transition: SPRING }}
+      whileTap={{ scale: 0.99, transition: SPRING_SNAPPY }}
+      sx={{
+        p: 3,
+        minWidth: 0,
+        overflow: "hidden",
+        boxShadow: theme.vars.customShadows.card,
+        transition: "box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "&:hover": { boxShadow: theme.vars.customShadows.z16 },
+      }}
     >
       <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 600 }}>
         {label}
