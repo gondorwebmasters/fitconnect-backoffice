@@ -196,6 +196,12 @@ export interface Subscription {
   isInTrial?: boolean | null;
   isPastDue?: boolean | null;
   daysUntilRenewal?: number | null;
+  /** Session Pack: snapshot de Plan.sessionCount al crear. null = ilimitado. */
+  creditsTotal?: number | null;
+  /** Créditos de sesión consumidos. */
+  creditsUsed?: number | null;
+  /** creditsTotal − creditsUsed (derivado). null = ilimitado. */
+  remainingCredits?: number | null;
 }
 
 export interface SubscriptionHistoryEntry {
