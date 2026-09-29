@@ -12,8 +12,15 @@ const MuiBackdrop: Components<Theme>['MuiBackdrop'] = {
   styleOverrides: {
     root: ({ theme }) => ({
       backgroundColor: varAlpha(theme.vars.palette.grey['800Channel'], 0.48),
+      backdropFilter: 'blur(6px) saturate(140%)',
+      WebkitBackdropFilter: 'blur(6px) saturate(140%)',
+      '@media (prefers-reduced-transparency: reduce)': {
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
+        backgroundColor: varAlpha(theme.vars.palette.grey['800Channel'], 0.72),
+      },
     }),
-    invisible: { background: 'transparent' },
+    invisible: { background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none' },
   },
 };
 

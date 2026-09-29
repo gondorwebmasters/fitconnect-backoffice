@@ -40,6 +40,7 @@ const MuiTableRow: Components<Theme>['MuiTableRow'] = {
    *************************************** */
   styleOverrides: {
     root: ({ theme }) => ({
+      transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
       [`&.${tableRowClasses.selected}`]: {
         backgroundColor: varAlpha(theme.vars.palette.primary.darkChannel, 0.04),
         '&:hover': { backgroundColor: varAlpha(theme.vars.palette.primary.darkChannel, 0.08) },

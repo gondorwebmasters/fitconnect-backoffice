@@ -15,6 +15,8 @@ const MuiSwitch: Components<Theme>['MuiSwitch'] = {
     root: { alignItems: 'center' },
     switchBase: ({ ownerState, theme }) => ({
       top: 'unset',
+      transition: 'transform 280ms cubic-bezier(0.34, 1.4, 0.64, 1), color 200ms ease',
+      '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       transform: 'translateX(6px)',
       [`&.${switchClasses.checked}`]: {
         [`& .${switchClasses.thumb}`]: {
@@ -39,7 +41,11 @@ const MuiSwitch: Components<Theme>['MuiSwitch'] = {
       borderRadius: 10,
       backgroundColor: varAlpha(theme.vars.palette.grey['500Channel'], 0.48),
     }),
-    thumb: ({ theme }) => ({ color: theme.vars.palette.common.white }),
+    thumb: ({ theme }) => ({
+      color: theme.vars.palette.common.white,
+      boxShadow: theme.vars.customShadows.z1,
+      transition: 'width 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+    }),
     sizeMedium: {
       [`& .${switchClasses.track}`]: { height: 20 },
       [`& .${switchClasses.thumb}`]: { width: 14, height: 14 },

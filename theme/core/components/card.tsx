@@ -13,6 +13,7 @@ const MuiCard: Components<Theme>['MuiCard'] = {
       boxShadow: theme.vars.customShadows.card,
       borderRadius: Number(theme.shape.borderRadius) * 2,
       zIndex: 0, // Fix Safari overflow: hidden with border radius
+      transition: `box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1)`,
     }),
   },
 };

@@ -8,6 +8,7 @@ import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import { GlassIconButton } from "@/components/ui/glass-icon-button";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -134,11 +135,11 @@ export function NotificationsBell() {
       onClose={() => setOpen(false)}
       panelSx={{ width: { xs: "calc(100vw - 32px)", sm: 400 }, maxWidth: 400 }}
       trigger={
-        <IconButton
+        <GlassIconButton
           onClick={() => setOpen((value) => !value)}
           aria-label={unreadCount ? t("titleWithCount", { count: unreadCount }) : t("title")}
           size="small"
-          sx={{ position: "relative", color: "text.disabled" }}
+          sx={{ position: "relative" }}
         >
           <Iconify icon="solar:bell-bold" width={22} />
           {unreadCount > 0 ? (
@@ -165,7 +166,7 @@ export function NotificationsBell() {
               {unreadCount > 9 ? "9+" : unreadCount}
             </Box>
           ) : null}
-        </IconButton>
+        </GlassIconButton>
       }
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pl: 2.5, pr: 1.5, py: 2 }}>

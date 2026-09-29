@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { DURATION, EASE_OUT, SPRING, SPRING_SNAPPY } from "@/lib/motion";
 import { varAlpha } from "@/theme/styles";
 
 import { useShell } from "./app-shell";
@@ -53,7 +54,10 @@ function NavLink({
         py: 1,
         fontSize: 14,
         textDecoration: "none",
-        transition: (theme) => theme.transitions.create("color", { duration: 200 }),
+        transition: (theme) =>
+          theme.transitions.create(["color", "background-color", "transform"], { duration: 160 }),
+        "&:active": { transform: "scale(0.98)" },
+        "@media (prefers-reduced-motion: reduce)": { "&:active": { transform: "none" } },
         ...(collapsed && { justifyContent: "center", px: 0 }),
         ...(active
           ? { fontWeight: 600, color: "primary.contrastText" }
@@ -64,7 +68,7 @@ function NavLink({
         <Box
           component={motion.span}
           layoutId={`sidebar-active-pill-${variant}`}
-          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+          transition={SPRING}
           sx={{
             position: "absolute",
             inset: 0,
@@ -109,7 +113,8 @@ function SidebarContent({
       >
         <Box
           component={motion.span}
-          whileHover={{ rotate: -8, scale: 1.05 }}
+          whileHover={{ rotate: -8, scale: 1.05, transition: SPRING_SNAPPY }}
+          whileTap={{ scale: 0.95, transition: SPRING_SNAPPY }}
           sx={{ display: "flex", height: 32, width: 32, flexShrink: 0, alignItems: "center", justifyContent: "center" }}
         >
           <Logo disableLink height={32} />
@@ -124,7 +129,7 @@ function SidebarContent({
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
               exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: DURATION.quick, ease: EASE_OUT }}
               sx={{ overflow: "hidden", whiteSpace: "nowrap" }}
             >
               <Typography variant="body2" noWrap sx={{ fontWeight: 600, letterSpacing: "-0.01em" }}>
@@ -217,7 +222,7 @@ export function Sidebar() {
         component={motion.aside}
         initial={false}
         animate={{ width: collapsed ? 88 : 280 }}
-        transition={{ type: "spring", stiffness: 400, damping: 40 }}
+        transition={SPRING}
         sx={{
           display: { xs: "none", md: "flex" },
           position: "fixed",
@@ -227,7 +232,15 @@ export function Sidebar() {
           overflow: "hidden",
           borderRight: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.paper",
+          // Material "grueso" para la región estructural: más opaco que la topbar.
+          bgcolor: (theme) => varAlpha(theme.vars.palette.background.paperChannel, 0.92),
+          backdropFilter: "blur(24px) saturate(160%)",
+          WebkitBackdropFilter: "blur(24px) saturate(160%)",
+          "@media (prefers-reduced-transparency: reduce)": {
+            bgcolor: "background.paper",
+            backdropFilter: "none",
+            WebkitBackdropFilter: "none",
+          },
         }}
       >
         <SidebarContent collapsed={collapsed} onToggleCollapsed={toggleCollapsed} variant="desktop" />

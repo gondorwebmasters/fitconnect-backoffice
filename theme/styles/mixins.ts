@@ -5,7 +5,7 @@ import { checkboxClasses } from '@mui/material/Checkbox';
 import { menuItemClasses } from '@mui/material/MenuItem';
 import { autocompleteClasses } from '@mui/material/Autocomplete';
 
-import { remToPx, varAlpha, mediaQueries } from './utils';
+import { remToPx, varAlpha, mediaQueries, stylesMode } from './utils';
 
 // ----------------------------------------------------------------------
 
@@ -187,6 +187,90 @@ export function maxLine({ line, persistent }: MaxLineProps): CSSObject {
   return baseStyles;
 }
 
+
+/**
+ * Liquid Glass (iOS 26): material translúcido con refracción simulada.
+ * - Blur + saturación alta: el fondo "se dobla" y se intensifica bajo el cristal.
+ * - Brillo especular: borde superior/izquierdo luminoso (luz cayendo sobre el vidrio)
+ *   y sombra interior inferior (grosor del cristal), vía box-shadow inset.
+ * - `tint` colorea el cristal (alerts); `clear` lo hace casi transparente (sobre media).
+ * Cae a superficie sólida con `prefers-reduced-transparency` y refuerza borde con
+ * `prefers-contrast: more`.
+ *
+ * Usage: ...glass({ theme, blur: 24, tint: theme.vars.palette.success.mainChannel })
+ */
+type GlassProps = {
+  theme: Theme;
+  blur?: number;
+  /** Canal RGB ("r g b") para teñir el cristal. */
+  tint?: string;
+  /** Sombra exterior (por defecto sutil). */
+  shadow?: string;
+};
+
+export function glass({ theme, blur = 24, tint, shadow }: GlassProps): CSSObject {
+  const white = theme.vars.palette.common.whiteChannel;
+  const black = theme.vars.palette.common.blackChannel;
+  // Sin tinte, el cristal toma el color de la superficie del tema (blanco en
+  // claro, azul-grafito en oscuro) en vez de blanco fijo → sigue al modo del sistema.
+  const surface = theme.vars.palette.background.paperChannel;
+  const lightBg = tint ? varAlpha(tint, 0.16) : varAlpha(surface, 0.7);
+  const darkBg = tint ? varAlpha(tint, 0.22) : varAlpha(surface, 0.62);
+  // Mismo color que el contorno de los inputs (textfield.tsx → notchedOutline).
+  const fieldBorder = varAlpha(theme.vars.palette.grey['500Channel'], 0.2);
+  const filter = `blur(${blur}px) saturate(180%) brightness(1.04)`;
+
+  return {
+    backgroundColor: lightBg,
+    backdropFilter: filter,
+    WebkitBackdropFilter: filter,
+    border: `1px solid ${fieldBorder}`,
+    boxShadow: [
+      shadow ?? `0 8px 32px ${varAlpha(black, 0.12)}`,
+      `inset 0 1px 0 ${varAlpha(white, 0.85)}`, // borde superior: luz especular
+      `inset 1px 0 0 ${varAlpha(white, 0.35)}`,
+      `inset 0 -1px 0 ${varAlpha(black, 0.06)}`, // grosor del cristal
+    ].join(', '),
+    [stylesMode.dark]: {
+      backgroundColor: darkBg,
+      // Sin bordes blancos en oscuro: mismo borde que los campos.
+      border: `1px solid ${fieldBorder}`,
+      boxShadow: [shadow ?? `0 8px 32px ${varAlpha(black, 0.4)}`, `inset 0 -1px 0 ${varAlpha(black, 0.3)}`].join(', '),
+    },
+    '@media (prefers-reduced-transparency: reduce)': {
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
+      backgroundColor: theme.vars.palette.background.paper,
+    },
+    '@media (prefers-contrast: more)': {
+      border: `1px solid ${theme.vars.palette.divider}`,
+    },
+  };
+}
+
+/**
+ * Botón de cristal circular para barras (iOS 26 toolbar button): hover ilumina,
+ * pulsación lo hunde. Solo transform/background → compositor.
+ */
+export function glassButton(theme: Theme): CSSObject {
+  return {
+    ...glass({ theme, blur: 16, shadow: `0 2px 10px ${varAlpha(theme.vars.palette.common.blackChannel, 0.08)}` }),
+    width: 40,
+    height: 40,
+    borderRadius: '50%',
+    color: theme.vars.palette.text.secondary,
+    transition:
+      'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+    '&:hover': {
+      color: theme.vars.palette.text.primary,
+      backgroundColor: varAlpha(theme.vars.palette.common.whiteChannel, 0.82),
+      [stylesMode.dark]: { backgroundColor: varAlpha(theme.vars.palette.common.whiteChannel, 0.16) },
+    },
+    '&:active': { transform: 'scale(0.92)', transition: 'transform 80ms ease-out' },
+    '@media (prefers-reduced-motion: reduce)': { '&:active': { transform: 'none' } },
+  };
+}
+
 /**
  * Usage:
  * ...paper({ theme, color: varAlpha(theme.vars.palette.background.paperChannel, 0.9), dropdown: true }),
@@ -199,14 +283,11 @@ type PaperProps = {
 
 export function paper({ theme, color, dropdown }: PaperProps) {
   return {
-    ...bgBlur({
-      color: color ?? varAlpha(theme.vars.palette.background.paperChannel, 0.9),
-      blur: 20,
-    }),
+    ...glass({ theme, blur: dropdown ? 24 : 32 }),
+    ...(color && { backgroundColor: color }),
     ...(dropdown && {
       padding: theme.spacing(0.5),
-      boxShadow: theme.vars.customShadows.dropdown,
-      borderRadius: `${Number(theme.shape.borderRadius) * 1.25}px`,
+      borderRadius: `${Number(theme.shape.borderRadius) * 1.75}px`,
     }),
   };
 }
@@ -218,6 +299,7 @@ export function paper({ theme, color, dropdown }: PaperProps) {
 export function menuItem(theme: Theme) {
   return {
     ...theme.typography.body2,
+    transition: 'background-color 120ms cubic-bezier(0.4, 0, 0.2, 1), color 120ms cubic-bezier(0.4, 0, 0.2, 1)',
     padding: theme.spacing(0.75, 1),
     borderRadius: Number(theme.shape.borderRadius) * 0.75,
     '&:not(:last-of-type)': { marginBottom: 4 },

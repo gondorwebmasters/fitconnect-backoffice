@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 
 import { DatePicker, TimePicker } from "./date-picker";
+import { Dropdown } from "./dropdown";
 import { PhoneInput } from "@/components/phone-input";
 
 // Native attributes TextFieldProps doesn't declare at the top level — MUI
@@ -69,6 +70,11 @@ export function Field({ label, children, hint }: { label: string; children: Reac
   // via `placeholder` (see components/ui/date-picker.tsx), not `label`.
   if (isValidElement(children) && (children.type === DatePicker || children.type === TimePicker)) {
     return cloneElement(children as ReactElement<{ placeholder?: string }>, { placeholder: label });
+  }
+
+  // Dropdown también flota su etiqueta dentro del borde, alineado con Input.
+  if (isValidElement(children) && children.type === Dropdown) {
+    return cloneElement(children as ReactElement<{ label?: string }>, { label });
   }
 
   // PhoneInput's underlying TextField also has its own floating label.
