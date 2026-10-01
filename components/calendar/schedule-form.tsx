@@ -208,21 +208,23 @@ export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate, fo
         <Field label={t("description")}>
           <Textarea value={form.description} onChange={(event) => set("description", event.target.value)} />
         </Field>
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <Field label={t("type")}>
-            <Dropdown options={typeOptions} value={form.type} onChange={(value) => set("type", value)} />
-          </Field>
-          <Field label={t("spots")}>
-            <Input
-              type="number"
-              min={1}
-              value={form.maxUsers}
-              onChange={(event) => set("maxUsers", event.target.value)}
-            />
-          </Field>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "start", gap: 2 }}>
+          <Dropdown
+            label={t("type")}
+            options={typeOptions}
+            value={form.type}
+            onChange={(value) => set("type", value)}
+          />
+          <Input
+            label={t("spots")}
+            type="number"
+            min={1}
+            value={form.maxUsers}
+            onChange={(event) => set("maxUsers", event.target.value)}
+          />
         </Box>
         {!editing ? (
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "start", gap: 2 }}>
             <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
             <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
           </Box>
