@@ -1,9 +1,10 @@
 "use client";
 import { Iconify } from "@/components/iconify";
 
-import { useMutation, useQuery } from "@apollo/client";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -11,6 +12,7 @@ import { useState } from "react";
 import { PlanForm } from "@/components/plans/plan-form";
 import { BadgeDot } from "@/components/ui/badge-dot";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
@@ -18,8 +20,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { PageShell } from "@/components/ui/sticky-header";
 import { useToast } from "@/components/ui/toast";
 import { formatCents, planPriceCents } from "@/lib/format";
-import { ARCHIVE_PLAN, LIST_PLANS } from "@/lib/graphql/plans";
-import type { Plan } from "@/lib/graphql/types";
+import { ARCHIVE_PLAN, LIST_PLANS, PLAN_SCHEDULE_REQUIREMENT } from "@/lib/graphql/plans";
+import type { Plan, PlanScheduleRequirement } from "@/lib/graphql/types";
 
 const PAGE_SIZE = 10;
 
@@ -40,6 +42,34 @@ export default function PlansPage() {
 
   const { data, loading, refetch } = useQuery<{ listPlans: { plans: Plan[] | null } }>(LIST_PLANS);
   const [archivePlan, archiveState] = useMutation(ARCHIVE_PLAN);
+  // El recuento se pide al abrir el diálogo, no con el listado: solo importa
+  // aquí. Archivar nunca se bloquea por él — solo se avisa (ADR 0005).
+  const [fetchRequirement, requirementState] = useLazyQuery<{
+    getPlan: { plan: { id: string; requiredBySchedules: PlanScheduleRequirement } | null } | null;
+  }>(PLAN_SCHEDULE_REQUIREMENT, { fetchPolicy: "network-only" });
+
+  // Se compara el id: Apollo conserva el dato de la consulta anterior, y el
+  // recuento del plan anterior en el diálogo del siguiente sería una mentira.
+  const requirementPlan = requirementState.data?.getPlan?.plan ?? null;
+  const requiredBySchedules =
+    archiving && requirementPlan?.id === archiving.id ? requirementPlan.requiredBySchedules : null;
+  const archiveDescription = [
+    t("archiveConfirmDescription", { name: archiving?.name ?? "" }),
+    // Si el recuento no llega, se dice — callarlo dejaría al administrador
+    // confirmando sin el aviso y creyendo que no había nada que avisar.
+    requirementState.error
+      ? t("archiveConfirmRequirementUnavailable")
+      : requiredBySchedules && requiredBySchedules.total > 0
+        ? t("archiveConfirmRequiredBySchedules", { count: requiredBySchedules.total })
+        : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const openArchiveDialog = (plan: Plan) => {
+    setArchiving(plan);
+    fetchRequirement({ variables: { planId: plan.id } });
+  };
 
   const allPlans = data?.listPlans?.plans ?? [];
   const pageCount = Math.max(Math.ceil(allPlans.length / PAGE_SIZE), 1);
@@ -63,9 +93,14 @@ export default function PlansPage() {
       header: t("columns.plan"),
       render: (plan) => (
         <Box>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {plan.name}
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {plan.name}
+            </Typography>
+            {plan.sessionCount ? (
+              <Chip tone="primary">{t("sessionPackBadge", { count: plan.sessionCount })}</Chip>
+            ) : null}
+          </Stack>
           {plan.description ? (
             <Typography variant="caption" sx={{ color: "text.disabled", display: "block", maxWidth: 320 }} noWrap>
               {plan.description}
@@ -114,7 +149,7 @@ export default function PlansPage() {
             size="small"
             onClick={(event) => {
               event.stopPropagation();
-              setArchiving(plan);
+              openArchiveDialog(plan);
             }}
             title={t("archivePlan")}
             sx={{ color: "text.disabled" }}
@@ -166,9 +201,11 @@ export default function PlansPage() {
       <ConfirmDialog
         open={Boolean(archiving)}
         title={t("archivePlan")}
-        description={t("archiveConfirmDescription", { name: archiving?.name ?? "" })}
+        description={archiveDescription}
         confirmLabel={t("archive")}
-        loading={archiveState.loading}
+        // Se espera al recuento antes de dejar confirmar: confirmar sin haberlo
+        // visto sería confirmar a ciegas justo lo que el aviso existe para decir.
+        loading={archiveState.loading || requirementState.loading}
         onConfirm={handleArchive}
         onCancel={() => setArchiving(null)}
       />

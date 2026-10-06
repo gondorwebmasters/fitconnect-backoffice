@@ -15,12 +15,16 @@ export const SUBSCRIPTION_FIELDS = gql`
     isInTrial
     isPastDue
     daysUntilRenewal
+    creditsTotal
+    creditsUsed
+    remainingCredits
     plan {
       id
       name
       amount
       currency
       interval
+      sessionCount
       metadata
     }
   }
@@ -54,10 +58,49 @@ export const GET_SUBSCRIPTION_HISTORY = gql`
   }
 `;
 
+/**
+ * El Entitlement del miembro: SOLO sus suscripciones vigentes. El back es la
+ * autoridad sobre qué cuenta como vigente (ACTIVE/TRIALING con el periodo en
+ * curso), así que el panel no lo deduce del status — una Suscripción Futura se
+ * guarda ya como ACTIVE y NO está vigente. Ver ADR 0006.
+ *
+ * El campo singular `subscription` está deprecado en esta query y no se pide.
+ */
+export const GET_ACTIVE_SUBSCRIPTION = gql`
+  ${SUBSCRIPTION_FIELDS}
+  query GetActiveSubscription($userId: ID!) {
+    getActiveSubscription(userId: $userId) {
+      success
+      message
+      subscriptions {
+        ...SubscriptionFields
+      }
+    }
+  }
+`;
+
 export const CREATE_SUBSCRIPTION = gql`
   ${SUBSCRIPTION_FIELDS}
   mutation CreateSubscription($subscription: CreateSubscriptionInput!) {
     createSubscription(subscription: $subscription) {
+      success
+      message
+      subscription {
+        ...SubscriptionFields
+      }
+    }
+  }
+`;
+
+/**
+ * Cambio de plan: explícito y nombrando la suscripción a migrar. Ya no se
+ * infiere de un createSubscription "otro plan, inicio hoy" — esa ruta ahora
+ * SIEMPRE añade. Ver ADR 0006.
+ */
+export const CHANGE_PLAN = gql`
+  ${SUBSCRIPTION_FIELDS}
+  mutation ChangePlan($input: ChangePlanInput!) {
+    changePlan(input: $input) {
       success
       message
       subscription {

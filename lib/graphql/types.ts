@@ -85,6 +85,13 @@ export interface ScheduleOptions {
   quotaWarningThresholds: number[];
 }
 
+/**
+ * Los campos de `Plan` que `SCHEDULE_FIELDS` pide dentro de un Schedule. Mantener
+ * a la par con el fragmento: sin codegen, el documento y este tipo solo coinciden
+ * si se tocan juntos.
+ */
+export type ScheduleAllowedPlan = Pick<Plan, "id" | "name">;
+
 export interface Schedule {
   id: string;
   title: string;
@@ -98,18 +105,48 @@ export interface Schedule {
   users?: User[] | null;
   waitListUsers?: User[] | null;
   admin?: User | null;
+  /**
+   * Restricted Schedule: planes que admite la clase. Lista vacía = sin restricción
+   * (abierta a todo el mundo). El back expone además `planAccess`, derivado por
+   * llamante, que el backoffice no pide: aquí nadie se inscribe, solo se configura.
+   *
+   * No es `Plan[]`: el back lo declara `[Plan!]!` (nunca null) y `SCHEDULE_FIELDS`
+   * solo pide `id` y `name`, así que tiparlo como `Plan` completo prometería un
+   * `amount` o un `status` que no viajan en la respuesta.
+   */
+  allowedPlans: ScheduleAllowedPlan[];
 }
 
+/**
+ * Plantilla semanal: el molde del que nacen los schedules de cada semana. No es
+ * un schedule — no tiene fecha ni estado ni inscritos, sino los días de la semana
+ * en que se repite. Editarla **pisa todos los schedules futuros** que engendró.
+ *
+ * Los campos son los de `SCHEDULE_PROGRAMMED_FIELDS`: sin codegen, el documento y
+ * este tipo solo coinciden si se tocan juntos.
+ */
 export interface ScheduleProgrammed {
   id: string;
   title: string;
   description?: string | null;
+  /** Convención del server: 0 = domingo … 6 = sábado. */
   daysOfWeek?: number[] | null;
+  /** `time` de Postgres: llega como `HH:mm:ss`, no como `HH:mm`. */
   startHour: string;
   endHour: string;
   maxUsers: number;
   type?: ScheduleType | null;
+  age?: number | null;
   admin?: User | null;
+  /**
+   * Restricted Schedule sobre la plantilla: planes que admitirán los schedules
+   * que engendre. Lista vacía = plantilla sin restricción, que sigue engendrando
+   * schedules abiertos. Editarla vuelve a sembrarla en todos los futuros (#12).
+   *
+   * Mismo `Pick` que en `Schedule` y por lo mismo: el back lo declara `[Plan!]!`
+   * y el fragmento solo pide `id` y `name`.
+   */
+  allowedPlans: ScheduleAllowedPlan[];
 }
 
 export interface Plan {
@@ -121,11 +158,26 @@ export interface Plan {
   interval: PlanInterval;
   intervalCount: number;
   trialPeriodDays?: number | null;
+  /** Session Pack (Bono): nº de sesiones. null = ilimitado (plan temporal clásico). */
+  sessionCount?: number | null;
   status: PlanStatus;
   isActive: boolean;
   features?: string[] | null;
   subscriptions?: Subscription[] | null;
   metadata?: { price?: number | string | null } & Record<string, unknown> | null;
+  /** Restricted Schedule: horarios que exigen este plan. Solo se pide al archivar. */
+  requiredBySchedules?: PlanScheduleRequirement | null;
+}
+
+/**
+ * Cuántos horarios exigen un plan (Restricted Schedule). Archivar el plan no se
+ * bloquea nunca por esto ni retira la restricción: es solo el aviso con el que
+ * el administrador confirma.
+ */
+export interface PlanScheduleRequirement {
+  scheduleCount: number;
+  scheduleProgrammedCount: number;
+  total: number;
 }
 
 export interface Subscription {
@@ -144,6 +196,12 @@ export interface Subscription {
   isInTrial?: boolean | null;
   isPastDue?: boolean | null;
   daysUntilRenewal?: number | null;
+  /** Session Pack: snapshot de Plan.sessionCount al crear. null = ilimitado. */
+  creditsTotal?: number | null;
+  /** Créditos de sesión consumidos. */
+  creditsUsed?: number | null;
+  /** creditsTotal − creditsUsed (derivado). null = ilimitado. */
+  remainingCredits?: number | null;
 }
 
 export interface SubscriptionHistoryEntry {

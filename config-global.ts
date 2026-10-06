@@ -6,7 +6,7 @@
 export const CONFIG = {
   site: {
     basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? '',
-    serverUrl: process.env.NEXT_PUBLIC_SERVER_URL ?? '',
+    serverUrl: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000/graphql',
     assetURL: process.env.NEXT_PUBLIC_ASSET_URL ?? '',
   },
 };

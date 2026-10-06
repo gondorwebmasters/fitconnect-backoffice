@@ -8,7 +8,10 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+
+import { DURATION, EASE_OUT, staggerDelay } from "@/lib/motion";
 
 import { Checkbox } from "./checkbox";
 
@@ -81,12 +84,17 @@ export function DataTable<T>({
                   ))}
                 </TableRow>
               ))
-            : rows.map((row) => {
+            : rows.map((row, index) => {
                 const key = rowKey(row);
                 const selected = selection?.selectedIds.has(key) ?? false;
                 return (
                   <TableRow
                     key={key}
+                    component={motion.tr}
+                    // Solo opacity: una fila con transform rompería el layout de la tabla
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: DURATION.standard, delay: staggerDelay(index, 0.025), ease: EASE_OUT }}
                     hover={Boolean(onRowClick)}
                     selected={selected}
                     onClick={() => onRowClick?.(row)}

@@ -11,7 +11,7 @@ const COOKIE_BASE = {
 };
 
 export function graphqlUrl(): string {
-  return CONFIG.site.serverUrl ?? "http://localhost:4000/graphql";
+  return CONFIG.site.serverUrl || "http://localhost:4000/graphql";
 }
 
 export async function setAuthCookies(token: string, refreshToken: string, isSuperAdmin?: boolean) {

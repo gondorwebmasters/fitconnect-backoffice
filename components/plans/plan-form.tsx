@@ -67,6 +67,7 @@ const EMPTY_FORM = {
   amount: "",
   interval: INTERVAL_VALUES[0] as (typeof INTERVAL_VALUES)[number],
   trialPeriodDays: "",
+  sessionCount: "",
   features: [] as string[],
   maxUsers: "",
   supportLevel: "email",
@@ -223,6 +224,7 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
         amount: String(planPriceCents(plan) / 100),
         interval: plan.interval,
         trialPeriodDays: plan.trialPeriodDays ? String(plan.trialPeriodDays) : "",
+        sessionCount: plan.sessionCount ? String(plan.sessionCount) : "",
         features: plan.features ?? [],
         maxUsers: metadata.maxUsers ? String(metadata.maxUsers) : "",
         supportLevel: typeof metadata.supportLevel === "string" ? metadata.supportLevel : "email",
@@ -239,6 +241,18 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
 
   const set = (key: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [key]: value }));
 
+  // Session Pack (Bono): con nº de sesiones informado el plan no puede tener trial.
+  const sessionCount = form.sessionCount.trim() ? Number(form.sessionCount) : null;
+  const isSessionPack = sessionCount !== null;
+
+  // Los errores de validación del back llegan como excepción (GraphQL error), no en `ServiceResponse`.
+  const backErrorMessage = (error: unknown, fallback: string) => {
+    const message = error instanceof Error ? error.message : "";
+    if (/sessionCount must be a positive integer/i.test(message)) return t("errors.sessionCountPositive");
+    if (/session pack .* cannot have a trial/i.test(message)) return t("errors.sessionPackNoTrial");
+    return message || fallback;
+  };
+
   const handleSubmit = async () => {
     const amountInEuros = Number(form.amount.replace(",", "."));
     const amountInCents = Math.round(amountInEuros * 100);
@@ -251,50 +265,63 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
     };
 
     if (plan) {
-      const { data } = await updatePlan({
-        variables: {
-          plan: {
-            id: plan.id,
-            name: form.name,
-            description: form.description || undefined,
-            amount: 0,
-            metadata,
-            features,
+      try {
+        const { data } = await updatePlan({
+          variables: {
+            plan: {
+              id: plan.id,
+              name: form.name,
+              description: form.description || undefined,
+              amount: 0,
+              metadata,
+              features,
+              // null = vuelve a ilimitado. Al convertir en bono se fuerza trial a null (un pack nunca tiene trial).
+              sessionCount,
+              ...(isSessionPack ? { trialPeriodDays: null } : {}),
+            },
           },
-        },
-      });
-      if (data?.updatePlan?.success) {
-        toast(t("updated"));
-        onSaved();
-        onClose();
-      } else {
-        toast(data?.updatePlan?.message ?? t("updateFailed"), "error");
+        });
+        if (data?.updatePlan?.success) {
+          toast(t("updated"));
+          onSaved();
+          onClose();
+        } else {
+          toast(data?.updatePlan?.message ?? t("updateFailed"), "error");
+        }
+      } catch (error) {
+        toast(backErrorMessage(error, t("updateFailed")), "error");
       }
     } else {
-      const { data } = await createPlan({
-        variables: {
-          plan: {
-            name: form.name,
-            description: form.description || undefined,
-            amount: 0,
-            metadata,
-            interval: form.interval,
-            trialPeriodDays: form.trialPeriodDays ? Number(form.trialPeriodDays) : undefined,
-            features,
+      try {
+        const { data } = await createPlan({
+          variables: {
+            plan: {
+              name: form.name,
+              description: form.description || undefined,
+              amount: 0,
+              metadata,
+              interval: form.interval,
+              trialPeriodDays: !isSessionPack && form.trialPeriodDays ? Number(form.trialPeriodDays) : undefined,
+              sessionCount: sessionCount ?? undefined,
+              features,
+            },
           },
-        },
-      });
-      if (data?.createPlan?.success) {
-        toast(t("created"));
-        onSaved();
-        onClose();
-      } else {
-        toast(data?.createPlan?.message ?? t("createFailed"), "error");
+        });
+        if (data?.createPlan?.success) {
+          toast(t("created"));
+          onSaved();
+          onClose();
+        } else {
+          toast(data?.createPlan?.message ?? t("createFailed"), "error");
+        }
+      } catch (error) {
+        toast(backErrorMessage(error, t("createFailed")), "error");
       }
     }
   };
 
-  const valid = form.name && Number(form.amount.replace(",", ".")) > 0;
+  const sessionCountValid = !isSessionPack || (Number.isInteger(sessionCount) && sessionCount > 0);
+  const valid = form.name && Number(form.amount.replace(",", ".")) > 0 && sessionCountValid;
 
   return (
     <SlideOver
@@ -343,7 +370,17 @@ export function PlanForm({ open, plan, onClose, onSaved }: PlanFormProps) {
             </Field>
           </Grid>
         </Grid>
-        {!plan ? (
+        <Field label={t("sessionCount")} hint={isSessionPack ? t("sessionCountPackHint") : t("sessionCountHint")}>
+          <Input
+            type="number"
+            min={1}
+            step={1}
+            value={form.sessionCount}
+            error={!sessionCountValid}
+            onChange={(event) => set("sessionCount")(event.target.value)}
+          />
+        </Field>
+        {!plan && !isSessionPack ? (
           <Field label={t("trialDays")} hint={t("optional")}>
             <Input
               type="number"

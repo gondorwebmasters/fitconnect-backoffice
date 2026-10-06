@@ -27,6 +27,22 @@ const MuiCssBaseline: Components<Theme>['MuiCssBaseline'] = {
       backgroundColor: varAlpha(theme.vars.palette.primary.mainChannel, 1),
       color: theme.vars.palette.primary.contrastText,
     },
+    // Anillo de foco solo con teclado (no en clic): visible, 2 px, con offset.
+    ':focus-visible': {
+      outline: `2px solid ${theme.vars.palette.primary.main}`,
+      outlineOffset: 2,
+    },
+    // Sin el retardo de 300 ms del tap y sin destello gris en móvil.
+    'a, button, [role="button"], input, select, textarea, label': {
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+    },
+    // Cifras de ancho fijo en tablas: no "bailan" al actualizarse.
+    'table, .MuiTableCell-root': { fontVariantNumeric: 'tabular-nums' },
+    '@media (prefers-contrast: more)': {
+      ':focus-visible': { outlineWidth: 3 },
+      '.MuiPaper-root, .MuiCard-root': { border: `1px solid ${theme.vars.palette.divider}` },
+    },
     '@media (prefers-reduced-motion: reduce)': {
       '*, *::before, *::after': {
         animationDuration: '0.01ms !important',

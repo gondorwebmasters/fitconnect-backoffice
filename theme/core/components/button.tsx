@@ -39,6 +39,15 @@ const MuiButtonBase: Components<Theme>['MuiButtonBase'] = {
   styleOverrides: { root: ({ theme }) => ({ fontFamily: theme.typography.fontFamily }) },
 };
 
+// Feedback en pointer-down (no al soltar): el botón "cede" 3 % al instante y
+// vuelve con el easing de firma. Solo transform → compositor, sin layout.
+const PRESS = {
+  transition:
+    'transform 160ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:active:not(:disabled)': { transform: 'scale(0.97)', transition: 'transform 80ms ease-out' },
+  '@media (prefers-reduced-motion: reduce)': { '&:active:not(:disabled)': { transform: 'none' } },
+} as const;
+
 // ----------------------------------------------------------------------
 
 const softVariant: Record<string, ComponentsVariants<Theme>['MuiButton']> = {
@@ -100,6 +109,7 @@ const MuiButton: Components<Theme>['MuiButton'] = {
    * STYLE
    *************************************** */
   styleOverrides: {
+    root: { ...PRESS },
     /**
      * @variant contained
      */

@@ -122,7 +122,13 @@ const MuiChip: Components<Theme>['MuiChip'] = {
         },
       };
 
-      return { ...styled.colors, ...styled.disabled };
+      return {
+        transition: 'transform 160ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+        '&.MuiChip-clickable:active': { transform: 'scale(0.96)' },
+        '@media (prefers-reduced-motion: reduce)': { '&.MuiChip-clickable:active': { transform: 'none' } },
+        ...styled.colors,
+        ...styled.disabled,
+      };
     },
     label: ({ theme }) => ({ fontWeight: theme.typography.fontWeightMedium }),
     icon: { color: 'currentColor' },

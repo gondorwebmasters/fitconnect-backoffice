@@ -1,6 +1,6 @@
 "use client";
 
-import IconButton from "@mui/material/IconButton";
+import { GlassIconButton } from "@/components/ui/glass-icon-button";
 import { useColorScheme } from "@mui/material/styles";
 import { useTranslations } from "next-intl";
 
@@ -25,14 +25,13 @@ export function ThemeToggle() {
   const label = t(resolvedMode);
 
   return (
-    <IconButton
+    <GlassIconButton
       onClick={() => setMode(NEXT_MODE[resolvedMode])}
       aria-label={label}
       title={label}
       size="small"
-      sx={{ color: "text.disabled" }}
     >
       <Iconify icon={mode ? icon : "solar:sun-bold"} width={20} />
-    </IconButton>
+    </GlassIconButton>
   );
 }

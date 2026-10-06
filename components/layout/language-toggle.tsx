@@ -2,7 +2,7 @@
 
 import { FlagIcon } from "@/components/iconify";
 
-import IconButton from "@mui/material/IconButton";
+import { GlassIconButton } from "@/components/ui/glass-icon-button";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -37,14 +37,14 @@ export function LanguageToggle() {
       onClose={() => setOpen(false)}
       panelSx={{ width: 200 }}
       trigger={
-        <IconButton
+        <GlassIconButton
           onClick={() => setOpen((value) => !value)}
           disabled={pending}
           aria-label={t("label")}
           size="small"
         >
           <FlagIcon code={LOCALE_FLAG[locale]} sx={{ width: 26, height: 20 }} />
-        </IconButton>
+        </GlassIconButton>
       }
     >
       <List dense sx={{ py: 0.5 }}>

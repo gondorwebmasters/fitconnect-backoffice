@@ -31,6 +31,7 @@ import {
   GET_SCHEDULES_STATS,
   GET_SUBSCRIPTIONS_STATS,
 } from "@/lib/graphql/stats";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 import type { AdminStats, Invoice, SchedulesStat, SubscriptionsStat } from "@/lib/graphql/types";
 
 function formatEuros(value: number, locale: string): string {
@@ -68,7 +69,7 @@ function Card({
       component={motion.section}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: DURATION.slow, delay, ease: EASE_OUT }}
       variant="outlined"
       sx={{ p: 3, minWidth: 0, overflow: "hidden" }}
     >

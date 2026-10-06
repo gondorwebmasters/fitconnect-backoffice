@@ -27,7 +27,12 @@ const MuiTabs: Components<Theme>['MuiTabs'] = {
         },
       }),
     }),
-    indicator: { backgroundColor: 'currentColor' },
+    indicator: {
+      backgroundColor: 'currentColor',
+      borderRadius: 2,
+      transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      transitionDuration: '320ms',
+    },
   },
 };
 
@@ -50,6 +55,8 @@ const MuiTab: Components<Theme>['MuiTab'] = {
       padding: theme.spacing(1, 0),
       color: theme.vars.palette.text.secondary,
       fontWeight: theme.typography.fontWeightMedium,
+      transition: 'color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:hover': { color: theme.vars.palette.text.primary },
       lineHeight: theme.typography.body2.lineHeight,
       [`&.${tabClasses.selected}`]: {
         color: theme.vars.palette.text.primary,

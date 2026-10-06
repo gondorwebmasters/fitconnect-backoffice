@@ -14,6 +14,8 @@ interface DropdownProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** Etiqueta flotante dentro del borde (igual que Input); `Field` la inyecta. */
+  label?: string;
   /** MUI Autocomplete siempre permite buscar; se mantiene la prop por compatibilidad. */
   searchable?: boolean;
   clearable?: boolean;
@@ -28,6 +30,7 @@ export function Dropdown({
   value,
   onChange,
   placeholder = "Seleccionar…",
+  label,
   clearable = false,
   disabled = false,
   sx,
@@ -44,7 +47,50 @@ export function Dropdown({
       onChange={(_event, newValue) => onChange(newValue?.value ?? "")}
       getOptionLabel={(option) => option.label}
       isOptionEqualToValue={(option, val) => option.value === val.value}
-      renderInput={(params) => <TextField {...params} placeholder={placeholder} />}
+      renderInput={(params) => <TextField {...params} label={label} placeholder={placeholder} />}
+    />
+  );
+}
+
+interface MultiDropdownProps {
+  options: DropdownOption[];
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  sx?: SxProps<Theme>;
+  size?: "small" | "medium";
+}
+
+/**
+ * Variante de `Dropdown` para seleccionar varias opciones. Misma forma de opción y
+ * el mismo Autocomplete de MUI; el valor es la lista de `value` seleccionados y el
+ * placeholder desaparece cuando ya hay alguno para no competir con los chips.
+ */
+export function MultiDropdown({
+  options,
+  value,
+  onChange,
+  placeholder = "Seleccionar…",
+  disabled = false,
+  sx,
+  size = "medium",
+}: MultiDropdownProps) {
+  return (
+    <Autocomplete
+      multiple
+      disableCloseOnSelect
+      size={size}
+      sx={sx}
+      disabled={disabled}
+      options={options}
+      value={options.filter((option) => value.includes(option.value))}
+      onChange={(_event, newValue) => onChange(newValue.map((option) => option.value))}
+      getOptionLabel={(option) => option.label}
+      isOptionEqualToValue={(option, val) => option.value === val.value}
+      renderInput={(params) => (
+        <TextField {...params} placeholder={value.length > 0 ? undefined : placeholder} />
+      )}
     />
   );
 }

@@ -6,7 +6,7 @@ import type { Theme } from '../../types';
 import SvgIcon from '@mui/material/SvgIcon';
 import { alertClasses } from '@mui/material/Alert';
 
-import { varAlpha, stylesMode } from '../../styles';
+import { glass, varAlpha, stylesMode } from '../../styles';
 
 // ----------------------------------------------------------------------
 
@@ -97,6 +97,7 @@ const MuiAlert: Components<Theme>['MuiAlert'] = {
    * STYLE
    *************************************** */
   styleOverrides: {
+    root: ({ theme }) => ({ borderRadius: Number(theme.shape.borderRadius) * 2.5 }),
     icon: { opacity: 1 },
     /**
      * @variant standard
@@ -104,11 +105,12 @@ const MuiAlert: Components<Theme>['MuiAlert'] = {
     standard: ({ ownerState, theme }) => {
       const styled = {
         colors: styleColors(ownerState, (color) => ({
+          // Cristal teñido (iOS 26): el color es una veladura, no un bloque sólido.
+          ...glass({ theme, blur: 20, tint: theme.vars.palette[color].mainChannel }),
           color: theme.vars.palette[color].darker,
-          backgroundColor: theme.vars.palette[color].lighter,
           [stylesMode.dark]: {
+            ...(glass({ theme, blur: 20, tint: theme.vars.palette[color].mainChannel })[stylesMode.dark] as object),
             color: theme.vars.palette[color].lighter,
-            backgroundColor: theme.vars.palette[color].darker,
           },
           [`& .${alertClasses.icon}`]: {
             color: theme.vars.palette[color].main,

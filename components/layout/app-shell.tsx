@@ -14,6 +14,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { DURATION, EASE_OUT } from "@/lib/motion";
+
 import { CommandPalette } from "./command-palette";
 import { CompanyBackdrop } from "./company-backdrop";
 import { useSession } from "./session-provider";
@@ -107,7 +109,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Box
         sx={{
           position: "relative",
-          transition: (theme) => theme.transitions.create("padding-left", { duration: 200 }),
+          transition: (theme) => theme.transitions.create("padding-left", { duration: 320, easing: theme.transitions.easing.easeOut }),
           pl: { xs: 0, md: collapsed ? "88px" : "280px" },
         }}
       >
@@ -130,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             key={`${pathname}-${user?.activeCompanyId ?? ""}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: DURATION.standard, ease: EASE_OUT }}
           >
             {children}
           </motion.div>

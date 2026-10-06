@@ -34,6 +34,12 @@ export const SCHEDULE_FIELDS = gql`
       surname
       nickname
     }
+    # Restricted Schedule: lista vacía = sin restricción. No se pide planAccess:
+    # es derivado por llamante y el backoffice configura la restricción, no se inscribe.
+    allowedPlans {
+      id
+      name
+    }
   }
 `;
 
@@ -68,25 +74,46 @@ export const GET_SCHEDULE_OPTIONS = gql`
   }
 `;
 
+/**
+ * Todos los campos editables de una plantilla semanal. El listado y la respuesta
+ * de `updateScheduleProgrammed` piden el mismo fragmento para que lo que vuelve
+ * de la mutación tenga la forma exacta que la lista ya tiene cacheada por `id`,
+ * en vez de dejar la entrada a medias hasta el siguiente refetch.
+ */
+export const SCHEDULE_PROGRAMMED_FIELDS = gql`
+  fragment ScheduleProgrammedFields on ScheduleProgrammed {
+    id
+    title
+    description
+    daysOfWeek
+    startHour
+    endHour
+    maxUsers
+    type
+    age
+    admin {
+      id
+      name
+      surname
+      nickname
+    }
+    # Restricted Schedule sobre la plantilla: lista vacía = sin restricción. La
+    # plantilla la siembra en cada schedule que engendra (#12).
+    allowedPlans {
+      id
+      name
+    }
+  }
+`;
+
 export const GET_SCHEDULES_PROGRAMMED = gql`
+  ${SCHEDULE_PROGRAMMED_FIELDS}
   query GetSchedulesProgrammed {
     getSchedulesProgrammed {
       success
       message
       schedulesProgrammed {
-        id
-        title
-        description
-        daysOfWeek
-        startHour
-        endHour
-        maxUsers
-        type
-        admin {
-          id
-          name
-          surname
-        }
+        ...ScheduleProgrammedFields
       }
     }
   }
@@ -180,10 +207,14 @@ export const REMOVE_USER_FROM_SCHEDULE = gql`
 `;
 
 export const UPDATE_SCHEDULE_PROGRAMMED = gql`
+  ${SCHEDULE_PROGRAMMED_FIELDS}
   mutation UpdateScheduleProgrammed($scheduleProgrammed: UpdateScheduleProgrammedInput!) {
     updateScheduleProgrammed(scheduleProgrammed: $scheduleProgrammed) {
       success
       message
+      scheduleProgrammed {
+        ...ScheduleProgrammedFields
+      }
     }
   }
 `;

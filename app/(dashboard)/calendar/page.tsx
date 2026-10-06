@@ -2,7 +2,9 @@
 
 import { Iconify } from "@/components/iconify";
 
+import Stack from "@mui/material/Stack";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRef } from "react";
 
 import { CalendarView, type CalendarViewHandle } from "@/components/calendar/calendar-view";
@@ -21,10 +23,16 @@ export default function CalendarPage() {
           title={t("title")}
           subtitle={t("subtitle")}
           actions={
-            <Button variant="primary" onClick={() => calendarRef.current?.openCreateForm()}>
-              <Iconify icon="mingcute:add-line" width={15} />
-              {t("newClass")}
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button variant="ghost" component={Link} href="/calendar/templates">
+                <Iconify icon="solar:repeat-bold" width={15} />
+                {t("templates.title")}
+              </Button>
+              <Button variant="primary" onClick={() => calendarRef.current?.openCreateForm()}>
+                <Iconify icon="mingcute:add-line" width={15} />
+                {t("newClass")}
+              </Button>
+            </Stack>
           }
         />
       }

@@ -21,6 +21,7 @@
     "segments": {
       "members": "Miembros",
       "calendar": "Calendario",
+      "templates": "Plantillas semanales",
       "plans": "Planes",
       "subscriptions": "Suscripciones",
       "billing": "Facturación",
@@ -324,10 +325,35 @@
       "confirmExtend": "Confirmar extensión",
       "periodExtended": "Periodo extendido {days} días",
       "extendFailed": "No se pudo extender",
-      "noSubscriptions": "Sin suscripciones",
+      "remainingCredits": "Créditos restantes",
+      "creditsOf": "{remaining} de {total}",
+      "liveSection": "Vigentes ({count})",
+      "noLiveSubscriptions": "Sin suscripciones vigentes",
+      "otherSection": "Otras suscripciones",
+      "addPlanTitle": "Añadir un plan",
+      "addPlanHint": "Se añade una suscripción nueva. Las vigentes se quedan como están.",
+      "addPlan": "Añadir plan",
+      "alreadyLive": "ya vigente",
+      "changePlan": "Cambiar de plan",
+      "changePlanTitle": "Cambiar el plan de «{plan}»",
+      "changePlanHint": "Sustituye esta suscripción, no añade otra. Las demás no se tocan.",
+      "newPlan": "Plan nuevo",
+      "noChangeTargets": "No hay planes a los que cambiar",
+      "prorate": "Prorratear la diferencia",
+      "confirmChangePlan": "Cambiar de plan",
+      "confirmChangeTitle": "¿Cambiar de plan?",
+      "confirmChangeDescription": "«{from}» pasará a «{to}». Esta suscripción deja de estar en «{from}»; el resto de suscripciones del miembro no se tocan.",
+      "planChanged": "Plan cambiado a «{plan}»",
+      "planChangeFailed": "No se pudo cambiar el plan",
+      "actionFailed": "No se pudo completar la acción",
+      "errors": {
+        "alreadyLiveInPlan": "El miembro ya tiene una suscripción vigente a ese plan. Para encadenar otro periodo del mismo plan, prográmalo con una fecha de inicio posterior.",
+        "changeWithSessionPack": "No se puede cambiar de plan hacia o desde un bono. Cancela y programa una suscripción nueva.",
+        "samePlan": "El plan nuevo es el mismo que el actual.",
+        "notChangeable": "Solo se puede cambiar el plan de una suscripción activa o en prueba."
+      },
       "assignPlan": "Asignar plan",
       "selectPlan": "Selecciona un plan…",
-      "subscribe": "Suscribir",
       "subscriptionCreated": "Suscripción creada",
       "subscriptionCreateFailed": "No se pudo crear la suscripción"
     }
@@ -503,6 +529,7 @@
   "calendar": {
     "title": "Calendario",
     "subtitle": "Clases y horarios de la semana",
+    "restrictedTo": "Solo para: {plans}",
     "newClass": "Nueva clase",
     "today": "Hoy",
     "views": { "month": "Mes", "week": "Semana", "day": "Día", "agenda": "Agenda" },
@@ -514,6 +541,7 @@
     },
     "schedulePanel": {
       "delete": "Eliminar",
+      "edit": "Editar",
       "reactivate": "Reactivar clase",
       "cancelClass": "Cancelar clase",
       "cancelled": "Cancelada",
@@ -528,7 +556,9 @@
       "deleteClass": "Eliminar clase",
       "deleteClassDescription": "Se eliminará la clase y las reservas asociadas. Esta acción no se puede deshacer.",
       "deleted": "Clase eliminada",
-      "deleteFailed": "No se pudo eliminar"
+      "deleteFailed": "No se pudo eliminar",
+      "allowedPlans": "Planes admitidos",
+      "openToEveryone": "Abierta a todo el mundo"
     },
     "scheduleForm": {
       "dayInitials": { "0": "D", "1": "L", "2": "M", "3": "X", "4": "J", "5": "V", "6": "S" },
@@ -557,7 +587,49 @@
       "daysOfWeek": "Días de la semana",
       "date": "Fecha",
       "created": "Clase creada",
-      "createFailed": "No se pudo crear la clase"
+      "createFailed": "No se pudo crear la clase",
+      "editTitle": "Editar clase",
+      "editSubtitle": "Los datos de fecha y hora no cambian aquí",
+      "saveChanges": "Guardar cambios",
+      "saving": "Guardando…",
+      "updated": "Clase actualizada",
+      "updateFailed": "No se pudo actualizar la clase",
+      "allowedPlans": "Planes admitidos",
+      "allowedPlansHint": "Déjalo vacío para que la clase esté abierta a todo el mundo.",
+      "allowedPlansSeriesHint": "Déjalo vacío para que la serie esté abierta a todo el mundo. La restricción se guarda en la plantilla y se aplica a cada clase que genere.",
+      "allowedPlansPlaceholder": "Sin restricción",
+      "newTemplate": "Nueva plantilla semanal",
+      "createTemplate": "Crear plantilla"
+    },
+    "templates": {
+      "title": "Plantillas semanales",
+      "subtitle": "Clases que se repiten cada semana. Editar una plantilla reescribe sus clases futuras.",
+      "newTemplate": "Nueva plantilla",
+      "emptyTable": "Todavía no hay plantillas semanales",
+      "openToEveryone": "Abierta a todo el mundo",
+      "deleted": "Plantilla eliminada",
+      "deleteFailed": "No se pudo eliminar la plantilla",
+      "editTemplate": "Editar plantilla",
+      "deleteTemplate": "Eliminar plantilla",
+      "deleteTemplateDescription": "Se dejará de generar «{title}» cada semana. Sus clases futuras con inscritos se cancelan y las demás se eliminan; las clases ya pasadas se conservan. Esta acción no se puede deshacer.",
+      "delete": "Eliminar",
+      "columns": {
+        "template": "Plantilla",
+        "days": "Días",
+        "hours": "Horario",
+        "trainer": "Entrenador",
+        "spots": "Plazas",
+        "allowedPlans": "Planes admitidos"
+      },
+      "form": {
+        "editTitle": "Editar plantilla semanal",
+        "editSubtitle": "Se aplica a las clases futuras, no a las ya pasadas",
+        "overwriteWarning": "Al guardar se reescriben todas las clases futuras de esta plantilla: título, horario, aforo, entrenador y planes admitidos. Las clases ya pasadas no se tocan.",
+        "daysHint": "Quitar un día cancela o elimina sus clases futuras; añadir uno empieza a generarlas.",
+        "allowedPlansHint": "Déjalo vacío para que las clases de esta plantilla estén abiertas a todo el mundo. El cambio se aplica también a las clases futuras ya generadas.",
+        "updated": "Plantilla actualizada",
+        "updateFailed": "No se pudo actualizar la plantilla"
+      }
     }
   },
   "polls": {
@@ -691,11 +763,14 @@
     "intervals": { "day": "diario", "week": "semanal", "month": "mensual", "year": "anual" },
     "columns": { "plan": "Plan", "price": "Precio", "trial": "Prueba", "status": "Estado" },
     "trialDays": "{count} días",
+    "sessionPackBadge": "Bono · {count, plural, one {# sesión} other {# sesiones}}",
     "statusLabels": { "active": "Activo", "archived": "Archivado", "inactive": "Inactivo" },
     "archivePlan": "Archivar plan",
     "emptyTable": "Aún no hay planes creados",
     "totalLabel": "{count} planes",
     "archiveConfirmDescription": "El plan \"{name}\" dejará de estar disponible para nuevas suscripciones. Las existentes no se ven afectadas.",
+    "archiveConfirmRequiredBySchedules": "{count, plural, one {# horario exige este plan y lo seguirá exigiendo} other {# horarios exigen este plan y lo seguirán exigiendo}}: quedarán cerrados de hecho, salvo para quien ya tenga una suscripción viva. La restricción no se retira sola.",
+    "archiveConfirmRequirementUnavailable": "No se ha podido comprobar cuántos horarios exigen este plan. Si archivas ahora, los que lo exijan lo seguirán exigiendo.",
     "archive": "Archivar",
     "archived": "Plan archivado",
     "archiveFailed": "No se pudo archivar",
@@ -715,6 +790,9 @@
       "interval": "Intervalo",
       "trialDays": "Días de prueba",
       "optional": "Opcional",
+      "sessionCount": "Nº de sesiones",
+      "sessionCountHint": "Vacío = sesiones ilimitadas durante el periodo",
+      "sessionCountPackHint": "Bono: no admite días de prueba y no se renueva automáticamente",
       "features": "Características",
       "addFeature": "Añadir característica",
       "maxUsers": "Máximo de usuarios",
@@ -754,7 +832,11 @@
       "updated": "Plan actualizado",
       "updateFailed": "No se pudo actualizar",
       "created": "Plan creado",
-      "createFailed": "No se pudo crear"
+      "createFailed": "No se pudo crear",
+      "errors": {
+        "sessionCountPositive": "El nº de sesiones debe ser un entero mayor que 0 (o vacío para ilimitado)",
+        "sessionPackNoTrial": "Un bono no puede tener días de prueba"
+      }
     }
   },
   "promotions": {

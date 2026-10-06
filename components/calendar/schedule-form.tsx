@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import Box from "@mui/material/Box";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
@@ -10,14 +10,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker, TimePicker } from "@/components/ui/date-picker";
-import { Dropdown } from "@/components/ui/dropdown";
+import { Dropdown, MultiDropdown } from "@/components/ui/dropdown";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { SlideOver } from "@/components/ui/slide-over";
 import { useToast } from "@/components/ui/toast";
-import { fullName } from "@/lib/format";
-import { CREATE_SCHEDULE } from "@/lib/graphql/schedules";
-import type { User } from "@/lib/graphql/types";
-import { GET_USERS } from "@/lib/graphql/users";
+import { CREATE_SCHEDULE, UPDATE_SCHEDULE } from "@/lib/graphql/schedules";
+import type { Schedule } from "@/lib/graphql/types";
+
+import { DayOfWeekPicker, usePlanOptions, useScheduleTypeOptions, useTrainerOptions } from "./schedule-fields";
 
 function toDateInputValue(date: Date): string {
   const year = date.getFullYear();
@@ -25,11 +25,6 @@ function toDateInputValue(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-
-// Convención del server: 0 = domingo … 6 = sábado (ver DAY_MAPPING en la app móvil)
-const DAY_VALUES = [1, 2, 3, 4, 5, 6, 0];
-
-const TYPE_VALUES = ["standard", "sparring", "free", "conditioning", "competition"] as const;
 
 const EMPTY_FORM = {
   title: "",
@@ -42,94 +37,166 @@ const EMPTY_FORM = {
   repeat: false,
   date: "",
   days: [] as number[],
+  allowedPlanIds: [] as string[],
 };
+
+/** Rellena el formulario con los campos editables de una clase existente. */
+function formFromSchedule(schedule: Schedule) {
+  return {
+    ...EMPTY_FORM,
+    title: schedule.title,
+    description: schedule.description ?? "",
+    type: schedule.type,
+    maxUsers: String(schedule.maxUsers),
+    admin: schedule.admin?.id ?? "",
+    allowedPlanIds: schedule.allowedPlans.map((plan) => plan.id),
+  };
+}
 
 interface ScheduleFormProps {
   open: boolean;
+  schedule: Schedule | null; // null = crear
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
   /** Preselecciona la fecha al abrir (p. ej. al hacer clic en un día del calendario). */
   initialDate?: Date;
+  /**
+   * Fuerza la serie semanal y oculta la casilla: lo usa la pantalla de plantillas,
+   * donde crear una clase puntual no tendría sentido. Solo aplica al crear.
+   */
+  forceRepeat?: boolean;
 }
 
-export function ScheduleForm({ open, onClose, onCreated, initialDate }: ScheduleFormProps) {
+export function ScheduleForm({ open, schedule, onClose, onSaved, initialDate, forceRepeat }: ScheduleFormProps) {
   const t = useTranslations("calendar.scheduleForm");
   const toast = useToast();
   const [form, setForm] = useState(EMPTY_FORM);
 
+  const editing = Boolean(schedule);
+
   useEffect(() => {
-    if (open && initialDate) {
-      setForm((current) => ({ ...current, date: toDateInputValue(initialDate) }));
+    if (schedule) {
+      setForm(formFromSchedule(schedule));
+    } else {
+      setForm({
+        ...EMPTY_FORM,
+        repeat: Boolean(forceRepeat),
+        ...(initialDate && !forceRepeat ? { date: toDateInputValue(initialDate) } : {}),
+      });
     }
-  }, [open, initialDate]);
+  }, [schedule, open, initialDate, forceRepeat]);
 
-  const DAYS = DAY_VALUES.map((value) => ({ value, label: t(`dayInitials.${value}`) }));
-  const TYPE_OPTIONS = TYPE_VALUES.map((value) => ({ value, label: t(`types.${value}`) }));
+  const typeOptions = useScheduleTypeOptions();
+  const trainerOptions = useTrainerOptions(open);
+  const planOptions = usePlanOptions(open, schedule?.allowedPlans);
 
-  const trainers = useQuery<{ getUsers: { users: User[] | null } }>(GET_USERS, {
-    variables: { roleFilter: ["admin", "coach"] },
-    skip: !open,
-  });
-
-  const [createSchedule, { loading }] = useMutation(CREATE_SCHEDULE);
+  const [createSchedule, createState] = useMutation(CREATE_SCHEDULE);
+  const [updateSchedule, updateState] = useMutation(UPDATE_SCHEDULE);
+  const loading = createState.loading || updateState.loading;
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
-  const toggleDay = (day: number) =>
-    set(
-      "days",
-      form.days.includes(day) ? form.days.filter((value) => value !== day) : [...form.days, day],
-    );
-
+  // Al crear hay que decir además de qué va la clase y cuándo es; al editar esos
+  // campos no se tocan, y la descripción puede venir vacía de una clase antigua.
+  const whenValid = form.repeat ? form.days.length > 0 : Boolean(form.date);
   const valid =
     form.title &&
-    form.description &&
     form.admin &&
     Number(form.maxUsers) > 0 &&
-    (form.repeat ? form.days.length > 0 : Boolean(form.date));
+    (editing || (form.description && whenValid));
 
-  const handleSubmit = async () => {
-    const { data } = await createSchedule({
-      variables: {
-        schedule: {
-          title: form.title,
-          description: form.description,
-          type: form.type,
-          startHour: form.startHour,
-          endHour: form.endHour,
-          maxUsers: Number(form.maxUsers),
-          admin: form.admin,
-          repeat: form.repeat,
-          days: form.repeat ? form.days : form.date ? [new Date(form.date).getDay()] : [],
-          date: form.repeat ? undefined : form.date,
+  const handleUpdate = async () => {
+    if (!schedule) return;
+    // Los errores de validación del back llegan como excepción (GraphQL error), no en `ServiceResponse`.
+    try {
+      const { data } = await updateSchedule({
+        variables: {
+          schedule: {
+            id: schedule.id,
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            maxUsers: Number(form.maxUsers),
+            admin: form.admin,
+            // Se manda siempre, también vacío: el formulario muestra la restricción
+            // vigente, así que una lista vacía es una orden de quitarla, no un "no tocar".
+            allowedPlanIds: form.allowedPlanIds,
+          },
         },
-      },
-    });
-    const result = data?.createSchedule;
-    if (result?.success) {
-      toast(t("created"));
-      setForm(EMPTY_FORM);
-      onCreated();
-      onClose();
-    } else {
-      toast(result?.message ?? t("createFailed"), "error");
+      });
+      const result = data?.updateSchedule;
+      if (result?.success) {
+        toast(t("updated"));
+        onSaved();
+        onClose();
+      } else {
+        toast(result?.message ?? t("updateFailed"), "error");
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : t("updateFailed"), "error");
     }
   };
+
+  const handleCreate = async () => {
+    try {
+      const { data } = await createSchedule({
+        variables: {
+          schedule: {
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            startHour: form.startHour,
+            endHour: form.endHour,
+            maxUsers: Number(form.maxUsers),
+            admin: form.admin,
+            repeat: form.repeat,
+            days: form.repeat ? form.days : form.date ? [new Date(form.date).getDay()] : [],
+            date: form.repeat ? undefined : form.date,
+            // Viaja igual en serie que en clase puntual: con repeat la restricción
+            // se guarda en la plantilla, que la siembra en cada schedule que
+            // engendra (#12), en vez de re-marcarlos uno a uno cada semana.
+            allowedPlanIds: form.allowedPlanIds,
+          },
+        },
+      });
+      const result = data?.createSchedule;
+      if (result?.success) {
+        toast(t("created"));
+        setForm({ ...EMPTY_FORM, repeat: Boolean(forceRepeat) });
+        onSaved();
+        onClose();
+      } else {
+        toast(result?.message ?? t("createFailed"), "error");
+      }
+    } catch (error) {
+      toast(error instanceof Error ? error.message : t("createFailed"), "error");
+    }
+  };
+
+  const handleSubmit = editing ? handleUpdate : handleCreate;
 
   return (
     <SlideOver
       open={open}
       onClose={onClose}
-      title={t("newClass")}
-      subtitle={form.repeat ? t("weeklySeries") : t("oneTimeClass")}
+      title={editing ? t("editTitle") : forceRepeat ? t("newTemplate") : t("newClass")}
+      subtitle={editing ? t("editSubtitle") : form.repeat ? t("weeklySeries") : t("oneTimeClass")}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             {t("cancel")}
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={!valid || loading}>
-            {loading ? t("creating") : t("createClass")}
+            {loading
+              ? editing
+                ? t("saving")
+                : t("creating")
+              : editing
+                ? t("saveChanges")
+                : forceRepeat
+                  ? t("createTemplate")
+                  : t("createClass")}
           </Button>
         </>
       }
@@ -141,29 +208,30 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
         <Field label={t("description")}>
           <Textarea value={form.description} onChange={(event) => set("description", event.target.value)} />
         </Field>
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <Field label={t("type")}>
-            <Dropdown options={TYPE_OPTIONS} value={form.type} onChange={(value) => set("type", value)} />
-          </Field>
-          <Field label={t("spots")}>
-            <Input
-              type="number"
-              min={1}
-              value={form.maxUsers}
-              onChange={(event) => set("maxUsers", event.target.value)}
-            />
-          </Field>
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "start", gap: 2 }}>
+          <Dropdown
+            label={t("type")}
+            options={typeOptions}
+            value={form.type}
+            onChange={(value) => set("type", value)}
+          />
+          <Input
+            label={t("spots")}
+            type="number"
+            min={1}
+            value={form.maxUsers}
+            onChange={(event) => set("maxUsers", event.target.value)}
+          />
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
-          <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
-        </Box>
+        {!editing ? (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", alignItems: "start", gap: 2 }}>
+            <TimePicker value={form.startHour} onChange={(value) => set("startHour", value)} placeholder={t("startTime")} />
+            <TimePicker value={form.endHour} onChange={(value) => set("endHour", value)} placeholder={t("endTime")} />
+          </Box>
+        ) : null}
         <Field label={t("trainer")}>
           <Dropdown
-            options={(trainers.data?.getUsers?.users ?? []).map((user) => ({
-              value: user.id,
-              label: fullName(user),
-            }))}
+            options={trainerOptions}
             placeholder={t("select")}
             searchable
             value={form.admin}
@@ -171,42 +239,42 @@ export function ScheduleForm({ open, onClose, onCreated, initialDate }: Schedule
           />
         </Field>
 
-        <FormControlLabel
-          control={<Checkbox checked={form.repeat} onChange={(event) => set("repeat", event.target.checked)} />}
-          label={t("repeatWeekly")}
-          slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
-        />
+        <Field
+          label={t("allowedPlans")}
+          hint={form.repeat ? t("allowedPlansSeriesHint") : t("allowedPlansHint")}
+        >
+          <MultiDropdown
+            options={planOptions}
+            placeholder={t("allowedPlansPlaceholder")}
+            value={form.allowedPlanIds}
+            onChange={(value) => set("allowedPlanIds", value)}
+          />
+        </Field>
 
-        {form.repeat ? (
-          <Field label={t("daysOfWeek")}>
-            <Stack direction="row" spacing={1}>
-              {DAYS.map((day) => (
-                <Box
-                  key={day.value}
-                  component="button"
-                  type="button"
-                  onClick={() => toggleDay(day.value)}
-                  sx={{
-                    height: 36,
-                    width: 36,
-                    borderRadius: 2,
-                    border: "1px solid",
-                    fontSize: 14,
-                    cursor: "pointer",
-                    transition: (theme) => theme.transitions.create(["background-color", "border-color", "color"]),
-                    ...(form.days.includes(day.value)
-                      ? { borderColor: "text.primary", bgcolor: "text.primary", color: "background.paper" }
-                      : { borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "text.disabled" } }),
-                  }}
-                >
-                  {day.label}
-                </Box>
-              ))}
-            </Stack>
-          </Field>
-        ) : (
-          <DatePicker value={form.date} onChange={(value) => set("date", value)} placeholder={t("date")} />
-        )}
+        {!editing ? (
+          <>
+          {!forceRepeat ? (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={form.repeat}
+                  onChange={(event) => set("repeat", event.target.checked)}
+                />
+              }
+              label={t("repeatWeekly")}
+              slotProps={{ typography: { variant: "body2", color: "text.secondary" } }}
+            />
+          ) : null}
+
+          {form.repeat ? (
+            <Field label={t("daysOfWeek")}>
+              <DayOfWeekPicker value={form.days} onChange={(days) => set("days", days)} />
+            </Field>
+          ) : (
+            <DatePicker value={form.date} onChange={(value) => set("date", value)} placeholder={t("date")} />
+          )}
+          </>
+        ) : null}
       </Stack>
     </SlideOver>
   );

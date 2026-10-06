@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import type { ReactNode } from "react";
 
+import { MotionProvider } from "@/components/ui/motion";
 import { ToastProvider } from "@/components/ui/toast";
 import { ApolloWrapper } from "@/lib/apollo/wrapper";
 import { LocalizationProvider } from "@/theme/localization-provider";
@@ -36,7 +37,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <LocalizationProvider>
               <ThemeProvider>
                 <ApolloWrapper>
-                  <ToastProvider>{children}</ToastProvider>
+                  <MotionProvider>
+                    <ToastProvider>{children}</ToastProvider>
+                  </MotionProvider>
                 </ApolloWrapper>
               </ThemeProvider>
             </LocalizationProvider>

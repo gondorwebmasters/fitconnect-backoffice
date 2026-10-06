@@ -24,6 +24,7 @@ export function SlideOver({ open, onClose, title, subtitle, children, footer, wi
       anchor="right"
       open={open}
       onClose={onClose}
+      transitionDuration={{ enter: 360, exit: 220 }}
       slotProps={{ paper: { sx: { width: { xs: 1, sm: wide ? 640 : 480 } } } }}
     >
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ px: 4, py: 3 }}>
